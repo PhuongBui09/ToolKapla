@@ -166,7 +166,7 @@
   let duplicatedStudents = [];
 
   rows.forEach(row => {
-    const nameCell = row.querySelector("td.student_name");
+    const nameCell = row.querySelector(".student_name");
     const studentName = nameCell ? nameCell.textContent.trim() : "Không rõ";
 
     const select = row.querySelector('select[name="attendance_type"]');
