@@ -15,7 +15,42 @@
   </head>
   <body>
     <div class="container">
-      <h2>Tạo Script Nhận Xét & Gửi Tự Động</h2>
+      <div class="header-with-help">
+        <h2>Tạo Script Nhận Xét & Gửi Tự Động</h2>
+        <div class="help-icon">
+          ?
+          <div class="help-tooltip">
+            <h4>Hướng dẫn & Chức năng</h4>
+
+            <p><strong>Script 1 – Thêm nhận xét & điểm danh</strong></p>
+            <ul>
+              <li>
+                Tự động chuyển học sinh chưa điểm danh từ “Không có” → “Vắng mặt
+                không phép”.
+              </li>
+              <li>Tự động điền nhận xét cho học sinh Có mặt và Đi trễ.</li>
+              <li>
+                Không cần xác nhận lại – chỉ cần dán code vào Console và Enter.
+              </li>
+              <li>
+                Nhận xét được random & không trùng; nếu danh sách nhận xét ít
+                hơn số học sinh thì sẽ báo học sinh bị trùng.
+              </li>
+            </ul>
+
+            <p><strong>Script 2 – Gửi nhận xét</strong></p>
+            <ul>
+              <li>Tự động gửi nhận xét cho học sinh Có mặt và Đi trễ.</li>
+            </ul>
+
+            <p><strong>Human Mode</strong></p>
+            <ul>
+              <li>Mô phỏng thao tác như con người: gõ từng ký tự chậm.</li>
+              <li>Giúp giảm rủi ro bị web phát hiện dùng auto.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
 
       <label>Nhập danh sách nhận xét (mỗi dòng là 1 câu):</label>
       <textarea
