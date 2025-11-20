@@ -1,7 +1,16 @@
+// script.js - Updated with human-like typing and delays
+
+// Utility to pretty-print in the UI (optional)
+function showAlert(msg) {
+  // simple alert for now — you can replace with a nicer UI later
+  alert(msg);
+}
+
+// Main: generate script strings (human-like or normal)
 function generateScripts() {
   const commentsText = document.getElementById("commentsInput").value.trim();
   if (!commentsText) {
-    alert("Bạn chưa nhập nhận xét!");
+    showAlert("Bạn chưa nhập nhận xét!");
     return;
   }
 
@@ -12,13 +21,32 @@ function generateScripts() {
 
   const humanMode = document.getElementById("humanModeCheckbox").checked;
 
-  // Script 1: Thêm nhận xét & điểm danh
+  // -----------------------
+  // Script 1 (comment & attendance)
+  // -----------------------
   const script1 = humanMode
     ? `(async function() {
-  function wait(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+  // human-like helpers
+  function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+  // typing effect: types into element.value, dispatches input events, then calls saveAttendance
+  async function typeTextAndSave(element, text, minDelay = 30, maxDelay = 80){
+    element.focus();
+    element.value = "";
+    for (let i = 0; i < text.length; i++){
+      element.value += text[i];
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+      const d = Math.random() * (maxDelay - minDelay) + minDelay;
+      await wait(d);
+    }
+    element.blur();
+    // call save (the page's existing function)
+    try { saveAttendance($(element)); } catch(e){ console.warn('saveAttendance failed', e); }
+  }
+
   const rows = document.querySelectorAll("#tbl_student tbody tr");
   const comments = ${JSON.stringify(commentsArray, null, 2)};
-  let availableComments = [...comments];
+  let availableComments = comments.slice();
   let savedCount = 0;
   let duplicatedStudents = [];
 
@@ -34,7 +62,7 @@ function generateScripts() {
     if (!attendance || attendance.trim() === "") {
       select.value = "A";
       attendance = "A";
-      saveAttendance($(select));
+      try { saveAttendance($(select)); } catch(e){ console.warn('saveAttendance(select) failed', e); }
       await wait(Math.random() * 300 + 200);
     }
 
@@ -49,15 +77,12 @@ function generateScripts() {
         duplicatedStudents.push(studentName);
       }
 
-      commentInput.focus();
-      commentInput.value = chosenComment;
-      commentInput.dispatchEvent(new Event('input', { bubbles: true }));
-      await wait(Math.random() * 500 + 300);
-      commentInput.blur();
+      // Simulate human typing + save
+      await typeTextAndSave(commentInput, chosenComment, 120, 200);
 
-      saveAttendance($(commentInput));
       savedCount++;
-      await wait(Math.random() * 500 + 300);
+      // small pause between students
+      await wait(Math.random() * 700 + 300);
     }
   }
 
@@ -65,11 +90,11 @@ function generateScripts() {
   console.log("Đã lưu cho " + savedCount + " học sinh.");
   if (duplicatedStudents.length > 0) {
     console.log("Học sinh bị trùng nhận xét:");
-    duplicatedStudents.forEach(n => console.log("- " + n));
+    duplicatedStudents.forEach(function(n){ console.log("- " + n); });
   } else {
     console.log("Không có học sinh nào bị nhận xét trùng.");
   }
-})()`
+})();`
     : `(function() {
   const rows = document.querySelectorAll("#tbl_student tbody tr");
   const comments = ${JSON.stringify(commentsArray, null, 2)};
@@ -89,7 +114,7 @@ function generateScripts() {
     if (!attendance || attendance.trim() === "") {
       select.value = "A";
       attendance = "A";
-      saveAttendance($(select));
+      try { saveAttendance($(select)); } catch(e){ console.warn('saveAttendance(select) failed', e); }
     }
 
     if ((attendance === "P" || attendance === "L") && commentInput) {
@@ -104,7 +129,7 @@ function generateScripts() {
       }
 
       commentInput.value = chosenComment;
-      saveAttendance($(commentInput));
+      try { saveAttendance($(commentInput)); } catch(e){ console.warn('saveAttendance(comment) failed', e); }
       savedCount++;
     }
   });
@@ -117,12 +142,14 @@ function generateScripts() {
   } else {
     console.log("Không có học sinh nào bị nhận xét trùng.");
   }
-})()`;
+})();`;
 
-  // Script 2: Gửi tới học sinh P/L
+  // -----------------------
+  // Script 2 (send messages)
+  // -----------------------
   const script2 = humanMode
     ? `(async function() {
-  function wait(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+  function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
   const rows = document.querySelectorAll("#tbl_student tbody tr");
   let sent = 0;
   let sentList = [];
@@ -134,23 +161,26 @@ function generateScripts() {
 
     const attendance = select.value;
     if (attendance === "P" || attendance === "L") {
-      sendButton.focus();
+      // human-like click
+      try { sendButton.focus(); } catch(e){}
+      await wait(Math.random() * 250 + 150);
+      try { sendButton.click(); } catch(e){ console.warn('click failed', e); }
       await wait(Math.random() * 300 + 200);
-      sendButton.click();
-      await wait(Math.random() * 300 + 200);
-      sendButton.blur();
+      try { sendButton.blur(); } catch(e){}
 
-      const name = row.querySelector(".student_name")?.innerText.trim() || "Không rõ tên";
+      const nameEl = row.querySelector(".student_name");
+      const name = nameEl ? nameEl.innerText.trim() : "Không rõ tên";
       sentList.push(name);
       sent++;
 
-      await wait(Math.random() * 500 + 500); // delay giữa các học sinh
+      // pause between sends
+      await wait(Math.random() * 900 + 400);
     }
   }
 
-  console.log(\`ĐÃ GỬI CHO \${sent} HỌC SINH (P + L).\`);
+  console.log("ĐÃ GỬI CHO " + sent + " HỌC SINH (P + L).");
   console.log("Danh sách đã gửi:", sentList);
-})()`
+})();`
     : `(function () {
   const rows = document.querySelectorAll("#tbl_student tbody tr");
   let sent = 0;
@@ -163,26 +193,38 @@ function generateScripts() {
 
     const attendance = select.value;
     if (attendance === "P" || attendance === "L") {
-      sendButton.click();
-      const name = row.querySelector(".student_name")?.innerText.trim() || "Không rõ tên";
+      try { sendButton.click(); } catch(e){ console.warn('click failed', e); }
+      const nameEl = row.querySelector(".student_name");
+      const name = nameEl ? nameEl.innerText.trim() : "Không rõ tên";
       sentList.push(name);
       sent++;
     }
   });
 
-  console.log(\`ĐÃ GỬI CHO \${sent} HỌC SINH (P + L).\`);
+  console.log("ĐÃ GỬI CHO " + sent + " HỌC SINH (P + L).");
   console.log("Danh sách đã gửi:", sentList);
 })();`;
 
+  // Put results into UI blocks
   document.getElementById("script1Output").textContent = script1;
   document.getElementById("script2Output").textContent = script2;
 
-  Prism.highlightAll();
+  // re-highlight code blocks
+  if (window.Prism) {
+    Prism.highlightAll();
+  }
 }
 
+// copy button
 function copyScript(id) {
   const scriptContent = document.getElementById(id).textContent;
-  navigator.clipboard.writeText(scriptContent).then(() => {
-    alert("Đã copy script!");
-  });
+  navigator.clipboard
+    .writeText(scriptContent)
+    .then(() => {
+      showAlert("Đã copy script!");
+    })
+    .catch((err) => {
+      console.error("Copy failed", err);
+      showAlert("Copy failed - check console for details.");
+    });
 }
