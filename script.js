@@ -78,7 +78,7 @@ function generateScripts() {
       }
 
       // Simulate human typing + save
-      await typeTextAndSave(commentInput, chosenComment, 80, 100);
+      await typeTextAndSave(commentInput, chosenComment, 50, 80);
 
       savedCount++;
       // small pause between students
