@@ -1,16 +1,61 @@
 // script.js - Updated with human-like typing and delays
+// -----------------------------------------------------
 
-// Utility to pretty-print in the UI (optional)
-function showAlert(msg) {
-  // simple alert for now — you can replace with a nicer UI later
-  alert(msg);
+// Hiển thị toast thông báo
+function showToast(msg, type = "success") {
+  const toast = document.createElement("div");
+  toast.textContent = msg;
+
+  // style cơ bản
+  toast.style.position = "fixed";
+  toast.style.top = "20px";
+  toast.style.right = "20px";
+  toast.style.padding = "12px 24px";
+  toast.style.borderRadius = "10px";
+  toast.style.fontFamily = "JetBrains Mono, monospace";
+  toast.style.fontSize = "14px";
+  toast.style.fontWeight = "700"; // chữ đậm hơn
+  toast.style.color = "#fff";
+  toast.style.textShadow = "1px 1px 2px rgba(0,0,0,0.4)"; // shadow cho chữ
+  toast.style.boxShadow = "0 4px 15px rgba(0,0,0,0.3)";
+  toast.style.opacity = 0;
+  toast.style.transition = "opacity 0.3s, transform 0.3s";
+  toast.style.zIndex = 9999;
+
+  // màu theo type
+  if (type === "success") {
+    toast.style.background = "linear-gradient(135deg, #4ade80, #22c55e)"; // xanh sáng hơn
+  } else if (type === "warning") {
+    toast.style.background = "linear-gradient(135deg, #fcd34d, #fbbf24)"; // vàng sáng
+  } else if (type === "error") {
+    toast.style.background = "linear-gradient(135deg, #f87171, #ef4444)"; // đỏ sáng
+  } else {
+    toast.style.background = "rgba(0,0,0,0.85)"; // mặc định
+  }
+
+  document.body.appendChild(toast);
+
+  // fade in + slide
+  requestAnimationFrame(() => {
+    toast.style.opacity = 1;
+    toast.style.transform = "translateY(0)";
+  });
+
+  // tự động ẩn sau 2.5 giây
+  setTimeout(() => {
+    toast.style.opacity = 0;
+    toast.style.transform = "translateY(-20px)";
+    setTimeout(() => document.body.removeChild(toast), 300);
+  }, 2500);
 }
 
-// Main: generate script strings (human-like or normal)
+// =====================================================
+// MAIN: Generate Script 1 & Script 2
+// =====================================================
 function generateScripts() {
   const commentsText = document.getElementById("commentsInput").value.trim();
   if (!commentsText) {
-    showAlert("Bạn chưa nhập nhận xét!");
+    showToast("Bạn chưa nhập nhận xét!", "warning");
     return;
   }
 
@@ -21,27 +66,31 @@ function generateScripts() {
 
   const humanMode = document.getElementById("humanModeCheckbox").checked;
 
-  // -----------------------
-  // Script 1 (comment & attendance)
-  // -----------------------
+  // =====================================================
+  // SCRIPT 1 (attendance + comment + score)
+  // =====================================================
   const script1 = humanMode
     ? `(async function() {
-  // human-like helpers
   function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
 
-  // typing effect: types into element.value, dispatches input events, then calls saveAttendance
   async function typeTextAndSave(element, text, minDelay = 30, maxDelay = 80){
     element.focus();
     element.value = "";
+
     for (let i = 0; i < text.length; i++){
       element.value += text[i];
       element.dispatchEvent(new Event('input', { bubbles: true }));
       const d = Math.random() * (maxDelay - minDelay) + minDelay;
       await wait(d);
     }
+
     element.blur();
-    // call save (the page's existing function)
-    try { saveAttendance($(element)); } catch(e){ console.warn('saveAttendance failed', e); }
+
+    try { 
+      saveAttendance($(element)); 
+    } catch(e){ 
+      console.warn('saveAttendance failed', e); 
+    }
   }
 
   const rows = document.querySelectorAll("#tbl_student tbody tr");
@@ -56,17 +105,25 @@ function generateScripts() {
 
     const select = row.querySelector('select[name="attendance_type"]');
     const commentInput = row.querySelector(".description");
-    if (!select || !commentInput) continue;
+    const scoreInput = row.querySelector(".homework_score");
+    if (!select || !commentInput || !scoreInput) continue;
 
     let attendance = select.value;
+
     if (!attendance || attendance.trim() === "") {
       select.value = "A";
       attendance = "A";
-      try { saveAttendance($(select)); } catch(e){ console.warn('saveAttendance(select) failed', e); }
+
+      try { saveAttendance($(select)); } 
+      catch(e){ console.warn('saveAttendance(select) failed', e); }
+
       await wait(Math.random() * 300 + 200);
     }
 
-    if ((attendance === "P" || attendance === "L") && commentInput) {
+    if (attendance === "P" || attendance === "L") {
+
+      await typeTextAndSave(scoreInput, "9", 20, 40);
+
       let chosenComment;
       if (availableComments.length > 0) {
         const idx = Math.floor(Math.random() * availableComments.length);
@@ -77,47 +134,54 @@ function generateScripts() {
         duplicatedStudents.push(studentName);
       }
 
-      // Simulate human typing + save
-      await typeTextAndSave(commentInput, chosenComment, 50, 80);
+      await typeTextAndSave(commentInput, chosenComment, 20, 40);
 
       savedCount++;
-      // small pause between students
-      await wait(Math.random() * 700 + 300);
+      await wait(Math.random() * 160 + 60);
     }
   }
 
   console.log("===== KẾT QUẢ =====");
   console.log("Đã lưu cho " + savedCount + " học sinh.");
+
   if (duplicatedStudents.length > 0) {
     console.log("Học sinh bị trùng nhận xét:");
-    duplicatedStudents.forEach(function(n){ console.log("- " + n); });
+    duplicatedStudents.forEach(n => console.log("- " + n));
   } else {
     console.log("Không có học sinh nào bị nhận xét trùng.");
   }
 })();`
-    : `(function() {
+    : `(async function() {
   const rows = document.querySelectorAll("#tbl_student tbody tr");
   const comments = ${JSON.stringify(commentsArray, null, 2)};
   let availableComments = [...comments];
   let savedCount = 0;
   let duplicatedStudents = [];
 
-  rows.forEach(row => {
+  for (const row of rows) {
     const nameCell = row.querySelector(".student_name");
     const studentName = nameCell ? nameCell.textContent.trim() : "Không rõ";
 
     const select = row.querySelector('select[name="attendance_type"]');
     const commentInput = row.querySelector(".description");
-    if (!select || !commentInput) return;
+    const scoreInput = row.querySelector(".homework_score");
+    if (!select || !commentInput || !scoreInput) continue;
 
     let attendance = select.value;
+
     if (!attendance || attendance.trim() === "") {
       select.value = "A";
       attendance = "A";
-      try { saveAttendance($(select)); } catch(e){ console.warn('saveAttendance(select) failed', e); }
+
+      try { saveAttendance($(select)); } 
+      catch(e){ console.warn('saveAttendance(select) failed', e); }
     }
 
-    if ((attendance === "P" || attendance === "L") && commentInput) {
+    if (attendance === "P" || attendance === "L") {
+
+      scoreInput.value = "9";
+      saveAttendance($(scoreInput));
+
       let chosenComment;
       if (availableComments.length > 0) {
         const idx = Math.floor(Math.random() * availableComments.length);
@@ -129,13 +193,17 @@ function generateScripts() {
       }
 
       commentInput.value = chosenComment;
-      try { saveAttendance($(commentInput)); } catch(e){ console.warn('saveAttendance(comment) failed', e); }
+
+      try { saveAttendance($(commentInput)); } 
+      catch(e){ console.warn('saveAttendance(comment) failed', e); }
+
       savedCount++;
     }
-  });
+  }
 
   console.log("===== KẾT QUẢ =====");
   console.log("Đã lưu cho " + savedCount + " học sinh.");
+
   if (duplicatedStudents.length > 0) {
     console.log("Học sinh bị trùng nhận xét:");
     duplicatedStudents.forEach(n => console.log("- " + n));
@@ -144,12 +212,13 @@ function generateScripts() {
   }
 })();`;
 
-  // -----------------------
-  // Script 2 (send messages)
-  // -----------------------
+  // =====================================================
+  // SCRIPT 2 (send messages)
+  // =====================================================
   const script2 = humanMode
     ? `(async function() {
   function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
+
   const rows = document.querySelectorAll("#tbl_student tbody tr");
   let sent = 0;
   let sentList = [];
@@ -161,11 +230,16 @@ function generateScripts() {
 
     const attendance = select.value;
     if (attendance === "P" || attendance === "L") {
-      // human-like click
+
       try { sendButton.focus(); } catch(e){}
-      await wait(Math.random() * 250 + 150);
-      try { sendButton.click(); } catch(e){ console.warn('click failed', e); }
-      await wait(Math.random() * 300 + 200);
+
+      await wait(Math.random() * 90 + 60);
+
+      try { sendButton.click(); } 
+      catch(e){ console.warn('click failed', e); }
+
+      await wait(Math.random() * 150 + 100);
+
       try { sendButton.blur(); } catch(e){}
 
       const nameEl = row.querySelector(".student_name");
@@ -173,8 +247,7 @@ function generateScripts() {
       sentList.push(name);
       sent++;
 
-      // pause between sends
-      await wait(Math.random() * 900 + 400);
+      await wait(Math.random() * 300 + 150);
     }
   }
 
@@ -189,13 +262,18 @@ function generateScripts() {
   rows.forEach(row => {
     const select = row.querySelector('select[name="attendance_type"]');
     const sendButton = row.querySelector('input.btn_send');
+
     if (!select || !sendButton) return;
 
     const attendance = select.value;
+
     if (attendance === "P" || attendance === "L") {
-      try { sendButton.click(); } catch(e){ console.warn('click failed', e); }
+      try { sendButton.click(); }
+      catch(e){ console.warn('click failed', e); }
+
       const nameEl = row.querySelector(".student_name");
       const name = nameEl ? nameEl.innerText.trim() : "Không rõ tên";
+
       sentList.push(name);
       sent++;
     }
@@ -205,26 +283,28 @@ function generateScripts() {
   console.log("Danh sách đã gửi:", sentList);
 })();`;
 
-  // Put results into UI blocks
+  // =====================================================
+  // Put results vào UI
+  // =====================================================
   document.getElementById("script1Output").textContent = script1;
   document.getElementById("script2Output").textContent = script2;
 
-  // re-highlight code blocks
-  if (window.Prism) {
-    Prism.highlightAll();
-  }
+  if (window.Prism) Prism.highlightAll();
 }
 
-// copy button
+// Copy script và hiển thị thông báo theo script
 function copyScript(id) {
-  const scriptContent = document.getElementById(id).textContent;
+  const content = document.getElementById(id).textContent;
+
   navigator.clipboard
-    .writeText(scriptContent)
+    .writeText(content)
     .then(() => {
-      showAlert("Đã copy script!");
+      if (id === "script1Output") showToast("Đã copy Script 1!");
+      else if (id === "script2Output") showToast("Đã copy Script 2!");
+      else showToast("Đã copy!");
     })
     .catch((err) => {
       console.error("Copy failed", err);
-      showAlert("Copy failed - check console for details.");
+      showToast("Copy thất bại — xem console.", "error");
     });
 }
