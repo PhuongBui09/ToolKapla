@@ -178,17 +178,19 @@ button:hover {
   position: absolute;
   top: -11px;
   right: 19px;
-  background: #ff9f43;
+  background: linear-gradient(135deg, #76c7ff, #4fa3e0);
   border: none;
   border-radius: 8px;
   padding: 5px 14px;
   cursor: pointer;
   font-size: 13px;
   color: #fff;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s ease;
 }
 
 .copy-btn:hover {
-  background: #e07b2f;
+  background: linear-gradient(135deg, #4fa3e0, #3a7fc1);
   transform: scale(1.05);
 }
 
@@ -234,17 +236,34 @@ pre {
   display: none;
   position: absolute;
   top: 36px;
-  left: -680px;
+  left: -680px; /* tùy chỉnh vị trí */
   width: 800px;
-  padding: 14px;
-  background: #2b2f3a;
-  color: #eee;
-  border-radius: 8px;
-  border: 1px solid #4fc3f7;
+  padding: 20px;
+  background: #1e1e2f; /* cùng tông container / score box */
+  color: #e5e5e5;
+  border-radius: 12px;
+  border: 2px solid #76c7ff; /* viền xanh nổi bật */
   font-size: 13px;
-  line-height: 1.45;
+  line-height: 1.5;
   z-index: 50;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4); /* bóng nhẹ */
+}
+
+.help-tooltip h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #76c7ff; /* chữ xanh nổi bật */
+  font-size: 14px;
+}
+
+.help-tooltip ul,
+.help-tooltip ol {
+  margin: 8px 0 12px 18px;
+  padding-left: 0;
+}
+
+.help-tooltip li {
+  margin-bottom: 6px;
 }
 
 .help-icon:hover .help-tooltip {
