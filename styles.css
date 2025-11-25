@@ -149,35 +149,37 @@ button:hover {
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
 }
 
-/* =========================
-   Code blocks
-========================= */
 .script-box {
   border: 2px solid #76c7ff;
   border-radius: 12px;
-  padding: 15px 20px;
-  margin-top: 20px;
-  background: #1e1e2f;
+  padding: 20px;
+  margin-top: 30px;
+  background: #1e1e2f; /* viền xanh, nền box */
   color: #e5e5e5;
 }
 
-.script-box legend {
+.script-legend {
+  display: flex;
+  justify-content: space-between; /* chữ trái, nút phải */
+  align-items: center;
   font-weight: 700;
   color: #76c7ff;
-  padding: 0 10px;
   font-size: 15px;
+  margin-bottom: 15px;
 }
 
-.script-box .code-block {
-  position: relative; /* Thêm dòng này */
-  margin-top: 10px;
-  padding: 0 10px;
+pre {
+  margin: 0;
+  padding: 0; /* không nền xám riêng */
+  white-space: pre; /* không wrap */
+  overflow-x: auto; /* scroll ngang nếu code dài */
+  font-size: 14px;
+  line-height: 1.5;
+  border-radius: 12px;
 }
 
+/* Nút copy cố định bên phải tiêu đề */
 .copy-btn {
-  position: absolute;
-  top: -11px;
-  right: 19px;
   background: linear-gradient(135deg, #76c7ff, #4fa3e0);
   border: none;
   border-radius: 8px;
@@ -187,22 +189,12 @@ button:hover {
   color: #fff;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
   transition: all 0.3s ease;
+  margin-top: 0;
 }
 
 .copy-btn:hover {
   background: linear-gradient(135deg, #4fa3e0, #3a7fc1);
   transform: scale(1.05);
-}
-
-pre {
-  margin: 0;
-  padding: 20px;
-  background: #1e1e2f;
-  font-size: 14px;
-  line-height: 1.5;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  border-radius: 10px;
 }
 
 /* =========================

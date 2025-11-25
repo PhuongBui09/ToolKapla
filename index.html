@@ -107,26 +107,25 @@
 
       <button onclick="generateScriptsUI()">Tạo Script</button>
 
-      <div class="script-section">
-        <fieldset class="script-box">
-          <legend>Script 1: Thêm nhận xét & điểm danh</legend>
-          <div class="code-block">
-            <button class="copy-btn" onclick="copyScript('script1Output')">Copy</button>
-            <pre><code id="script1Output" class="language-js">/* Chưa có script, bấm "Tạo Script" để hiển thị */</code></pre>
-          </div>
-        </fieldset>
+    <div class="script-section">
+      <div class="script-box">
+        <div class="script-legend">
+          <span>Script 1: Thêm nhận xét & điểm danh</span>
+          <button class="copy-btn" onclick="copyScript('script1Output')">Copy</button>
+        </div>
+        <pre><code id="script1Output" class="language-js">/* Chưa có script, bấm "Tạo Script" để hiển thị */</code></pre>
       </div>
+    </div>
 
-      <div class="script-section">
-        <fieldset class="script-box">
-          <legend>Script 2: Gửi tới học sinh Có mặt / Đi trễ</legend>
-          <div class="code-block">
-            <button class="copy-btn" onclick="copyScript('script2Output')">Copy</button>
-            <pre><code id="script2Output" class="language-js">/* Chưa có script, bấm "Tạo Script" để hiển thị */</code></pre>
-          </div>
-        </fieldset>
+    <div class="script-section">
+      <div class="script-box">
+        <div class="script-legend">
+          <span>Script 2: Gửi tới học sinh Có mặt / Đi trễ</span>
+          <button class="copy-btn" onclick="copyScript('script2Output')">Copy</button>
+        </div>
+        <pre><code id="script2Output" class="language-js">/* Chưa có script, bấm "Tạo Script" để hiển thị */</code></pre>
       </div>
-
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js"></script>
