@@ -10,6 +10,19 @@ window.generateScriptsUI = function () {
   generator.setComments(text);
   generator.setHumanMode(document.getElementById("humanModeCheckbox").checked);
 
+  const mode = document.querySelector('input[name="scoreMode"]:checked').value;
+
+  if (mode === "fixed") {
+    generator.setScoreMode("fixed", {
+      fixed: Number(document.getElementById("fixedScore").value),
+    });
+  } else {
+    generator.setScoreMode("range", {
+      min: Number(document.getElementById("scoreMin").value),
+      max: Number(document.getElementById("scoreMax").value),
+    });
+  }
+
   document.getElementById("script1Output").textContent =
     generator.generateScript1();
   document.getElementById("script2Output").textContent =
@@ -21,10 +34,20 @@ window.generateScriptsUI = function () {
 };
 
 window.copyScript = function (id) {
-  const content = document.getElementById(id).textContent;
+  const el = document.getElementById(id);
+  const content = el.textContent.trim();
+
+  // Kiểm tra nếu chưa tạo script
+  if (!content || content.startsWith("/* Chưa có script")) {
+    Toast.show("Chưa có script để copy!", "warning");
+    return;
+  }
+
+  // Xác định Script 1 hay 2
+  const scriptName = id === "script1Output" ? "Script 1" : "Script 2";
 
   navigator.clipboard
     .writeText(content)
-    .then(() => Toast.show("Đã copy thành công!", "success"))
-    .catch(() => Toast.show("Copy lỗi!", "error"));
+    .then(() => Toast.show(`Đã copy ${scriptName}!`, "success"))
+    .catch(() => Toast.show(`Copy ${scriptName} lỗi!`, "error"));
 };

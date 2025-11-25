@@ -67,41 +67,69 @@
         </div>
       </div>
 
-      <label>Nhập danh sách nhận xét (mỗi dòng là 1 câu):</label>
-      <textarea
-        id="commentsInput"
-        placeholder="Nhập nhận xét ở đây..."
-      ></textarea>
+      <div class="comment-box">
+        <fieldset>
+          <legend>Nhập nhận xét</legend>
+          <textarea
+            id="commentsInput"
+            placeholder="Nhập nhận xét ở đây..."
+          ></textarea>
+        </fieldset>
+      </div>
+
+      <div class="score-box">
+        <fieldset>
+          <legend>Chọn điểm</legend>
+
+          <div class="score-option">
+            <label>
+              <input type="radio" name="scoreMode" value="fixed" checked />
+              Điểm cố định:
+            </label>
+            <input type="number" id="fixedScore" min="1" max="10" value="9" />
+          </div>
+
+          <div class="score-option">
+            <label>
+              <input type="radio" name="scoreMode" value="range" />
+              Random điểm từ:
+            </label>
+            <input type="number" id="scoreMin" min="1" max="10" value="8" />
+            đến
+            <input type="number" id="scoreMax" min="1" max="10" value="9" />
+          </div>
+        </fieldset>
+      </div>
+
       <label>
         <input type="checkbox" id="humanModeCheckbox" /> Human Mode
       </label>
+
       <button onclick="generateScriptsUI()">Tạo Script</button>
 
       <div class="script-section">
-        <h3>Script 1: Thêm nhận xét & điểm danh</h3>
-        <div class="code-block">
-          <button class="copy-btn" onclick="copyScript('script1Output')">
-            Copy
-          </button>
-          <pre><code id="script1Output" class="language-js">/* Chưa có script, bấm "Tạo Script" để hiển thị */</code></pre>
-        </div>
+        <fieldset class="script-box">
+          <legend>Script 1: Thêm nhận xét & điểm danh</legend>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyScript('script1Output')">Copy</button>
+            <pre><code id="script1Output" class="language-js">/* Chưa có script, bấm "Tạo Script" để hiển thị */</code></pre>
+          </div>
+        </fieldset>
       </div>
 
       <div class="script-section">
-        <h3>Script 2: Gửi tới học sinh Có mặt / Đi trễ</h3>
-        <div class="code-block">
-          <button class="copy-btn" onclick="copyScript('script2Output')">
-            Copy
-          </button>
-          <pre><code id="script2Output" class="language-js">/* Chưa có script, bấm "Tạo Script" để hiển thị */</code></pre>
-        </div>
+        <fieldset class="script-box">
+          <legend>Script 2: Gửi tới học sinh Có mặt / Đi trễ</legend>
+          <div class="code-block">
+            <button class="copy-btn" onclick="copyScript('script2Output')">Copy</button>
+            <pre><code id="script2Output" class="language-js">/* Chưa có script, bấm "Tạo Script" để hiển thị */</code></pre>
+          </div>
+        </fieldset>
       </div>
-    </div>
+
 
     <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js"></script>
-
-    <!-- <script src="script.js"></script> -->
     <script type="module" src="./Js/main.js"></script>
   </body>
 </html>

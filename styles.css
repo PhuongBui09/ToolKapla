@@ -3,12 +3,13 @@
 ========================= */
 * {
   box-sizing: border-box;
+  font-family: "JetBrains Mono", monospace;
+  transition: all 0.3s ease;
 }
 
 body {
   margin: 0;
   padding: 0;
-  font-family: "JetBrains Mono", monospace;
   background: #0f111a;
   color: #e5e5e5;
   line-height: 1.6;
@@ -24,7 +25,6 @@ body {
   padding: 40px 50px;
   border-radius: 16px;
   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.5);
-  transition: transform 0.3s ease;
 }
 
 .container:hover {
@@ -61,32 +61,69 @@ label {
   color: #cdd3e0;
 }
 
-textarea {
-  width: 100%;
-  height: 200px;
-  padding: 15px;
-  border: 1px solid #555;
+.comment-box fieldset {
+  border: 2px solid #76c7ff;
   border-radius: 12px;
-  font-size: 15px;
-  background: #14142a;
-  color: #f0f0f0;
-  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.4);
-  transition: border 0.3s, box-shadow 0.3s;
-  resize: vertical;
+  padding: 15px 20px;
+  background: #1e1e2f;
+  color: #e5e5e5;
+  position: relative;
 }
 
-textarea:focus {
+.comment-box legend {
+  font-weight: 700;
+  color: #76c7ff;
+  padding: 0 10px; /* cách viền trái/phải giống score box */
+  font-size: 15px;
+}
+
+.comment-box textarea {
+  width: 100%;
+  min-height: 180px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 0;
+  background: #1e1e2f;
+  color: #f0f0f0;
+  font-size: 14px;
+  line-height: 1.5;
+  font-family: "JetBrains Mono", monospace;
+  resize: vertical;
+  box-shadow: none;
+}
+
+.comment-box textarea:focus {
+  outline: none;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+input[type="text"],
+input[type="number"],
+select {
+  border-radius: 8px;
+  border: 1px solid #555;
+  padding: 5px 10px;
+  background: #14142a;
+  color: #f0f0f0;
+  font-size: 14px;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+select:focus {
   outline: none;
   border-color: #76c7ff;
   box-shadow: 0 0 10px rgba(118, 199, 255, 0.5);
 }
 
-label input[type="checkbox"] {
-  margin-right: 8px;
+label input[type="checkbox"],
+label input[type="radio"] {
+  cursor: pointer;
   width: 18px;
   height: 18px;
   accent-color: #76c7ff;
-  cursor: pointer;
 }
 
 /* =========================
@@ -104,7 +141,6 @@ button {
   border-radius: 12px;
   cursor: pointer;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
-  transition: all 0.3s ease;
 }
 
 button:hover {
@@ -116,20 +152,32 @@ button:hover {
 /* =========================
    Code blocks
 ========================= */
-.code-block {
-  position: relative;
-  margin-top: 20px;
+.script-box {
+  border: 2px solid #76c7ff;
   border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid #333;
-  background: #1b1b2b;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+  padding: 15px 20px;
+  margin-top: 20px;
+  background: #1e1e2f;
+  color: #e5e5e5;
+}
+
+.script-box legend {
+  font-weight: 700;
+  color: #76c7ff;
+  padding: 0 10px;
+  font-size: 15px;
+}
+
+.script-box .code-block {
+  position: relative; /* Thêm dòng này */
+  margin-top: 10px;
+  padding: 0 10px;
 }
 
 .copy-btn {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: -11px;
+  right: 19px;
   background: #ff9f43;
   border: none;
   border-radius: 8px;
@@ -137,7 +185,6 @@ button:hover {
   cursor: pointer;
   font-size: 13px;
   color: #fff;
-  transition: all 0.3s;
 }
 
 .copy-btn:hover {
@@ -156,7 +203,9 @@ pre {
   border-radius: 10px;
 }
 
-/* Container cho h2 + icon */
+/* =========================
+   Help tooltip
+========================= */
 .header-with-help {
   display: flex;
   align-items: center;
@@ -164,7 +213,6 @@ pre {
   margin-bottom: 20px;
 }
 
-/* Giữ nguyên kiểu icon */
 .help-icon {
   width: 28px;
   height: 28px;
@@ -182,7 +230,6 @@ pre {
   box-shadow: 0 0 6px rgba(0, 0, 0, 0.2);
 }
 
-/* Tooltip giữ nguyên */
 .help-tooltip {
   display: none;
   position: absolute;
@@ -197,31 +244,53 @@ pre {
   font-size: 13px;
   line-height: 1.45;
   z-index: 50;
-  box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
-.help-tooltip h4 {
-  margin-top: 0;
-  margin-bottom: 8px;
-  color: #4fc3f7;
-  font-size: 14px;
-}
-
-.help-tooltip ul {
-  margin: 6px 0 12px 18px;
-  padding-left: 0;
-}
-
-.help-tooltip li {
-  margin-bottom: 5px;
-}
-
-/* Hiện tooltip khi hover icon */
 .help-icon:hover .help-tooltip {
   display: block;
 }
 
-/* Tooltip luôn trên các phần tử khác khi hover */
 .help-icon:hover {
   z-index: 51;
+}
+
+/* =========================
+   Score box
+========================= */
+.score-box {
+  margin: 15px 0;
+}
+
+.score-box fieldset {
+  border: 2px solid #76c7ff;
+  border-radius: 12px;
+  padding: 15px 20px;
+  background: #1e1e2f;
+  color: #e5e5e5;
+}
+
+.score-box legend {
+  font-weight: 700;
+  color: #76c7ff;
+  padding: 0 10px;
+  font-size: 15px;
+}
+
+.score-box .score-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.score-box input[type="number"] {
+  width: 60px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  font-size: 14px;
+  text-align: center;
+  background: #14142a;
+  color: #f0f0f0;
 }
