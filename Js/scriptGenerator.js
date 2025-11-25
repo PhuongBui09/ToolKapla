@@ -1,0 +1,166 @@
+// scriptGenerator.js
+export class ScriptGenerator {
+  constructor() {
+    this.humanMode = false;
+    this.comments = [];
+  }
+
+  setHumanMode(value) {
+    this.humanMode = value;
+  }
+
+  setComments(text) {
+    this.comments = text
+      .split("\n")
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0);
+  }
+
+  generateScript1() {
+    return this.humanMode
+      ? this.#generateScript1Human()
+      : this.#generateScript1Fast();
+  }
+
+  generateScript2() {
+    return this.humanMode
+      ? this.#generateScript2Human()
+      : this.#generateScript2Fast();
+  }
+
+  // ---------- PRIVATE METHODS ----------
+  #generateScript1Human() {
+    return `(async function() {
+  function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
+  async function typeTextAndSave(el, text, min=20, max=40){
+    el.focus(); el.value = "";
+    for (let c of text){
+      el.value += c;
+      el.dispatchEvent(new Event('input', {bubbles:true}));
+      await wait(Math.random()*(max-min)+min);
+    }
+    try { saveAttendance($(el)); } catch(e){}
+  }
+
+  const rows = document.querySelectorAll("#tbl_student tbody tr");
+  const comments = ${JSON.stringify(this.comments)};
+  let available = comments.slice();
+  let duplicated = [];
+  let count = 0;
+
+  for (const row of rows){
+    const select = row.querySelector('select[name="attendance_type"]');
+    const comment = row.querySelector(".description");
+    const score   = row.querySelector(".homework_score");
+    if (!select || !comment || !score) continue;
+
+    let att = select.value;
+    if (!att){
+      select.value = "A";
+      try { saveAttendance($(select)); } catch(e){}
+      await wait(200 + Math.random()*300);
+      att = "A";
+    }
+
+    if (att === "P" || att === "L"){
+      await typeTextAndSave(score, "9");
+      let chosen = available.length
+        ? available.splice(Math.floor(Math.random()*available.length), 1)[0]
+        : comments[Math.floor(Math.random()*comments.length)];
+
+      await typeTextAndSave(comment, chosen);
+      count++;
+      await wait(60 + Math.random()*160);
+    }
+  }
+
+  console.log("✔ Lưu xong " + count + " học sinh.");
+})();`;
+  }
+
+  #generateScript1Fast() {
+    return `(async function() {
+  const rows = document.querySelectorAll("#tbl_student tbody tr");
+  const comments = ${JSON.stringify(this.comments)};
+  let available = comments.slice();
+  let duplicated = [];
+  let count = 0;
+
+  for (const row of rows){
+    const select = row.querySelector('select[name="attendance_type"]');
+    const comment = row.querySelector(".description");
+    const score   = row.querySelector(".homework_score");
+    if (!select || !comment || !score) continue;
+
+    let att = select.value;
+    if (!att){
+      select.value = "A";
+      try { saveAttendance($(select)); } catch(e){}
+      att = "A";
+    }
+
+    if (att === "P" || att === "L"){
+      score.value = "9";
+      saveAttendance($(score));
+
+      let chosen = available.length
+        ? available.splice(Math.floor(Math.random()*available.length), 1)[0]
+        : comments[Math.floor(Math.random()*comments.length)];
+
+      comment.value = chosen;
+      try { saveAttendance($(comment)); } catch(e){}
+      count++;
+    }
+  }
+
+  console.log("✔ Lưu xong " + count + " học sinh.");
+})();`;
+  }
+
+  #generateScript2Human() {
+    return `(async function(){
+  function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+  const rows = document.querySelectorAll("#tbl_student tbody tr");
+  let sentList = [];
+
+  for (const row of rows){
+    const select = row.querySelector('select[name="attendance_type"]');
+    const btn    = row.querySelector('.btn_send');
+
+    if (!select || !btn) continue;
+    if (select.value !== "P" && select.value !== "L") continue;
+
+    btn.focus();
+    await wait(60 + Math.random()*90);
+    btn.click();
+    await wait(100 + Math.random()*150);
+    btn.blur();
+
+    sentList.push(row.querySelector(".student_name")?.innerText.trim());
+    await wait(150 + Math.random()*300);
+  }
+
+  console.log("✔ Đã gửi:", sentList);
+})();`;
+  }
+
+  #generateScript2Fast() {
+    return `(function(){
+  const rows = document.querySelectorAll("#tbl_student tbody tr");
+  let sent = [];
+
+  rows.forEach(row => {
+    const select = row.querySelector('select[name="attendance_type"]');
+    const btn    = row.querySelector('.btn_send');
+    if (!select || !btn) return;
+    if (select.value === "P" || select.value === "L"){
+      btn.click();
+      sent.push(row.querySelector(".student_name")?.innerText.trim());
+    }
+  });
+
+  console.log("✔ Đã gửi:", sent);
+})();`;
+  }
+}
