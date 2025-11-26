@@ -67,12 +67,15 @@ export class ScriptGenerator {
   const rows = document.querySelectorAll("#tbl_student tbody tr");
   const comments = ${JSON.stringify(this.comments)};
   let available = comments.slice();
+  let duplicated = [];
   let count = 0;
 
   for (const row of rows){
     const select = row.querySelector('select[name="attendance_type"]');
     const comment = row.querySelector(".description");
     const score   = row.querySelector(".homework_score");
+    const name    = row.querySelector("td:nth-child(2)")?.innerText?.trim(); // tên học sinh
+
     if (!select || !comment || !score) continue;
 
     let att = select.value;
@@ -85,9 +88,14 @@ export class ScriptGenerator {
 
     if (att === "P" || att === "L"){
       await typeTextAndSave(score, ${scoreExpr});
-      let chosen = available.length
-        ? available.splice(Math.floor(Math.random()*available.length), 1)[0]
-        : comments[Math.floor(Math.random()*comments.length)];
+
+      let chosen;
+      if (available.length){
+        chosen = available.splice(Math.floor(Math.random()*available.length), 1)[0];
+      } else {
+        chosen = comments[Math.floor(Math.random()*comments.length)];
+        duplicated.push(name || "Không rõ tên");
+      }
 
       await typeTextAndSave(comment, chosen);
       count++;
@@ -96,6 +104,10 @@ export class ScriptGenerator {
   }
 
   console.log("✔ Lưu xong " + count + " học sinh.");
+  if (duplicated.length){
+    console.log("⚠ Các học sinh bị trùng nhận xét:");
+    duplicated.forEach(n => console.log("- " + n));
+  }
 })();`;
   }
 
@@ -109,12 +121,15 @@ export class ScriptGenerator {
   const rows = document.querySelectorAll("#tbl_student tbody tr");
   const comments = ${JSON.stringify(this.comments)};
   let available = comments.slice();
+  let duplicated = [];
   let count = 0;
 
   for (const row of rows){
     const select = row.querySelector('select[name="attendance_type"]');
     const comment = row.querySelector(".description");
     const score   = row.querySelector(".homework_score");
+    const name    = row.querySelector("td:nth-child(2)")?.innerText?.trim();
+
     if (!select || !comment || !score) continue;
 
     let att = select.value;
@@ -128,9 +143,13 @@ export class ScriptGenerator {
       score.value = ${scoreExpr};
       try { saveAttendance($(score)); } catch(e){}
 
-      let chosen = available.length
-        ? available.splice(Math.floor(Math.random()*available.length), 1)[0]
-        : comments[Math.floor(Math.random()*comments.length)];
+      let chosen;
+      if (available.length){
+        chosen = available.splice(Math.floor(Math.random()*available.length), 1)[0];
+      } else {
+        chosen = comments[Math.floor(Math.random()*comments.length)];
+        duplicated.push(name || "Không rõ tên");
+      }
 
       comment.value = chosen;
       try { saveAttendance($(comment)); } catch(e){}
@@ -139,6 +158,10 @@ export class ScriptGenerator {
   }
 
   console.log("✔ Lưu xong " + count + " học sinh.");
+  if (duplicated.length){
+    console.log("⚠ Các học sinh bị trùng nhận xét:");
+    duplicated.forEach(n => console.log("- " + n));
+  }
 })();`;
   }
 
