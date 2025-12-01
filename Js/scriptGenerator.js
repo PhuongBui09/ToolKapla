@@ -1,15 +1,10 @@
 // scriptGenerator.js
 export class ScriptGenerator {
   constructor() {
-    this.humanMode = false;
     this.comments = [];
 
     this.scoreMode = "fixed"; // fixed | range
     this.scoreConfig = { fixed: 9, min: 7, max: 10 };
-  }
-
-  setHumanMode(value) {
-    this.humanMode = value;
   }
 
   setComments(text) {
@@ -33,9 +28,7 @@ export class ScriptGenerator {
   }
 
   generateScript() {
-    return this.humanMode
-      ? this.#generateScriptHuman()
-      : this.#generateScriptFast();
+    return this.#generateScriptHuman();
   }
 
   // ---------- PRIVATE METHODS ----------
@@ -114,78 +107,6 @@ export class ScriptGenerator {
 
       count++;
       await wait(60 + Math.random()*160);
-    }
-  }
-
-  console.log("✔ Hoàn tất và đã gửi cho " + count + " học sinh.");
-  if (duplicated.length){
-    console.log("⚠ Các học sinh bị trùng nhận xét:");
-    duplicated.forEach(n => console.log("- " + n));
-  }
-})();`;
-  }
-
-  #generateScriptFast() {
-    const scoreExpr =
-      this.scoreMode === "fixed"
-        ? this.scoreConfig.fixed
-        : `(Math.floor(Math.random() * (${this.scoreConfig.max} - ${this.scoreConfig.min} + 1)) + ${this.scoreConfig.min})`;
-
-    return `(function(){
-  function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
-  
-  // Hỏi trước: đã nhập bài tập chưa?
-  const ok = confirm("Bạn đã nhập bài tập chưa? Nếu đã nhập ấn Ok để tiếp tục, Hủy nếu chưa nhập.");
-  if (!ok) { console.log("❗ Dừng: chưa nhập bài tập."); return; }
-
-  const rows = document.querySelectorAll("#tbl_student tbody tr");
-  const comments = ${JSON.stringify(this.comments)};
-  let available = comments.slice();
-  let duplicated = [];
-  let count = 0;
-
-  for (const row of rows){
-    const select = row.querySelector('select[name="attendance_type"]');
-    const comment = row.querySelector(".description");
-    const score   = row.querySelector(".homework_score");
-    const sendBtn = row.querySelector('.btn_send');
-    const name    = row.querySelector("td:nth-child(2)")?.innerText?.trim();
-
-    if (!select || !comment || !score) continue;
-
-    let att = select.value;
-    if (!att){
-      select.value = "A";
-      try { saveAttendance($(select)); } catch(e){}
-      att = "A";
-    }
-
-    if (att === "P" || att === "L"){
-      // Viết điểm
-      score.value = ${scoreExpr};
-      try { saveAttendance($(score)); } catch(e){} 
-      wait(100 + Math.random()*200);
-
-      // Viết nhận xét
-      let chosen;
-      if (available.length){
-        chosen = available.splice(Math.floor(Math.random()*available.length), 1)[0];
-      } else {
-        chosen = comments[Math.floor(Math.random()*comments.length)];
-        duplicated.push(name || "Không rõ tên");
-      }
-
-      comment.value = chosen;
-      try { saveAttendance($(comment)); } catch(e){}
-      wait(100 + Math.random()*200);
-
-      // Gửi
-      if (sendBtn) {
-        try { sendBtn.click(); } catch(e){}
-      }
-
-      count++;
-      wait(150 + Math.random()*250);
     }
   }
 

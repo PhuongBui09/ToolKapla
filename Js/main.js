@@ -8,7 +8,6 @@ window.generateScriptsUI = function () {
   if (!text) return Toast.show("Bạn chưa nhập nhận xét!", "warning");
 
   generator.setComments(text);
-  generator.setHumanMode(document.getElementById("humanModeCheckbox").checked);
 
   const mode = document.querySelector('input[name="scoreMode"]:checked').value;
 
