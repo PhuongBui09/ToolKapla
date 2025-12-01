@@ -23,10 +23,8 @@ window.generateScriptsUI = function () {
     });
   }
 
-  document.getElementById("script1Output").textContent =
-    generator.generateScript1();
-  document.getElementById("script2Output").textContent =
-    generator.generateScript2();
+  document.getElementById("scriptOutput").textContent =
+    generator.generateScript();
 
   if (window.Prism) Prism.highlightAll();
 
@@ -43,8 +41,7 @@ window.copyScript = function (id) {
     return;
   }
 
-  // Xác định Script 1 hay 2
-  const scriptName = id === "script1Output" ? "Script 1" : "Script 2";
+  const scriptName = "Script";
 
   navigator.clipboard
     .writeText(content)
