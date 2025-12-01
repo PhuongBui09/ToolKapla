@@ -135,7 +135,7 @@ export class ScriptGenerator {
   function wait(ms){ return new Promise(r => setTimeout(r, ms)); }
   
   // Hỏi trước: đã nhập bài tập chưa?
-  const ok = confirm("Bạn đã nhập bài tập chưa? Nhấn OK nếu đã nhập (Yes) để tiếp tục, Hủy nếu chưa (No).");
+  const ok = confirm("Bạn đã nhập bài tập chưa? Nếu đã nhập ấn Ok để tiếp tục, Hủy nếu chưa nhập.");
   if (!ok) { console.log("❗ Dừng: chưa nhập bài tập."); return; }
 
   const rows = document.querySelectorAll("#tbl_student tbody tr");
