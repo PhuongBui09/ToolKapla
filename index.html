@@ -17,61 +17,26 @@
     <div class="container">
       <div class="header-with-help">
         <h2>Tạo Script Nhận Xét & Gửi Tự Động</h2>
-        <div class="help-icon">
-          ?
-          <div class="help-tooltip">
-            <h4>Chức năng</h4>
-
-            <p>
-              <strong>Script thực hiện toàn bộ quy trình: điểm danh, điền điểm, gán
-            nhận xét và gửi</strong>
-            </p>
-            <ul>
-              <li>
-                Tự động chuyển học sinh chưa điểm danh từ “Không có” → “Vắng mặt
-                không phép”.
-              </li>
-              <li>Tự động điền nhận xét cho học sinh Có mặt và Đi trễ.</li>
-              <li>
-                Nhận xét random & không trùng; nếu ít hơn số học sinh → báo
-                trùng.
-              </li>
-              <li>
-                Nhập điểm (Cố định hoặc ngẫu nhiên theo khoảng).
-              </li>
-              <li>
-                Gửi nhận xét sau khi đã điền xong và thông báo học sinh bị trùng nhận xét.
-              </li>
-              <li>
-                Không cần xác nhận lại, dán code vào console và Enter là xong.
-              </li>
-            </ul>
-
-            <p><strong>Human Mode:</strong></p>
-            <ul>
-              <li>Mô phỏng thao tác như người thật, gõ từng ký tự chậm.</li>
-              <li>Giúp giảm rủi ro bị web phát hiện dùng auto.</li>
-            </ul>
-
-            <h4>Hướng dẫn sử dụng:</h4>
-            <ol>
-              <li>Nhập các nhận xét vào ô danh sách nhận xét.</li>
-              <li>Bấm “Tạo Script”.</li>
-              <li>
-                Copy Script → mở tab điểm danh → dán vào console → chờ hoàn
-                thành.
-              </li>
-            </ol>
-          </div>
-        </div>
       </div>
 
       <div class="comment-box">
         <fieldset>
-          <legend>Nhập nhận xét</legend>
+          <legend>Mô tả buổi học</legend>
+          <textarea
+            id="lessonDescription"
+            placeholder="Ví dụ: Học Scratch cơ bản, làm quen với giao diện và các khối lệnh..."
+          ></textarea>
+        </fieldset>
+      </div>
+
+      <button onclick="generateCommentsByAI()" style="margin: 20px 0">🤖 Sinh nhận xét bằng AI</button>
+
+      <div class="comment-box">
+        <fieldset>
+          <legend>Nhận xét</legend>
           <textarea
             id="commentsInput"
-            placeholder="Nhập nhận xét ở đây..."
+            placeholder="Nhập nhận xét ở đây hoặc AI tự sinh ra..."
           ></textarea>
         </fieldset>
       </div>

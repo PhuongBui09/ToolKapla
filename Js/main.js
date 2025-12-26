@@ -1,7 +1,28 @@
 import { Toast } from "./toast.js";
 import { ScriptGenerator } from "./scriptGenerator.js";
+import { generateCommentsFromGemini } from "./gemini.js";
 
 const generator = new ScriptGenerator();
+
+window.generateCommentsByAI = async function () {
+  const lesson = document.getElementById("lessonDescription").value.trim();
+  if (!lesson) {
+    return Toast.show("Bạn chưa nhập mô tả buổi học!", "warning");
+  }
+
+  Toast.show("Đang sinh nhận xét bằng AI...", "info");
+
+  try {
+    const aiText = await generateCommentsFromGemini(lesson);
+
+    document.getElementById("commentsInput").value = aiText.trim();
+
+    Toast.show("Đã sinh 20 nhận xét. Bạn có thể chỉnh sửa!", "success");
+  } catch (e) {
+    console.error(e);
+    Toast.show("Lỗi khi gọi AI!", "error");
+  }
+};
 
 window.generateScriptsUI = function () {
   const text = document.getElementById("commentsInput").value.trim();
