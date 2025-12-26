@@ -1,6 +1,6 @@
 import { buildPrompt } from "./aiPrompt.js";
 
-const API_KEY = "AIzaSyAxS4F4FBAlKTQ373lbGh4J3JplcI6PhgE";
+const API_KEY = "";
 
 export async function generateCommentsFromGemini(lessonText) {
   const prompt = buildPrompt(lessonText);
