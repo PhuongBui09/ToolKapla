@@ -11,7 +11,7 @@ module.exports = async (req, res) => {
 
   const UPSTREAM_URL =
     process.env.GEMINI_API_URL ||
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent";
   const API_KEY = process.env.GEMINI_API_KEY;
 
   if (!API_KEY) {
