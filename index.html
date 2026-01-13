@@ -14,71 +14,149 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="loading-spinner">
+        <div class="spinner"></div>
+        <div class="loading-text">Đang sinh nhận xét bằng AI...</div>
+      </div>
+    </div>
+
     <div class="container">
       <div class="header-with-help">
-        <h2>Tạo Script Nhận Xét & Gửi Tự Động</h2>
+        <h2>🤖 Tạo Script Nhận Xét & Gửi Tự Động</h2>
       </div>
 
-      <div class="comment-box">
-        <fieldset>
-          <legend>Mô tả buổi học</legend>
-          <textarea
-            id="lessonDescription"
-            placeholder="Ví dụ: Học Scratch cơ bản, làm quen với giao diện và các khối lệnh..."
-          ></textarea>
-        </fieldset>
+      <!-- Tab Navigation -->
+      <div class="tab-navigation">
+        <button class="tab-btn active" data-tab="generate-comments">
+          📝 Tạo Nhận Xét & Script
+        </button>
+        <button class="tab-btn" data-tab="script-output">📋 Script</button>
+        <button class="tab-btn" data-tab="configure">⚙️ Cấu Hình</button>
+        <button class="tab-btn" data-tab="history">📚 Lịch Sử</button>
       </div>
 
-      <button onclick="generateCommentsByAI()" style="margin: 20px 0">🤖 Sinh nhận xét bằng AI</button>
-
-      <div class="comment-box">
-        <fieldset>
-          <legend>Nhận xét</legend>
-          <textarea
-            id="commentsInput"
-            placeholder="Nhập nhận xét ở đây hoặc AI tự sinh ra..."
-          ></textarea>
-        </fieldset>
-      </div>
-
-      <div class="score-box">
-        <fieldset>
-          <legend>Chọn điểm</legend>
-
-          <div class="score-option">
-            <label>
-              <input type="radio" name="scoreMode" value="fixed" checked />
-              Điểm cố định:
-            </label>
-            <input type="number" id="fixedScore" min="1" max="10" value="9" />
-          </div>
-
-          <div class="score-option">
-            <label>
-              <input type="radio" name="scoreMode" value="range" />
-              Random điểm từ:
-            </label>
-            <input type="number" id="scoreMin" min="1" max="10" value="8" />
-            đến
-            <input type="number" id="scoreMax" min="1" max="10" value="9" />
-          </div>
-        </fieldset>
-      </div>
-
-      <button onclick="generateScriptsUI()">Tạo Script</button>
-
-    <div class="script-section">
-      <div class="script-box">
-        <div class="script-legend">
-          <span>Script: Thêm nhận xét, điểm danh, điểm & gửi</span>
-          <button class="copy-btn" onclick="copyScript('scriptOutput')">Copy</button>
+      <!-- Tab 1: Tạo Nhận Xét & Script -->
+      <div class="tab-content active" id="tab-generate-comments">
+        <div class="form-section">
+          <fieldset>
+            <legend>📝 Mô tả buổi học</legend>
+            <textarea
+              id="lessonDescription"
+              placeholder="Ví dụ: Học Scratch cơ bản, làm quen với giao diện và các khối lệnh..."
+            ></textarea>
+          </fieldset>
         </div>
-        <pre><code id="scriptOutput" class="language-js">/* Chưa có script, bấm "Tạo Script" để hiển thị */</code></pre>
+
+        <button
+          type="button"
+          onclick="generateCommentsByAI()"
+          style="width: 100%; margin-bottom: 20px; display: block"
+        >
+          ✨ Sinh nhận xét bằng AI
+        </button>
+
+        <div class="form-section">
+          <fieldset>
+            <legend>💬 Kết quả nhận xét</legend>
+            <textarea
+              id="commentsInput"
+              placeholder="Nhập nhận xét ở đây hoặc AI tự sinh ra..."
+            ></textarea>
+          </fieldset>
+        </div>
+
+        <button
+          type="button"
+          onclick="generateScriptsUI()"
+          style="width: 100%; margin: 20px 0; display: block"
+        >
+          🔨 Tạo Script
+        </button>
+      </div>
+
+      <!-- Tab 2: Script Output -->
+      <div class="tab-content" id="tab-script-output">
+        <div class="script-section">
+          <div class="script-box">
+            <div class="script-legend">
+              <span>📋 Script: Thêm nhận xét, điểm danh, điểm & gửi</span>
+              <button
+                type="button"
+                class="copy-btn"
+                onclick="copyScript('scriptOutput')"
+              >
+                📋 Copy
+              </button>
+            </div>
+            <pre><code id="scriptOutput" class="language-js">/* Chưa có script, bấm "Tạo Script" để hiển thị */</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Cấu Hình -->
+      <div class="tab-content" id="tab-configure">
+        <div class="score-box">
+          <fieldset>
+            <legend>⭐ Chọn Điểm</legend>
+
+            <div class="score-option">
+              <label>
+                <input type="radio" name="scoreMode" value="fixed" checked />
+                Điểm cố định
+              </label>
+              <input type="number" id="fixedScore" min="1" max="10" value="9" />
+            </div>
+
+            <div class="score-option">
+              <label>
+                <input type="radio" name="scoreMode" value="range" />
+                Random từ
+              </label>
+              <input type="number" id="scoreMin" min="1" max="10" value="8" />
+              <span style="color: #ccc">đến</span>
+              <input type="number" id="scoreMax" min="1" max="10" value="9" />
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="form-section" style="margin-top: 20px">
+          <fieldset>
+            <legend>ℹ️ Hướng Dẫn</legend>
+            <div style="color: #b0b0b0; font-size: 14px; line-height: 1.8">
+              <p>
+                <strong>Điểm cố định:</strong> Tất cả học sinh sẽ được điểm này
+              </p>
+              <p style="margin-top: 10px">
+                <strong>Random từ X đến Y:</strong> Mỗi học sinh sẽ được random
+                một điểm trong khoảng này
+              </p>
+              <p style="margin-top: 10px"><strong>Thứ tự quy trình:</strong></p>
+              <ol style="margin-left: 20px; margin-top: 8px">
+                <li>Tạo nhận xét từ AI (Tab 1)</li>
+                <li>Xem script (Tab 2)</li>
+                <li>Cấu hình điểm (Tab này)</li>
+                <li>Xem lịch sử (Tab 4)</li>
+              </ol>
+            </div>
+          </fieldset>
+        </div>
+      </div>
+
+      <!-- Tab 4: Lịch Sử -->
+      <div class="tab-content" id="tab-history">
+        <div class="form-section">
+          <fieldset>
+            <legend>📚 Lịch sử nhận xét gần nhất</legend>
+            <div id="historyContainer"></div>
+            <p id="historyEmpty">Chưa có nhận xét nào</p>
+          </fieldset>
+        </div>
       </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js"></script>
-    <script type="module" src="./Js/main.js"></script>
+    <script type="module" defer src="./Js/main.js"></script>
   </body>
 </html>

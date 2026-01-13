@@ -1,4 +1,3 @@
-// toast.js
 export class Toast {
   static show(msg, type = "success") {
     const toast = document.createElement("div");
@@ -15,11 +14,13 @@ export class Toast {
     toast.style.color = "#fff";
     toast.style.textShadow = "1px 1px 2px rgba(0,0,0,0.4)";
     toast.style.boxShadow = "0 4px 15px rgba(0,0,0,0.3)";
-    toast.style.opacity = 0;
-    toast.style.transition = "opacity 0.3s, transform 0.3s";
     toast.style.zIndex = 9999;
 
-    // màu
+    // 🔥 TRẠNG THÁI BAN ĐẦU
+    toast.style.opacity = 0;
+    toast.style.transform = "translateY(-10px)";
+    toast.style.transition = "opacity 0.3s ease, transform 0.3s ease";
+
     const colors = {
       success: "linear-gradient(135deg, #4ade80, #22c55e)",
       warning: "linear-gradient(135deg, #fcd34d, #fbbf24)",
@@ -30,11 +31,13 @@ export class Toast {
 
     document.body.appendChild(toast);
 
+    // Fade in
     requestAnimationFrame(() => {
       toast.style.opacity = 1;
       toast.style.transform = "translateY(0)";
     });
 
+    // Fade out
     setTimeout(() => {
       toast.style.opacity = 0;
       toast.style.transform = "translateY(-10px)";

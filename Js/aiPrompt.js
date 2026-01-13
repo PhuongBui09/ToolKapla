@@ -1,21 +1,29 @@
 export function buildPrompt(lessonContent) {
   return `
-Bạn là giáo viên giảng dạy công nghệ cho học sinh.
+Bạn là giáo viên trực tiếp đứng lớp và đang viết nhận xét gửi cho phụ huynh SAU BUỔI HỌC.
 
-Dựa trên phần mô tả buổi học dưới đây, hãy viết 20 nhận xét khác nhau để gửi cho phụ huynh, giúp phụ huynh hiểu rõ học sinh đã học được gì và đã thực hiện những hoạt động cụ thể nào trong buổi học.
+Dựa trên phần mô tả buổi học dưới đây, hãy viết 20 nhận xét mô tả CỤ THỂ học sinh đã học và đã làm những gì trong buổi học.
 
-Yêu cầu:
-- Viết bằng tiếng Việt
-- Mỗi nhận xét thể hiện một ý khác nhau, không trùng lặp
-- Diễn đạt rõ ràng để phụ huynh không cần biết lập trình vẫn hiểu nội dung buổi học
-- Nội dung bám sát các hoạt động cụ thể được mô tả (công cụ, sản phẩm, thao tác chính)
-- Nội dung phản ánh kiến thức lý thuyết và kỹ năng thực hành (nếu có)
+NGUYÊN TẮC BẮT BUỘC:
+- MỖI nhận xét PHẢI đề cập ĐẦY ĐỦ TẤT CẢ các mục tiêu và hoạt động được nêu trong phần mô tả buổi học
+- Không được bỏ sót bất kỳ mục tiêu hoặc hoạt động nào
+- Không được gộp mục tiêu thành các khái niệm chung chung
+- Mỗi mục tiêu phải được thể hiện bằng hành động cụ thể mà học sinh đã thực hiện
+
+YÊU CẦU DIỄN ĐẠT:
+- Không cần khác biệt hoàn toàn giữa các nhận xét, chỉ cần diễn đạt khác nhau một chút (thay đổi cách dùng từ, thứ tự mô tả, hoặc trọng tâm)
+- Diễn đạt đơn giản, rõ ràng để phụ huynh KHÔNG biết lập trình vẫn hiểu buổi học
+- Ưu tiên mô tả: công cụ sử dụng, thao tác học sinh làm, sản phẩm hoặc kết quả đạt được
 - Chỉ dùng từ “học sinh”, KHÔNG dùng từ “con”
-- Giọng văn tích cực, rõ ràng, mang tính sư phạm
+- Giọng văn tích cực, mang tính sư phạm
+
+ĐỊNH DẠNG:
 - Mỗi nhận xét dài 1–2 câu
 - Mỗi nhận xét nằm trên MỘT DÒNG
-- KHÔNG đánh số thứ tự
-- KHÔNG thêm mở đầu hoặc kết luận
+- KHÔNG đánh số
+- KHÔNG mở đầu, KHÔNG kết luận
+- KHÔNG dùng các từ chung chung như: “quy trình”, “tổng thể”, “hoàn chỉnh”, “nền tảng”, “tư duy”
+- KHÔNG dùng emoji hoặc ký hiệu đặc biệt
 
 Phần mô tả buổi học:
 ${lessonContent}
