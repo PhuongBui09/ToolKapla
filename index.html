@@ -40,10 +40,16 @@
       <div class="tab-content active" id="tab-generate-comments">
         <div class="form-section">
           <fieldset>
-            <legend>📝 Mô tả buổi học</legend>
+            <legend>
+              📝 Mô tả buổi học
+              <span class="highlight-suggest" style="font-size: 12px"
+                >*Khuyến khích thêm mục tiêu buổi học</span
+              >
+            </legend>
             <textarea
               id="lessonDescription"
-              placeholder="Ví dụ: Học Scratch cơ bản, làm quen với giao diện và các khối lệnh..."
+              placeholder="Ví dụ: Học scratch, Mục tiêu
+Hiểu và thực hành được chức năng cảm biến chuyển động trong Scratch 3.0..."
             ></textarea>
           </fieldset>
         </div>
@@ -96,6 +102,112 @@
 
       <!-- Tab 3: Cấu Hình -->
       <div class="tab-content" id="tab-configure">
+        <!-- Phần cấu hình prompt AI -->
+        <div class="form-section">
+          <fieldset>
+            <legend>🤖 Cấu Hình Prompt AI</legend>
+
+            <!-- Số lượng nhận xét -->
+            <div class="config-group">
+              <label for="configNumComments">📊 Số lượng nhận xét</label>
+              <div class="input-with-unit">
+                <input
+                  type="number"
+                  id="configNumComments"
+                  min="10"
+                  max="25"
+                  value="20"
+                />
+                <span class="unit">nhận xét</span>
+              </div>
+              <small style="color: #999">Từ 10 đến 25 nhận xét</small>
+            </div>
+
+            <!-- Bắt buộc tất cả mục tiêu -->
+            <div class="config-group">
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  id="configIncludeAllObjectives"
+                  checked
+                />
+                <span
+                  >🎯 Bắt buộc mỗi nhận xét bao gồm TẤT CẢ mục tiêu/hoạt
+                  động</span
+                >
+              </label>
+              <small style="color: #999"
+                >Đảm bảo AI không bỏ sót mục tiêu nào</small
+              >
+            </div>
+
+            <!-- Mức độ khác biệt -->
+            <div class="config-group">
+              <label for="configCommentVariety"
+                >✨ Mức độ khác biệt nhận xét</label
+              >
+              <select id="configCommentVariety">
+                <option value="low">
+                  Ít - Nhận xét tương tự (chỉ thay đổi từ)
+                </option>
+                <option value="medium" selected>
+                  Vừa - Thay đổi cách diễn đạt & trọng tâm
+                </option>
+              </select>
+            </div>
+
+            <!-- Độ dài nhận xét -->
+            <div class="config-group">
+              <label for="configCommentLength">📄 Độ dài mỗi nhận xét</label>
+              <select id="configCommentLength">
+                <option value="1-2" selected>1–2 câu (ngắn gọn)</option>
+                <option value="2-3">2–3 câu (chi tiết hơn)</option>
+              </select>
+            </div>
+
+            <!-- Giọng văn -->
+            <div class="config-group">
+              <label for="configTone">🎤 Giọng văn</label>
+              <select id="configTone">
+                <option value="pedagogical" selected>
+                  Sư phạm - Chuyên nghiệp, tích cực
+                </option>
+                <option value="neutral">
+                  Trung tính - Khách quan, cân bằng
+                </option>
+                <option value="friendly">Thân thiện - Gần gũi, ấm áp</option>
+              </select>
+            </div>
+
+            <!-- Cho phép emoji -->
+            <div class="config-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="configAllowEmoji" />
+                <span>😊 Cho phép sử dụng emoji trong nhận xét</span>
+              </label>
+            </div>
+
+            <!-- Cấm từ chung chung -->
+            <div class="config-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="configBanGenericWords" checked />
+                <span
+                  >⛔ Cấm các từ chung chung (quy trình, tổng thể, nền
+                  tảng...)</span
+                >
+              </label>
+            </div>
+
+            <!-- Nút khôi phục -->
+            <div style="margin-top: 20px; display: flex; gap: 10px">
+              <button type="button" id="resetConfigBtn" class="btn-secondary">
+                🔄 Khôi phục mặc định
+              </button>
+            </div>
+          </fieldset>
+        </div>
+
+        <!-- Phần cấu hình điểm -->
         <div class="score-box">
           <fieldset>
             <legend>⭐ Chọn Điểm</legend>
@@ -120,24 +232,22 @@
           </fieldset>
         </div>
 
+        <!-- Hướng dẫn -->
         <div class="form-section" style="margin-top: 20px">
           <fieldset>
             <legend>ℹ️ Hướng Dẫn</legend>
             <div style="color: #b0b0b0; font-size: 14px; line-height: 1.8">
               <p>
+                <strong>Cấu hình Prompt AI:</strong> Điều chỉnh cách AI sinh
+                nhận xét
+              </p>
+              <p style="margin-top: 10px">
                 <strong>Điểm cố định:</strong> Tất cả học sinh sẽ được điểm này
               </p>
               <p style="margin-top: 10px">
                 <strong>Random từ X đến Y:</strong> Mỗi học sinh sẽ được random
                 một điểm trong khoảng này
               </p>
-              <p style="margin-top: 10px"><strong>Thứ tự quy trình:</strong></p>
-              <ol style="margin-left: 20px; margin-top: 8px">
-                <li>Tạo nhận xét từ AI (Tab 1)</li>
-                <li>Xem script (Tab 2)</li>
-                <li>Cấu hình điểm (Tab này)</li>
-                <li>Xem lịch sử (Tab 4)</li>
-              </ol>
             </div>
           </fieldset>
         </div>

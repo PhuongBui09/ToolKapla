@@ -5,7 +5,9 @@ import {
   generateCommentsFromGemini,
   getCommentHistory,
   deleteFromHistory,
+  setUseUserConfig,
 } from "./gemini.js";
+import { initPromptConfigUI } from "./promptConfigUI.js";
 
 const generator = new ScriptGenerator();
 let tabManager;
@@ -106,6 +108,9 @@ window.generateCommentsByAI = async function () {
     return Toast.show("Bạn chưa nhập mô tả buổi học!", "warning");
   }
 
+  // Set flag để dùng user config
+  setUseUserConfig(true);
+
   // Disable buttons khi đang sinh
   disableButtons();
 
@@ -129,7 +134,7 @@ window.generateCommentsByAI = async function () {
       }
       commentsInput.value += comment;
       commentCount++;
-      progressDiv.textContent = `📥 Đã nhận ${commentCount}/20 nhận xét...`;
+      progressDiv.textContent = `📥 Đã nhận ${commentCount} nhận xét...`;
       // Scroll xuống dưới cùng
       commentsInput.scrollTop = commentsInput.scrollHeight;
     };
@@ -212,6 +217,9 @@ window.copyScript = function (id) {
 document.addEventListener("DOMContentLoaded", () => {
   // Khởi tạo tab manager
   tabManager = new TabManager();
+
+  // Khởi tạo UI cấu hình prompt
+  initPromptConfigUI();
 
   // Load lịch sử
   renderHistory();

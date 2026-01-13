@@ -268,6 +268,28 @@ legend {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
+}
+
+.highlight-suggest {
+  background: linear-gradient(135deg, #ff6b9d 0%, #ff1493 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+  font-size: 17px;
+  letter-spacing: 0.5px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
 }
 
 /* =========================
@@ -626,4 +648,106 @@ code {
     font-size: 11px;
     font-weight: 500;
   }
+}
+
+/* =========================
+   Prompt Config UI
+========================= */
+.config-group {
+  margin-bottom: 24px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.1);
+}
+
+.config-group:last-child {
+  border-bottom: none;
+}
+
+.config-group label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 600;
+  color: #e0e7ff;
+  font-size: 14px;
+}
+
+.config-group select,
+.config-group input[type="number"] {
+  width: 100%;
+  max-width: 300px;
+  padding: 10px 14px;
+  border: 1.5px solid rgba(0, 212, 255, 0.3);
+  border-radius: 10px;
+  background: rgba(20, 20, 42, 0.6);
+  color: #f0f0f0;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.config-group select:focus,
+.config-group input[type="number"]:focus {
+  outline: none;
+  border-color: #00d4ff;
+  background: rgba(20, 20, 42, 1);
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+}
+
+.config-group option {
+  background: #1a1a2e;
+  color: #f0f0f0;
+}
+
+.input-with-unit {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.input-with-unit input[type="number"] {
+  width: 100px;
+}
+
+.unit {
+  color: #999;
+  font-size: 13px;
+}
+
+.config-group small {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  color: #777;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-label input[type="checkbox"] {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  accent-color: #00d4ff;
+  cursor: pointer;
+}
+
+.checkbox-label span {
+  flex: 1;
+  margin: 0;
+  color: #e0e7ff;
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  box-shadow: 0 6px 25px rgba(99, 102, 241, 0.5);
+  background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
 }

@@ -1,4 +1,4 @@
-import { buildPrompt } from "./aiPrompt.js";
+import { buildPrompt, buildPromptWithUserConfig } from "./aiPrompt.js";
 
 const API_BASE = window.BACKEND_URL || ""; // set window.BACKEND_URL to your Vercel URL when hosting frontend on GitHub
 const STORAGE_KEY = "toolkapla_comments_history";
@@ -6,6 +6,19 @@ const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 
 // Cache để lưu comments khi lesson trùng nhau
 const commentCache = new Map();
+
+/**
+ * Flag để xác định có dùng user config hay không
+ * Mặc định: false (dùng prompt mặc định)
+ */
+let useUserConfig = false;
+
+/**
+ * Set flag để dùng user config
+ */
+export function setUseUserConfig(value) {
+  useUserConfig = value;
+}
 
 /**
  * Lấy preview (câu đầu) từ lesson description
@@ -93,7 +106,10 @@ export async function generateCommentsFromGemini(
     return cachedComments.join("\n");
   }
 
-  const prompt = buildPrompt(lessonText);
+  // Chọn hàm build prompt phù hợp
+  const prompt = useUserConfig
+    ? buildPromptWithUserConfig(lessonText)
+    : buildPrompt(lessonText);
 
   const res = await fetch(`${API_BASE}/api/gemini`, {
     method: "POST",
