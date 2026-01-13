@@ -48,6 +48,7 @@ export function saveCommentToHistory(lessonText, comments) {
     history.unshift({
       id: Date.now(),
       lessonPreview: preview,
+      lessonDescription: lessonText,
       comments,
       timestamp: Date.now(),
     });

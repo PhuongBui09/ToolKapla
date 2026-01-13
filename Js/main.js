@@ -62,10 +62,12 @@ function renderHistory() {
       ).toLocaleString("vi-VN")}</div>
     `;
 
-    // Click để load nhận xét
+    // Click để load nhận xét và mô tả
     textDiv.addEventListener("click", () => {
+      document.getElementById("lessonDescription").value =
+        item.lessonDescription || item.lessonPreview;
       document.getElementById("commentsInput").value = item.comments.join("\n");
-      Toast.show("✓ Đã tải nhận xét từ lịch sử!", "success");
+      Toast.show("✓ Đã tải mô tả và nhận xét từ lịch sử!", "success");
       updateScriptTabInfo();
     });
 
