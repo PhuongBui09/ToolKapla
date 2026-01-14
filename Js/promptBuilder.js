@@ -58,11 +58,25 @@ function buildInstructions(config) {
     );
   }
 
-  // Độ dài nhận xét
+  // Độ dài nhận xét + cấu trúc câu
   if (config.commentLength === "1-2") {
     instructions.push(`- Mỗi nhận xét dài 1–2 câu`);
+    instructions.push(`- KHÔNG viết câu tổng kết kỹ năng`);
+    instructions.push(
+      `- KHÔNG dùng các cụm: "qua đó", "qua bài học", "giúp học sinh", "rèn luyện"`
+    );
+    instructions.push(
+      `- Tập trung mô tả hành động và nội dung học sinh đã thực hiện`
+    );
   } else if (config.commentLength === "2-3") {
     instructions.push(`- Mỗi nhận xét dài 2–3 câu`);
+    instructions.push(`- Cấu trúc BẮT BUỘC:`);
+    instructions.push(
+      `  + Câu 1: Mô tả học sinh đã thực hành và thao tác cụ thể`
+    );
+    instructions.push(
+      `  + Câu 2 (hoặc 3): BẮT BUỘC dùng dạng "Qua bài học, học sinh..." hoặc "Qua đó, học sinh..." để nêu kỹ năng hoặc giá trị đạt được`
+    );
   }
 
   // Giọng văn
