@@ -39,6 +39,7 @@ export class ScriptGenerator {
         : `(Math.floor(Math.random() * (${this.scoreConfig.max} - ${this.scoreConfig.min} + 1)) + ${this.scoreConfig.min})`;
 
     return `(async function () {
+  // ============ UTILITIES ============
   function wait(ms) {
     return new Promise((r) => setTimeout(r, ms));
   }
@@ -60,7 +61,7 @@ export class ScriptGenerator {
   // ====== CONFIRM ======
   if (
     !confirm(
-      "Script sẽ nhập nhận xét + điểm cho toàn bộ học sinh (P/L) nhưng CHƯA gửi. Bạn có muốn tiếp tục?"
+      "Script sẽ nhập nhận xét + điểm cho toàn bộ học sinh (P/L), sau đó tự kiểm tra và gửi. Bạn có muốn tiếp tục?"
     )
   ) {
     console.log("❗ Hủy thao tác");
@@ -70,14 +71,13 @@ export class ScriptGenerator {
   // ====== CONTROL STATE ======
   let paused = false;
   let sendQueue = [];
+  let missingStudents = [];
 
   // ====== PANEL (Modern UI) ======
   (function createPanel() {
-    // Tạo container chính
     const panel = document.createElement("div");
     let isCollapsed = false;
 
-    // Inline styles cho panel
     panel.style.cssText = \`
       position: fixed;
       top: 20px;
@@ -94,7 +94,6 @@ export class ScriptGenerator {
       transition: all 0.3s ease;
     \`;
 
-    // HTML cấu trúc panel
     panel.innerHTML = \`
       <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #fff; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; font-weight: 600; font-size: 14px;">
         <div style="display: flex; align-items: center; gap: 8px;">
@@ -107,7 +106,12 @@ export class ScriptGenerator {
       <div id="panelContent" style="padding: 14px; background: #f9fafb;">
         <!-- Status Badge -->
         <div id="status" style="background: #dbeafe; border: 1px solid #93c5fd; color: #1e40af; padding: 8px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; margin-bottom: 12px; text-align: center;">
-          ⏱ Đang nhập...
+          ⏱ PHASE 1: Đang nhập...
+        </div>
+
+        <!-- Missing Info -->
+        <div id="missingInfo" style="display: none; background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 8px 10px; border-radius: 6px; font-size: 11px; margin-bottom: 12px; line-height: 1.4;">
+          ⚠ Còn thiếu dữ liệu cho một số học sinh. Đang sửa lại...
         </div>
 
         <!-- Buttons Container -->
@@ -122,32 +126,26 @@ export class ScriptGenerator {
 
         <!-- Info Text -->
         <div style="font-size: 11px; color: #6b7280; line-height: 1.4; text-align: center;">
-          Bấm "GỬI TẤT CẢ" sau khi hoàn tất nhập liệu
+          Script tự động kiểm tra và gửi sau khi nhập xong
         </div>
       </div>
     \`;
 
     document.body.appendChild(panel);
 
-    // Lấy các element quan trọng
     const panelContent = panel.querySelector("#panelContent");
     const btnPause = panel.querySelector("#btnPause");
     const btnSendAll = panel.querySelector("#btnSendAll");
     const btnCollapse = panel.querySelector("#btnCollapse");
     const status = panel.querySelector("#status");
+    const missingInfo = panel.querySelector("#missingInfo");
 
     // Nút Thu gọn / Mở rộng
     btnCollapse.onclick = (e) => {
       e.stopPropagation();
       isCollapsed = !isCollapsed;
-      if (isCollapsed) {
-        panelContent.style.display = "none";
-        btnCollapse.textContent = "▲";
-        panel.style.width = "280px";
-      } else {
-        panelContent.style.display = "block";
-        btnCollapse.textContent = "▼";
-      }
+      panelContent.style.display = isCollapsed ? "none" : "block";
+      btnCollapse.textContent = isCollapsed ? "▲" : "▼";
     };
 
     // Nút Pause / Resume
@@ -158,19 +156,11 @@ export class ScriptGenerator {
         btnPause.style.background = "#fef3c7";
         btnPause.style.color = "#92400e";
         btnPause.style.borderColor = "#fcd34d";
-        status.textContent = "⏸ Tạm dừng";
-        status.style.background = "#fef3c7";
-        status.style.borderColor = "#fcd34d";
-        status.style.color = "#92400e";
       } else {
         btnPause.textContent = "⏸ Tạm dừng";
         btnPause.style.background = "#f3f4f6";
         btnPause.style.color = "#374151";
         btnPause.style.borderColor = "#d1d5db";
-        status.textContent = "⏱ Đang nhập...";
-        status.style.background = "#dbeafe";
-        status.style.borderColor = "#93c5fd";
-        status.style.color = "#1e40af";
       }
     };
 
@@ -180,34 +170,21 @@ export class ScriptGenerator {
 
       btnSendAll.disabled = true;
       btnSendAll.style.opacity = "0.6";
-
-      status.textContent = "📤 Đang gửi (đang kiểm tra...)";
+      status.textContent = "📤 PHASE 3: Đang gửi...";
       status.style.background = "#ddd6fe";
       status.style.borderColor = "#c4b5fd";
       status.style.color = "#5b21b6";
 
       for (let i = 0; i < sendQueue.length; i++) {
         const btn = sendQueue[i];
-
-        // 🧠 Dừng lâu hơn ở học sinh đầu tiên
-        if (i === 0) {
-          await wait(1500 + Math.random() * 2000); // 1.5s – 3.5s
-        }
-
-        // 👀 Scroll tới nút gửi
+        if (i === 0) await wait(1500 + Math.random() * 2000);
         btn.scrollIntoView({ behavior: "smooth", block: "center" });
         await wait(400 + Math.random() * 700);
-
-        // 🖱 Focus → suy nghĩ → click
         btn.focus();
         await wait(300 + Math.random() * 600);
-
         btn.click();
-
         await wait(800 + Math.random() * 1400);
         btn.blur();
-
-        // ⏳ Nghỉ giữa các học sinh
         await wait(1000 + Math.random() * 1800);
       }
 
@@ -217,7 +194,7 @@ export class ScriptGenerator {
       status.style.color = "#065f46";
     };
 
-    // Hover effect cho nút Pause
+    // Hover effects
     btnPause.onmouseover = () => {
       if (!paused) {
         btnPause.style.background = "#e5e7eb";
@@ -231,11 +208,9 @@ export class ScriptGenerator {
       }
     };
 
-    // Hover effect cho nút Send All (khi enabled)
     btnSendAll.onmouseover = () => {
       if (!btnSendAll.disabled) {
         btnSendAll.style.background = "#059669";
-        btnSendAll.style.opacity = "1";
       }
     };
     btnSendAll.onmouseout = () => {
@@ -244,8 +219,7 @@ export class ScriptGenerator {
       }
     };
 
-    // Lưu reference để script chính có thể cập nhật
-    window.__panel = { btnSendAll, status };
+    window.__panel = { btnSendAll, status, missingInfo };
   })();
 
   async function waitIfPaused() {
@@ -254,13 +228,19 @@ export class ScriptGenerator {
     }
   }
 
-  // ====== MAIN ======
+  // ============ PHASE 1: NHẬP ============
+  console.log("🔄 PHASE 1: Bắt đầu nhập nhận xét + điểm...");
+  
   const rows = document.querySelectorAll("#tbl_student tbody tr");
   const comments = ${JSON.stringify(this.comments)};
   let available = comments.slice();
   let duplicated = [];
+  
+  // Map để theo dõi dữ liệu nhập: { rowIndex: { commentInput, scoreInput, name, sendBtn } }
+  const studentMap = new Map();
 
-  for (const row of rows) {
+  for (let idx = 0; idx < rows.length; idx++) {
+    const row = rows[idx];
     const select = row.querySelector('select[name="attendance_type"]');
     const comment = row.querySelector(".description");
     const score = row.querySelector(".homework_score");
@@ -299,6 +279,16 @@ export class ScriptGenerator {
       await typeTextAndSave(score, ${scoreExpr});
       await waitIfPaused();
 
+      // Lưu thông tin học sinh để kiểm tra sau
+      studentMap.set(idx, {
+        comment,
+        score,
+        sendBtn,
+        name: name || "Học sinh #" + idx,
+        valueComment: chosen,
+        valueScore: ${scoreExpr}
+      });
+
       if (sendBtn) {
         sendQueue.push(sendBtn);
         sendBtn.style.outline = "2px solid #22c55e";
@@ -307,9 +297,116 @@ export class ScriptGenerator {
     }
   }
 
-  window.__panel.status.textContent =
-    "✔ Nhập xong – kiểm tra rồi bấm GỬI TẤT CẢ";
-  window.__panel.btnSendAll.disabled = false;
+  console.log("✅ PHASE 1 hoàn tất: Nhập xong " + sendQueue.length + " học sinh");
+
+  // ============ PHASE 2: KIỂM TRA TỰ ĐỘNG ============
+  console.log("🔄 PHASE 2: Bắt đầu kiểm tra tự động...");
+  window.__panel.status.textContent = "⏳ PHASE 2: Đang kiểm tra dữ liệu...";
+  window.__panel.status.style.background = "#fef3c7";
+  window.__panel.status.style.borderColor = "#fcd34d";
+  window.__panel.status.style.color = "#92400e";
+
+  let retryCount = 0;
+  const maxRetry = 2;
+
+  async function checkAndRetry() {
+    missingStudents = [];
+
+    // Reload dữ liệu bằng cách click nút refresh
+    const refreshBtn = document.querySelector("#refresh_sms");
+    if (refreshBtn) {
+      console.log("📤 Click nút tải lại dữ liệu...");
+      refreshBtn.click();
+      
+      // Chờ dữ liệu load
+      await wait(3000 + Math.random() * 2000);
+    }
+
+    // Kiểm tra lại từng học sinh
+    const currentRows = document.querySelectorAll("#tbl_student tbody tr");
+    
+    for (const [idx, student] of studentMap) {
+      if (idx >= currentRows.length) continue;
+      
+      const row = currentRows[idx];
+      const select = row.querySelector('select[name="attendance_type"]');
+      let att = select?.value;
+
+      if (att !== "P" && att !== "L") continue;
+
+      const comment = row.querySelector(".description");
+      const score = row.querySelector(".homework_score");
+
+      const commentMissing = !comment || !comment.value || comment.value.trim() === "";
+      const scoreMissing = !score || !score.value || score.value.trim() === "";
+
+      if (commentMissing || scoreMissing) {
+        missingStudents.push({
+          idx,
+          name: student.name,
+          commentMissing,
+          scoreMissing,
+          comment,
+          score,
+          valueComment: student.valueComment,
+          valueScore: student.valueScore
+        });
+      }
+    }
+
+    console.log(\`📋 Kiểm tra: Còn \${missingStudents.length} học sinh thiếu dữ liệu\`);
+
+    // Nếu còn thiếu và chưa hết retry
+    if (missingStudents.length > 0 && retryCount < maxRetry) {
+      window.__panel.missingInfo.style.display = "block";
+      console.log(\`⚠️  Lần retry \${retryCount + 1}/\${maxRetry}: Sửa \${missingStudents.length} học sinh bị thiếu...\`);
+      
+      for (const student of missingStudents) {
+        await waitIfPaused();
+        
+        if (student.commentMissing && student.comment) {
+          console.log(\`📝 Sửa nhận xét cho: \${student.name}\`);
+          await typeTextAndSave(student.comment, student.valueComment);
+          await wait(300);
+        }
+
+        if (student.scoreMissing && student.score) {
+          console.log(\`📝 Sửa điểm cho: \${student.name}\`);
+          await typeTextAndSave(student.score, student.valueScore);
+          await wait(300);
+        }
+      }
+
+      retryCount++;
+      await wait(1500);
+      
+      // Kiểm tra lại
+      await checkAndRetry();
+    } else if (missingStudents.length === 0) {
+      console.log("✅ PHASE 2 hoàn tất: Toàn bộ dữ liệu đã sẵn sàng!");
+      window.__panel.missingInfo.style.display = "none";
+      
+      window.__panel.status.textContent = "✅ PHASE 2: Sẵn sàng gửi";
+      window.__panel.status.style.background = "#d1fae5";
+      window.__panel.status.style.borderColor = "#6ee7b7";
+      window.__panel.status.style.color = "#065f46";
+      
+      // Enable nút gửi
+      window.__panel.btnSendAll.disabled = false;
+      window.__panel.btnSendAll.style.opacity = "1";
+      window.__panel.btnSendAll.style.cursor = "pointer";
+    } else {
+      console.log("❌ PHASE 2 thất bại: Còn thiếu sau " + maxRetry + " lần thử");
+      window.__panel.status.textContent = "❌ Thiếu dữ liệu (sửa thủ công)";
+      window.__panel.status.style.background = "#fee2e2";
+      window.__panel.status.style.borderColor = "#fca5a5";
+      window.__panel.status.style.color = "#991b1b";
+      window.__panel.missingInfo.style.display = "block";
+    }
+  }
+
+  // Bắt đầu kiểm tra
+  await checkAndRetry();
 
   if (duplicated.length) {
     console.log("⚠ Nhận xét bị trùng cho:");
