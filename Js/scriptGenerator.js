@@ -43,6 +43,15 @@ export class ScriptGenerator {
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   const css = (el, obj) => Object.assign(el.style, obj);
 
+  function uiLog(text, colorKey = "default") {
+    window.__panel.status.textContent = text;
+    css(window.__panel.status, { ...COLORS[colorKey], background: COLORS[colorKey].bg, borderColor: COLORS[colorKey].border });
+    console.log(text);
+  }
+
+  function uiSuccess(text) { uiLog(text, "success"); }
+  function uiError(text) { uiLog(text, "error"); }
+
   async function typeTextSmart(el, text, fastMode = false) {
     el.focus();
     el.value = "";
@@ -199,7 +208,7 @@ export class ScriptGenerator {
   async function waitIfPaused() { while (paused) await wait(150); }
 
   // ===== PHASE 1: INPUT =====
-  console.log("🔄 PHASE 1: Nhập...");
+  uiLog("🔄 PHASE 1: Nhập nhận xét + điểm...", "default");
   const rows = document.querySelectorAll("#tbl_student tbody tr");
   let available = comments.slice(), duplicated = [], studentMap = new Map();
   let totalPL = 0;
@@ -237,13 +246,10 @@ export class ScriptGenerator {
     window.__panel.progressBar.style.width = (totalPL / sendQueue.length * 100) + "%";
   }
 
-  console.log("✅ PHASE 1: OK " + sendQueue.length);
+  uiSuccess("✅ PHASE 1 hoàn tất: Nhập xong " + sendQueue.length + " HS");
 
   // ===== PHASE 2: CHECK & RETRY =====
-  console.log("🔄 PHASE 2: Kiểm tra...");
-  css(window.__panel.status, { ...COLORS.pause, background: COLORS.pause.bg });
-  window.__panel.status.textContent = "🔄 PHASE 2...";
-  window.__panel.progressBar.style.width = "33%";
+  uiLog("🔄 PHASE 2: Kiểm tra dữ liệu...", "pause");
 
   let retryCount = 0, maxRetry = 3;
 
@@ -251,7 +257,7 @@ export class ScriptGenerator {
     missingStudents = [];
     const refreshBtn = document.querySelector("#refresh_sms");
     if (refreshBtn) {
-      console.log("📤 Reload...");
+      uiLog("📤 Reloading dữ liệu...", "pause");
       refreshBtn.click();
       await waitForReload();
     }
@@ -273,8 +279,8 @@ export class ScriptGenerator {
     console.log(\`📋 Thiếu: \${missingStudents.length}\`);
 
     if (missingStudents.length && retryCount < maxRetry) {
+      uiLog(\`⚠️ Retry \${retryCount + 1}/\${maxRetry}: Sửa \${missingStudents.length} HS...\`, "pause");
       window.__panel.missingInfo.style.display = "block";
-      console.log(\`⚠️ Retry \${retryCount + 1}/\${maxRetry}\`);
       for (const x of missingStudents) {
         await waitIfPaused();
         if (x.cmtMiss && x.c) {
@@ -290,18 +296,14 @@ export class ScriptGenerator {
       await wait(1000);
       await checkAndRetry();
     } else if (!missingStudents.length) {
-      console.log("✅ PHASE 2: OK");
+      uiSuccess("✅ PHASE 2: Toàn bộ dữ liệu sẵn sàng!");
       window.__panel.missingInfo.style.display = "none";
-      css(window.__panel.status, { ...COLORS.success, background: COLORS.success.bg });
-      window.__panel.status.textContent = "✅ Sẵn gửi";
       window.__panel.btnSendAll.disabled = false;
       css(window.__panel.btnSendAll, { opacity: "1", cursor: "pointer" });
       window.__panel.progressBar.style.width = "66%";
     } else {
-      console.warn("❌ PHASE 2: Lỗi sau " + maxRetry + " lần:", missingStudents.map(x => x.name));
-      css(window.__panel.status, { ...COLORS.error, background: COLORS.error.bg });
-      window.__panel.status.textContent = "❌ Thiếu dữ liệu";
-      window.__panel.missingInfo.style.display = "block";
+      uiError("❌ Thiếu dữ liệu sau " + maxRetry + " lần thử");
+      console.warn("Danh sách HS thiếu:", missingStudents.map(x => x.name));
       window.__panel.progressBar.style.width = "50%";
     }
   }
@@ -309,7 +311,7 @@ export class ScriptGenerator {
   await checkAndRetry();
 
   if (duplicated.length) {
-    console.log("⚠ Trùng:", duplicated);
+    console.log("⚠ Nhận xét bị trùng cho:", duplicated);
   }
 })();`;
   }
