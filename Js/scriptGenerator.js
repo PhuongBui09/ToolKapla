@@ -39,25 +39,57 @@ export class ScriptGenerator {
         : `(Math.floor(Math.random() * (${this.scoreConfig.max} - ${this.scoreConfig.min} + 1)) + ${this.scoreConfig.min})`;
 
     return `(async function () {
-  // ===== UTILITIES =====
+  // ===== CORE HELPERS =====
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const css = (el, obj) => Object.assign(el.style, obj);
 
-  async function typeTextAndSave(el, text, min = 20, max = 40) {
+  async function typeTextSmart(el, text, fastMode = false) {
     el.focus();
     el.value = "";
-    for (let c of String(text)) {
-      el.value += c;
+    text = String(text);
+    
+    if (fastMode || text.length > 120) {
+      el.value = text;
       el.dispatchEvent(new Event("input", { bubbles: true }));
-      await wait(Math.random() * (max - min) + min);
+      await wait(100);
+    } else {
+      for (let c of text) {
+        el.value += c;
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        await wait(20 + Math.random() * 20);
+      }
     }
+    
     try { saveAttendance($(el)); } catch (e) {}
   }
 
-  const css = (el, obj) => Object.assign(el.style, obj);
+  async function waitForReload(maxWait = 5000) {
+    const start = Date.now();
+    while (Date.now() - start < maxWait) {
+      if (!document.querySelector(".loading") && !document.querySelector(".spinner")) {
+        await wait(500);
+        return true;
+      }
+      await wait(200);
+    }
+    return false;
+  }
 
-  // ===== STATE & CONSTANTS =====
-  if (!confirm("Script sẽ nhập nhận xét + điểm cho toàn bộ học sinh (P/L), sau đó tự kiểm tra và gửi. Tiếp tục?")) {
-    console.log("❗ Hủy thao tác");
+  function getPLRows() {
+    const rows = document.querySelectorAll("#tbl_student tbody tr");
+    const plRows = [];
+    rows.forEach((row, idx) => {
+      const select = row.querySelector('select[name="attendance_type"]');
+      if (select && (select.value === "P" || select.value === "L")) {
+        plRows.push({ idx, row, select });
+      }
+    });
+    return plRows;
+  }
+
+  // ===== INIT =====
+  if (!confirm("Script nhập nhận xét + điểm cho học sinh (P/L), kiểm tra tự động, rồi gửi. Tiếp tục?")) {
+    console.log("❗ Hủy");
     return;
   }
 
@@ -71,96 +103,106 @@ export class ScriptGenerator {
     success: { bg: "#d1fae5", color: "#065f46", border: "#6ee7b7" }
   };
 
-  // ===== PANEL UI =====
+  // ===== PANEL =====
   (function createPanel() {
     const panel = document.createElement("div");
-    let isCollapsed = false;
+    let collapsed = false;
 
     css(panel, {
       position: "fixed", top: "20px", right: "20px", width: "280px",
-      background: "#ffffff", color: "#1f2937", borderRadius: "12px",
+      background: "#fff", color: "#1f2937", borderRadius: "12px",
       zIndex: "99999", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       boxShadow: "0 4px 20px rgba(0,0,0,0.12)", border: "1px solid #e5e7eb",
       overflow: "hidden", transition: "all 0.3s ease"
     });
 
     panel.innerHTML = \`
-      <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: #fff; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; font-weight: 600; font-size: 14px;">
-        <div style="display: flex; align-items: center; gap: 8px;"><span style="font-size: 18px;">🎓</span><span>Nhập Điểm & Nhận Xét</span></div>
-        <button id="btnCollapse" style="background: none; border: none; color: #fff; cursor: pointer; font-size: 16px; padding: 0; width: 24px; height: 24px;">▼</button>
+      <div style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 14px;">
+        <div style="display: flex; gap: 8px; align-items: center;"><span style="font-size: 18px;">🎓</span><span>Nhập Điểm</span></div>
+        <button id="btnCollapse" style="background: none; border: none; color: #fff; font-size: 14px; cursor: pointer;">▼</button>
       </div>
-      <div id="panelContent" style="padding: 14px; background: #f9fafb;">
-        <div id="status" style="background: #dbeafe; border: 1px solid #93c5fd; color: #1e40af; padding: 8px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; margin-bottom: 12px; text-align: center;">⏱ PHASE 1: Đang nhập...</div>
-        <div id="missingInfo" style="display: none; background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 8px 10px; border-radius: 6px; font-size: 11px; margin-bottom: 12px;">⚠ Còn thiếu dữ liệu. Đang sửa lại...</div>
-        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-          <button id="btnPause" style="flex: 1; padding: 8px 10px; background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; transition: all 0.2s ease;">⏸ Tạm dừng</button>
-          <button id="btnSendAll" disabled style="flex: 1.2; padding: 8px 10px; background: #10b981; color: #fff; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: not-allowed; transition: all 0.2s ease; opacity: 0.6;">✅ GỬI TẤT CẢ</button>
+      <div id="panelContent" style="padding: 12px; background: #f9fafb;">
+        <div id="status" style="background: #dbeafe; border: 1px solid #93c5fd; color: #1e40af; padding: 8px; border-radius: 6px; font-size: 11px; font-weight: 500; margin-bottom: 10px;">⏱ PHASE 1...</div>
+        <div id="progress" style="width: 100%; height: 4px; background: #e5e7eb; border-radius: 2px; margin-bottom: 10px; overflow: hidden;">
+          <div id="progressBar" style="height: 100%; background: #6366f1; width: 0%; transition: width 0.3s;"></div>
         </div>
-        <div style="font-size: 11px; color: #6b7280; text-align: center;">Script tự động kiểm tra và gửi sau khi nhập xong</div>
+        <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+          <button id="btnPause" style="flex: 1; padding: 6px; background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; border-radius: 4px; font-size: 11px; font-weight: 500; cursor: pointer; transition: all 0.2s;">⏸ Dừng</button>
+          <button id="btnSendAll" disabled style="flex: 1; padding: 6px; background: #10b981; color: #fff; border: none; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: not-allowed; opacity: 0.5; transition: all 0.2s;">✅ Gửi</button>
+        </div>
+        <div id="missingInfo" style="display: none; background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; padding: 6px; border-radius: 4px; font-size: 10px;">⚠ Sửa dữ liệu...</div>
       </div>
     \`;
 
     document.body.appendChild(panel);
 
     const panelContent = panel.querySelector("#panelContent");
+    const progressBar = panel.querySelector("#progressBar");
+    const btnCollapse = panel.querySelector("#btnCollapse");
     const btnPause = panel.querySelector("#btnPause");
     const btnSendAll = panel.querySelector("#btnSendAll");
-    const btnCollapse = panel.querySelector("#btnCollapse");
     const status = panel.querySelector("#status");
     const missingInfo = panel.querySelector("#missingInfo");
 
     btnCollapse.onclick = () => {
-      isCollapsed = !isCollapsed;
-      panelContent.style.display = isCollapsed ? "none" : "block";
-      btnCollapse.textContent = isCollapsed ? "▲" : "▼";
+      collapsed = !collapsed;
+      panelContent.style.display = collapsed ? "none" : "block";
+      btnCollapse.textContent = collapsed ? "▲" : "▼";
     };
 
     btnPause.onclick = () => {
       paused = !paused;
-      const c = paused ? COLORS.pause : COLORS.default;
-      css(btnPause, c);
-      btnPause.textContent = paused ? "▶ Tiếp tục" : "⏸ Tạm dừng";
+      if (paused) {
+        btnPause.textContent = "▶ Tiếp";
+        css(btnPause, COLORS.pause);
+      } else {
+        btnPause.textContent = "⏸ Dừng";
+        css(btnPause, COLORS.default);
+      }
     };
 
     btnPause.onmouseover = () => !paused && css(btnPause, { background: "#e5e7eb", borderColor: "#9ca3af" });
     btnPause.onmouseout = () => !paused && css(btnPause, COLORS.default);
 
     btnSendAll.onclick = async () => {
-      if (!confirm(\`Gửi nhận xét cho \${sendQueue.length} học sinh?\`)) return;
+      if (!confirm(\`Gửi cho \${sendQueue.length} HS?\`)) return;
       btnSendAll.disabled = true;
-      css(btnSendAll, { opacity: "0.6" });
       css(status, { ...COLORS.send, background: COLORS.send.bg, borderColor: COLORS.send.border });
-      status.textContent = "📤 PHASE 3: Đang gửi...";
+      status.textContent = "📤 PHASE 3: Gửi...";
+      progressBar.style.width = "0%";
 
       for (let i = 0; i < sendQueue.length; i++) {
         const btn = sendQueue[i];
-        if (i === 0) await wait(1500 + Math.random() * 2000);
+        if (i === 0) await wait(1200 + Math.random() * 1800);
         btn.scrollIntoView({ behavior: "smooth", block: "center" });
-        await wait(400 + Math.random() * 700);
+        await wait(300 + Math.random() * 400);
         btn.focus();
-        await wait(300 + Math.random() * 600);
+        await wait(200 + Math.random() * 300);
         btn.click();
-        await wait(800 + Math.random() * 1400);
+        await wait(600 + Math.random() * 800);
         btn.blur();
-        await wait(1000 + Math.random() * 1800);
+        await wait(700 + Math.random() * 1000);
+        progressBar.style.width = ((i + 1) / sendQueue.length * 100) + "%";
       }
 
       css(status, { ...COLORS.success, background: COLORS.success.bg, borderColor: COLORS.success.border });
-      status.textContent = "✅ Đã gửi xong (an toàn)";
+      status.textContent = "✅ Gửi xong";
+      progressBar.style.width = "100%";
     };
 
     btnSendAll.onmouseover = () => !btnSendAll.disabled && css(btnSendAll, { background: "#059669" });
     btnSendAll.onmouseout = () => !btnSendAll.disabled && css(btnSendAll, { background: "#10b981" });
 
-    window.__panel = { btnSendAll, status, missingInfo };
+    window.__panel = { btnSendAll, status, missingInfo, progressBar };
   })();
 
-  async function waitIfPaused() { while (paused) await wait(200); }
+  async function waitIfPaused() { while (paused) await wait(150); }
 
   // ===== PHASE 1: INPUT =====
-  console.log("🔄 PHASE 1: Nhập nhận xét + điểm...");
+  console.log("🔄 PHASE 1: Nhập...");
   const rows = document.querySelectorAll("#tbl_student tbody tr");
   let available = comments.slice(), duplicated = [], studentMap = new Map();
+  let totalPL = 0;
 
   for (let idx = 0; idx < rows.length; idx++) {
     const row = rows[idx];
@@ -168,48 +210,50 @@ export class ScriptGenerator {
     const comment = row.querySelector(".description");
     const score = row.querySelector(".homework_score");
     const sendBtn = row.querySelector(".btn_send");
-    const name = row.querySelector("td:nth-child(2)")?.innerText?.trim() || "Học sinh #" + idx;
-
     if (!select || !comment || !score) continue;
 
-    let att = select.value || (select.value = "A", saveAttendance($(select)), await wait(300), "A");
+    let att = select.value || (select.value = "A", saveAttendance($(select)), await wait(250), "A");
     if (att !== "P" && att !== "L") continue;
 
+    totalPL++;
     await waitIfPaused();
 
+    const name = row.querySelector("td:nth-child(2)")?.innerText?.trim() || "HS#" + idx;
     const chosen = available.length
       ? available.splice(Math.floor(Math.random() * available.length), 1)[0]
       : (duplicated.push(name), comments[Math.floor(Math.random() * comments.length)]);
 
-    await typeTextAndSave(comment, chosen);
+    await typeTextSmart(comment, chosen, chosen.length > 120);
     await waitIfPaused();
-    await typeTextAndSave(score, ${scoreExpr});
+    await typeTextSmart(score, ${scoreExpr}, false);
     await waitIfPaused();
 
-    studentMap.set(idx, { comment, score, sendBtn, name, valueComment: chosen, valueScore: ${scoreExpr} });
+    studentMap.set(idx, { comment, score, sendBtn, name, chosen, scoreVal: ${scoreExpr} });
     if (sendBtn) {
       sendQueue.push(sendBtn);
       sendBtn.style.outline = "2px solid #22c55e";
-      sendBtn.title = "Sẵn sàng gửi";
     }
+
+    window.__panel.progressBar.style.width = (totalPL / sendQueue.length * 100) + "%";
   }
 
-  console.log("✅ PHASE 1: Nhập xong " + sendQueue.length + " học sinh");
+  console.log("✅ PHASE 1: OK " + sendQueue.length);
 
   // ===== PHASE 2: CHECK & RETRY =====
-  console.log("🔄 PHASE 2: Kiểm tra dữ liệu...");
-  css(window.__panel.status, { ...COLORS.pause, background: COLORS.pause.bg, borderColor: COLORS.pause.border });
-  window.__panel.status.textContent = "⏳ PHASE 2: Đang kiểm tra...";
+  console.log("🔄 PHASE 2: Kiểm tra...");
+  css(window.__panel.status, { ...COLORS.pause, background: COLORS.pause.bg });
+  window.__panel.status.textContent = "🔄 PHASE 2...";
+  window.__panel.progressBar.style.width = "33%";
 
-  let retryCount = 0, maxRetry = 2;
+  let retryCount = 0, maxRetry = 3;
 
   async function checkAndRetry() {
     missingStudents = [];
     const refreshBtn = document.querySelector("#refresh_sms");
     if (refreshBtn) {
-      console.log("📤 Reload dữ liệu...");
+      console.log("📤 Reload...");
       refreshBtn.click();
-      await wait(3000 + Math.random() * 2000);
+      await waitForReload();
     }
 
     const currentRows = document.querySelectorAll("#tbl_student tbody tr");
@@ -218,55 +262,54 @@ export class ScriptGenerator {
       const row = currentRows[idx], select = row.querySelector('select[name="attendance_type"]');
       if (select?.value !== "P" && select?.value !== "L") continue;
 
-      const comment = row.querySelector(".description"), score = row.querySelector(".homework_score");
-      const cmtMissing = !comment?.value?.trim(), scoreMissing = !score?.value?.trim();
+      const c = row.querySelector(".description"), s = row.querySelector(".homework_score");
+      const cmtMiss = !c?.value?.trim(), scoreMiss = !s?.value?.trim();
 
-      if (cmtMissing || scoreMissing) {
-        missingStudents.push({ idx, name: student.name, commentMissing: cmtMissing, scoreMissing, comment, score, valueComment: student.valueComment, valueScore: student.valueScore });
+      if (cmtMiss || scoreMiss) {
+        missingStudents.push({ idx, name: student.name, cmtMiss, scoreMiss, c, s, chosen: student.chosen, scoreVal: student.scoreVal });
       }
     }
 
-    console.log(\`📋 Thiếu: \${missingStudents.length} học sinh\`);
+    console.log(\`📋 Thiếu: \${missingStudents.length}\`);
 
     if (missingStudents.length && retryCount < maxRetry) {
       window.__panel.missingInfo.style.display = "block";
-      console.log(\`⚠️ Retry \${retryCount + 1}/\${maxRetry}...\`);
-      for (const s of missingStudents) {
+      console.log(\`⚠️ Retry \${retryCount + 1}/\${maxRetry}\`);
+      for (const x of missingStudents) {
         await waitIfPaused();
-        if (s.commentMissing && s.comment) {
-          console.log(\`📝 Sửa nhận xét: \${s.name}\`);
-          await typeTextAndSave(s.comment, s.valueComment);
-          await wait(300);
+        if (x.cmtMiss && x.c) {
+          await typeTextSmart(x.c, x.chosen, x.chosen.length > 120);
+          await wait(200);
         }
-        if (s.scoreMissing && s.score) {
-          console.log(\`📝 Sửa điểm: \${s.name}\`);
-          await typeTextAndSave(s.score, s.valueScore);
-          await wait(300);
+        if (x.scoreMiss && x.s) {
+          await typeTextSmart(x.s, x.scoreVal, false);
+          await wait(200);
         }
       }
       retryCount++;
-      await wait(1500);
+      await wait(1000);
       await checkAndRetry();
     } else if (!missingStudents.length) {
-      console.log("✅ PHASE 2: Toàn bộ sẵn sàng!");
+      console.log("✅ PHASE 2: OK");
       window.__panel.missingInfo.style.display = "none";
-      css(window.__panel.status, { ...COLORS.success, background: COLORS.success.bg, borderColor: COLORS.success.border });
-      window.__panel.status.textContent = "✅ PHASE 2: Sẵn sàng gửi";
+      css(window.__panel.status, { ...COLORS.success, background: COLORS.success.bg });
+      window.__panel.status.textContent = "✅ Sẵn gửi";
       window.__panel.btnSendAll.disabled = false;
       css(window.__panel.btnSendAll, { opacity: "1", cursor: "pointer" });
+      window.__panel.progressBar.style.width = "66%";
     } else {
-      console.log("❌ PHASE 2: Lỗi sau " + maxRetry + " lần thử");
-      css(window.__panel.status, { ...COLORS.error, background: COLORS.error.bg, borderColor: COLORS.error.border });
+      console.warn("❌ PHASE 2: Lỗi sau " + maxRetry + " lần:", missingStudents.map(x => x.name));
+      css(window.__panel.status, { ...COLORS.error, background: COLORS.error.bg });
       window.__panel.status.textContent = "❌ Thiếu dữ liệu";
       window.__panel.missingInfo.style.display = "block";
+      window.__panel.progressBar.style.width = "50%";
     }
   }
 
   await checkAndRetry();
 
   if (duplicated.length) {
-    console.log("⚠ Nhận xét trùng:");
-    duplicated.forEach((n) => console.log("- " + n));
+    console.log("⚠ Trùng:", duplicated);
   }
 })();`;
   }
