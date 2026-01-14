@@ -82,9 +82,6 @@ export class ScriptGenerator {
     }
 
     if (att === "P" || att === "L"){
-      // gõ điểm
-      await typeTextAndSave(score, ${scoreExpr});
-
       // chọn nhận xét không trùng nếu có
       let chosen;
       if (available.length){
@@ -95,6 +92,9 @@ export class ScriptGenerator {
       }
 
       await typeTextAndSave(comment, chosen);
+
+      // gõ điểm
+      await typeTextAndSave(score, ${scoreExpr});
 
       // gửi
       if (sendBtn) {
