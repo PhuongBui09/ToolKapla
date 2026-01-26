@@ -69,7 +69,7 @@ export class ScriptGenerator {
       }
     }
     
-    try { saveAttendance($(el)); } catch (e) {}
+    try { saveAttendance($(el)); await wait(500); } catch (e) {}
   }
 
   async function waitForReload(maxWait = 5000) {
@@ -260,6 +260,7 @@ export class ScriptGenerator {
       uiLog("📤 Reloading dữ liệu...", "pause");
       refreshBtn.click();
       await waitForReload();
+      await wait(1000); // Đợi thêm để server cập nhật
     }
 
     const currentRows = document.querySelectorAll("#tbl_student tbody tr");
