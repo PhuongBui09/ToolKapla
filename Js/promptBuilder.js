@@ -88,3 +88,48 @@ function buildInstructions(config) {
 
     return instructions.join('\n');
 }
+
+/**
+ * Build prompt hoàn chỉnh
+ */
+export function buildPromptWithConfig(lessonContent, config) {
+    const instructions = buildInstructions(config);
+
+    return `${BASE_PROMPT}
+
+${instructions}
+
+Phần mô tả buổi học:
+${lessonContent}`.trim();
+}
+
+/**
+ * Export BASE_PROMPT để reference
+ */
+export function getDefaultPromptBase() {
+    return BASE_PROMPT.trim();
+}
+
+/**
+ * Xây dựng prompt với config mặc định (giống aiPrompt.js gốc)
+ */
+export function buildDefaultPrompt(lessonContent) {
+    const DEFAULT_CONFIG = {
+        numComments: 20,
+        includeAllObjectives: true,
+        commentVariety: 'medium',
+        commentLength: '1-2',
+        tone: 'pedagogical',
+        allowEmoji: false,
+        banGenericWords: true,
+    };
+
+    const instructions = buildInstructions(DEFAULT_CONFIG);
+
+    return `${BASE_PROMPT}
+
+${instructions}
+
+Phần mô tả buổi học:
+${lessonContent}`.trim();
+}
