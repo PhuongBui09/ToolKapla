@@ -1,44 +1,44 @@
 // scriptGenerator.js
 export class ScriptGenerator {
-  constructor() {
-    this.comments = [];
+    constructor() {
+        this.comments = [];
 
-    this.scoreMode = "fixed"; // fixed | range
-    this.scoreConfig = { fixed: 9, min: 7, max: 10 };
-  }
-
-  setComments(text) {
-    this.comments = text
-      .split("\n")
-      .map((t) => t.trim())
-      .filter((t) => t.length > 0);
-  }
-
-  setScoreMode(mode, config) {
-    this.scoreMode = mode;
-    this.scoreConfig = config;
-  }
-
-  getScoreValue() {
-    if (this.scoreMode === "fixed") {
-      return this.scoreConfig.fixed;
+        this.scoreMode = 'fixed'; // fixed | range
+        this.scoreConfig = { fixed: 9, min: 7, max: 10 };
     }
-    const { min, max } = this.scoreConfig;
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
 
-  generateScript() {
-    return this.#generateScriptHuman();
-  }
+    setComments(text) {
+        this.comments = text
+            .split('\n')
+            .map((t) => t.trim())
+            .filter((t) => t.length > 0);
+    }
 
-  // ---------- PRIVATE ----------
-  #generateScriptHuman() {
-    const scoreExpr =
-      this.scoreMode === "fixed"
-        ? this.scoreConfig.fixed
-        : `(Math.floor(Math.random() * (${this.scoreConfig.max} - ${this.scoreConfig.min} + 1)) + ${this.scoreConfig.min})`;
+    setScoreMode(mode, config) {
+        this.scoreMode = mode;
+        this.scoreConfig = config;
+    }
 
-    return `(async function () {
+    getScoreValue() {
+        if (this.scoreMode === 'fixed') {
+            return this.scoreConfig.fixed;
+        }
+        const { min, max } = this.scoreConfig;
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    generateScript() {
+        return this.#generateScriptHuman();
+    }
+
+    // ---------- PRIVATE ----------
+    #generateScriptHuman() {
+        const scoreExpr =
+            this.scoreMode === 'fixed'
+                ? this.scoreConfig.fixed
+                : `(Math.floor(Math.random() * (${this.scoreConfig.max} - ${this.scoreConfig.min} + 1)) + ${this.scoreConfig.min})`;
+
+        return `(async function () {
   // ===== CORE HELPERS =====
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
   const css = (el, obj) => Object.assign(el.style, obj);
@@ -182,7 +182,7 @@ export class ScriptGenerator {
 
       for (let i = 0; i < sendQueue.length; i++) {
         const btn = sendQueue[i];
-        if (i === 0) await wait(1200 + Math.random() * 1800);
+        if (i === 0) await wait(800 + Math.random() * 400);
         btn.scrollIntoView({ behavior: "smooth", block: "center" });
         await wait(300 + Math.random() * 400);
         btn.focus();
@@ -233,8 +233,10 @@ export class ScriptGenerator {
       : (duplicated.push(name), comments[Math.floor(Math.random() * comments.length)]);
 
     await typeTextSmart(comment, chosen, chosen.length > 120);
+    await wait(800 + Math.random() * 400); // Đợi nhận xét được lưu
     await waitIfPaused();
     await typeTextSmart(score, ${scoreExpr}, false);
+    await wait(600 + Math.random() * 300); // Đợi điểm được lưu
     await waitIfPaused();
 
     studentMap.set(idx, { comment, score, sendBtn, name, chosen, scoreVal: ${scoreExpr} });
@@ -247,6 +249,12 @@ export class ScriptGenerator {
   }
 
   uiSuccess("✅ PHASE 1 hoàn tất: Nhập xong " + sendQueue.length + " HS");
+
+  // ===== PHASE 1.5: WAIT FOR SERVER =====
+  uiLog("⏳ Chờ server lưu dữ liệu (5-8 giây)...", "pause");
+  await wait(5000 + Math.random() * 3000);
+  uiLog("✅ Dữ liệu đã được lưu. Tiếp tục...", "success");
+  await wait(500);
 
   // ===== PHASE 2: CHECK & RETRY =====
   uiLog("🔄 PHASE 2: Kiểm tra dữ liệu...", "pause");
@@ -315,5 +323,5 @@ export class ScriptGenerator {
     console.log("⚠ Nhận xét bị trùng cho:", duplicated);
   }
 })();`;
-  }
+    }
 }
