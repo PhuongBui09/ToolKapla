@@ -54,14 +54,14 @@ function buildInstructions(config) {
     // Độ dài nhận xét + cấu trúc câu
     if (config.commentLength === '1-2') {
         instructions.push(`- Mỗi nhận xét dài 1–2 câu`);
-        instructions.push(`- Một câu mô tả hành động cụ thể, một câu nêu thái độ học tập`);
+        instructions.push(`- Một câu mô tả hành động cụ thể, một câu nêu thái độ học tập tốt trong buổi học`);
         instructions.push(
             `- KHÔNG dùng các cụm: "qua đó", "qua bài học", "giúp học sinh", "rèn luyện"`,
         );
     } else if (config.commentLength === '2-3') {
         instructions.push(`- Mỗi nhận xét dài 2–3 câu`);
         instructions.push(
-            `- Cấu trúc BẮT BUỘC: Câu 1 mô tả hành động, Câu 2 (hoặc 3) nêu thái độ học tập`,
+            `- Cấu trúc BẮT BUỘC: Câu 1 mô tả hành động, Câu 2 (hoặc 3) nêu thái độ học tập tốt trong buổi học`,
         );
     }
 
