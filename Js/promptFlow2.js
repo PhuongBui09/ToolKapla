@@ -23,6 +23,15 @@ YÊU CẦU DIỄN ĐẠT:
 - Ưu tiên mô tả: công cụ sử dụng, thao tác học sinh làm, sản phẩm hoặc kết quả đạt được
 - Chỉ dùng từ "học sinh", KHÔNG dùng từ "con"
 
+CẤM TUYỆT ĐỐI:
+- KHÔNG mô tả học sinh hỗ trợ, giúp đỡ, hướng dẫn, kèm cặp hoặc ảnh hưởng đến các bạn khác
+- KHÔNG đề cập đến vai trò dẫn dắt, làm gương, hỗ trợ nhóm, giúp lớp học
+- Mọi nhận xét CHỈ tập trung vào hành động và kết quả học tập CỦA CHÍNH học sinh đó
+
+KHÔNG dùng các cụm từ:
+"giúp đỡ bạn bè", "hỗ trợ các bạn", "làm gương cho lớp", 
+"dẫn dắt nhóm", "chia sẻ với các bạn", "phối hợp với bạn"
+
 ĐỊNH DẠNG:
 - Mỗi nhận xét nằm trên MỘT DÒNG
 - KHÔNG đánh số
@@ -143,6 +152,59 @@ export function buildPromptFlow2(lessonDescription, config = null) {
 - KHÔNG dùng các từ chung chung như: "quy trình", "tổng thể", "hoàn chỉnh", "nền tảng", "tư duy"`;
     }
 
+    // Determine counts per category. Default ratios favor GIOI, then KHA; XUATSAR and YEU are smaller.
+    // New default distribution (sum 25): XUATSAR:3, GIOI:13, KHA:7, YEU:2
+    const defaultRatios = { XUATSAR: 3, GIOI: 13, KHA: 7, YEU: 2 };
+    const ratioSum = Object.values(defaultRatios).reduce((s, v) => s + v, 0);
+
+    // total comments: use config.numComments if provided, otherwise fall back to ratioSum (25)
+    const total = config && typeof config.numComments === 'number' ? config.numComments : ratioSum;
+
+    // support explicit distribution in config (counts or percentages)
+    let counts = { XUATSAR: 0, GIOI: 0, KHA: 0, YEU: 0 };
+    if (config && config.distribution && typeof config.distribution === 'object') {
+        const dist = config.distribution;
+        const keys = Object.keys(counts);
+        const numericValues = keys.map((k) => Number(dist[k] || 0));
+        const sumNumeric = numericValues.reduce((s, v) => s + v, 0);
+
+        if (sumNumeric === 0) {
+            // maybe distribution provided as percentages (sum to 100)
+            const percentSum = keys.map((k) => Number(dist[k] || 0)).reduce((s, v) => s + v, 0);
+            if (percentSum > 0) {
+                keys.forEach((k, i) => {
+                    counts[k] = Math.round((Number(dist[k] || 0) / percentSum) * total);
+                });
+            }
+        } else {
+            // distribution provided as raw counts -> scale to `total` if sums differ
+            if (sumNumeric === total) {
+                keys.forEach((k, i) => {
+                    counts[k] = Math.round(Number(dist[k] || 0));
+                });
+            } else {
+                keys.forEach((k, i) => {
+                    counts[k] = Math.round((Number(dist[k] || 0) / sumNumeric) * total);
+                });
+            }
+        }
+    } else {
+        // compute from default ratios
+        Object.keys(defaultRatios).forEach((k) => {
+            counts[k] = Math.round((defaultRatios[k] / ratioSum) * total);
+        });
+    }
+
+    // adjust rounding errors so sum(counts) === total
+    const sumCounts = Object.values(counts).reduce((s, v) => s + v, 0);
+    if (sumCounts !== total) {
+        // add the difference to the largest ratio bucket (GIOI by default)
+        const primary = Object.keys(defaultRatios).reduce((a, b) =>
+            defaultRatios[a] >= defaultRatios[b] ? a : b,
+        );
+        counts[primary] += total - sumCounts;
+    }
+
     return `${BASE_PROMPT}
 
 ${baseInstructions}
@@ -150,46 +212,49 @@ ${baseInstructions}
 HÃY CHIA NHẬN XÉT THÀNH 4 NHÓM THEO MỨC ĐIỂM (CỐ ĐỊNH):
 
 1️⃣ Xuất sắc (Điểm 10 - Hoàn hảo, vượt mong đợi)
-   • Thái độ học tập: chủ động, sáng tạo, vượt mong đợi, thể hiện năng lực nổi bật trong buổi học
-   • Viết CHÍNH XÁC 5 nhận xét
+     • Thái độ học tập: chủ động, sáng tạo, vượt mong đợi, thể hiện năng lực nổi bật trong buổi học
+     • Viết CHÍNH XÁC ${counts.XUATSAR} nhận xét
+     LƯU Ý BỔ SUNG:
+     - KHÔNG mô tả học sinh hỗ trợ, hướng dẫn hoặc giúp đỡ các bạn khác
+     - Chỉ mô tả năng lực cá nhân, mức độ hoàn thành và chất lượng sản phẩm
 
 2️⃣ Giỏi (Điểm 9 - Giỏi)
-   • Thái độ học tập: chủ động, tập trung, hiểu rõ nội dung, thực hiện đúng yêu cầu, phối hợp tốt trong quá trình học
-   • Viết CHÍNH XÁC 10 nhận xét
+     • Thái độ học tập: chủ động, tập trung, hiểu rõ nội dung, thực hiện đúng yêu cầu, phối hợp tốt trong quá trình học
+     • Viết CHÍNH XÁC ${counts.GIOI} nhận xét
 
 3️⃣ Khá (Điểm 7–8 – Đạt yêu cầu)
-   • Thái độ học tập: BẮT BUỘC phải đề cập rõ ràng rằng học sinh cần tập trung hơn trong quá trình học hoặc thực hành (ví dụ: chưa tập trung ổn định, đôi lúc sao nhãng, cần chú ý hơn khi làm bài)
-   • Nội dung học tập: học sinh nắm được nội dung chính và hoàn thành các yêu cầu cơ bản của buổi học
-   • Viết CHÍNH XÁC 5 nhận xét
-   • MỖI nhận xét PHẢI có ít nhất 1 cụm từ liên quan đến “tập trung” hoặc “chú ý”
+     • Thái độ học tập: BẮT BUỘC phải đề cập rõ ràng rằng học sinh cần tập trung hơn trong quá trình học hoặc thực hành (ví dụ: chưa tập trung ổn định, đôi lúc sao nhãng, cần chú ý hơn khi làm bài)
+     • Nội dung học tập: học sinh nắm được nội dung chính và hoàn thành các yêu cầu cơ bản của buổi học
+     • Viết CHÍNH XÁC ${counts.KHA} nhận xét
+     • MỖI nhận xét PHẢI có ít nhất 1 cụm từ liên quan đến “tập trung” hoặc “chú ý”
 
 4️⃣ Yếu (Điểm 0-6 - Yếu, cần hỗ trợ)
-   • Thái độ học tập: tham gia, cần thêm thời gian/luyện tập, động viên cố gắng hơn
-   • Giọng văn: Động viên, ghi nhận sự tham gia, KHÔNG phê bình tiêu cực, tích cực hướng
-   • Viết CHÍNH XÁC 5 nhận xét
+     • Thái độ học tập: tham gia, cần thêm thời gian/luyện tập, động viên cố gắng hơn
+     • Giọng văn: Động viên, ghi nhận sự tham gia, KHÔNG phê bình tiêu cực, tích cực hướng
+     • Viết CHÍNH XÁC ${counts.YEU} nhận xét
 
 ĐỊNH DẠNG TRẢ VỀ (CHỈ JSON, không giải thích):
 
 {
-  "lessonSummary": "Tóm tắt 1 câu nội dung buổi học",
-  "commentBank": {
-    "XUATSAR": {
-      "range": "10",
-      "comments": ["...", "...", "...", "...", "..."]
-    },
-    "GIOI": {
-      "range": "9",
-      "comments": ["...", "...", "...", "...", "..."]
-    },
-    "KHA": {
-      "range": "7-8",
-      "comments": ["...", "...", "...", "...", "..."]
-    },
-    "YEU": {
-      "range": "0-6",
-      "comments": ["...", "...", "...", "...", "..."]
+    "lessonSummary": "Tóm tắt 1 câu nội dung buổi học",
+    "commentBank": {
+        "XUATSAR": {
+            "range": "10",
+            "comments": []
+        },
+        "GIOI": {
+            "range": "9",
+            "comments": []
+        },
+        "KHA": {
+            "range": "7-8",
+            "comments": []
+        },
+        "YEU": {
+            "range": "0-6",
+            "comments": []
+        }
     }
-  }
 }
 
 Phần mô tả buổi học:
