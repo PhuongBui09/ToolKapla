@@ -61,6 +61,13 @@ export class ScriptGeneratorFlow2 {
     try { saveAttendance($(el)); await wait(500); } catch (e) {}
   }
 
+  async function setSelectValue(selectEl, value) {
+    selectEl.value = value;
+    selectEl.dispatchEvent(new Event("change", { bubbles: true }));
+    try { $(selectEl).val(value).trigger("change"); } catch (e) {}
+    try { saveAttendance($(selectEl)); await wait(300); } catch (e) {}
+  }
+
   async function waitForReload(maxWait = 5000) {
     const start = Date.now();
     while (Date.now() - start < maxWait) {
@@ -203,7 +210,7 @@ export class ScriptGeneratorFlow2 {
 
   // ===== PHASE 1: INPUT =====
   uiLog("🔄 PHASE 1: Nhập nhận xét + điểm...", "default");
-  const rows = document.querySelectorAll("#tbl_student tbody tr");
+  const rows = document.querySelectorAll("table.list-student tbody tr");
   let studentMap = new Map();
 
   for (let idx = 0; idx < rows.length; idx++) {
@@ -215,12 +222,18 @@ export class ScriptGeneratorFlow2 {
     if (!select || !comment || !score) continue;
 
     // Chuyển "" thành "A" (vắng không phép)
-    let att = select.value || (select.value = "A", saveAttendance($(select)), await wait(250), "A");
+    let att = select.value;
+    if (!att) {
+      await setSelectValue(select, "A");
+      att = "A";
+    }
     if (att !== "P" && att !== "L") continue;
 
     await waitIfPaused();
 
-    const name = row.querySelector("td:nth-child(2)")?.innerText?.trim() || "HS#" + idx;
+    const name = row.querySelector(".student_name")?.innerText?.trim()
+      || row.getAttribute("pname")
+      || "HS#" + idx;
     const scoreVal = Number(score.value);
     const level = mapScoreToLevel(scoreVal);
     const chosen = getRandomComment(level);
@@ -242,67 +255,11 @@ export class ScriptGeneratorFlow2 {
   // ===== PHASE 1.5: WAIT FOR SERVER =====
   uiLog("⏳ Chờ server lưu dữ liệu (5-8 giây)...", "pause");
   await wait(5000 + Math.random() * 3000);
-  uiLog("✅ Dữ liệu đã được lưu. Kiểm tra...", "success");
-  await wait(500);
-
-  // ===== PHASE 2: CHECK & RETRY =====
-  uiLog("🔄 PHASE 2: Kiểm tra dữ liệu...", "pause");
-
-  let retryCount = 0, maxRetry = 3;
-
-  async function checkAndRetry() {
-    missingStudents = [];
-    const refreshBtn = document.querySelector("#refresh_sms");
-    if (refreshBtn) {
-      uiLog("📤 Reloading dữ liệu...", "pause");
-      refreshBtn.click();
-      await waitForReload();
-      await wait(1000);
-    }
-
-    const currentRows = document.querySelectorAll("#tbl_student tbody tr");
-    for (const [idx, student] of studentMap) {
-      if (idx >= currentRows.length) continue;
-      const row = currentRows[idx], select = row.querySelector('select[name="attendance_type"]');
-      if (select?.value !== "P" && select?.value !== "L") continue;
-
-      const c = row.querySelector(".description"), s = row.querySelector(".homework_score");
-      const cmtMiss = !c?.value?.trim(), scoreMiss = !s?.value?.trim();
-
-      if (cmtMiss || scoreMiss) {
-        missingStudents.push({ idx, name: student.name, cmtMiss, scoreMiss, c, s, chosen: student.chosen });
-      }
-    }
-
-    console.log(\`📋 Thiếu: \${missingStudents.length}\`);
-
-    if (missingStudents.length && retryCount < maxRetry) {
-      uiLog(\`⚠️ Retry \${retryCount + 1}/\${maxRetry}: Sửa \${missingStudents.length} HS...\`, "pause");
-      window.__panel.missingInfo.style.display = "block";
-      for (const x of missingStudents) {
-        await waitIfPaused();
-        if (x.cmtMiss && x.c) {
-          await typeTextSmart(x.c, x.chosen, x.chosen.length > 120);
-          await wait(200);
-        }
-      }
-      retryCount++;
-      await wait(1000);
-      await checkAndRetry();
-    } else if (!missingStudents.length) {
-      uiSuccess("✅ PHASE 2: Toàn bộ dữ liệu sẵn sàng!");
-      window.__panel.missingInfo.style.display = "none";
-      window.__panel.btnSendAll.disabled = false;
-      css(window.__panel.btnSendAll, { opacity: "1", cursor: "pointer" });
-      window.__panel.progressBar.style.width = "66%";
-    } else {
-      uiError("❌ Thiếu dữ liệu sau " + maxRetry + " lần thử");
-      console.warn("Danh sách HS thiếu:", missingStudents.map(x => x.name));
-      window.__panel.progressBar.style.width = "50%";
-    }
-  }
-
-  await checkAndRetry();
+  uiSuccess("✅ Dữ liệu đã được lưu. Sẵn sàng gửi!");
+  window.__panel.missingInfo.style.display = "none";
+  window.__panel.btnSendAll.disabled = false;
+  css(window.__panel.btnSendAll, { opacity: "1", cursor: "pointer" });
+  window.__panel.progressBar.style.width = "66%";
 })();`;
     }
 }
