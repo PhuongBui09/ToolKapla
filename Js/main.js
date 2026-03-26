@@ -7,7 +7,6 @@ import {
     getCommentHistory,
     deleteFromHistory,
     updateHistoryPreview,
-    setUseUserConfig,
 } from './gemini.js';
 import { initPromptConfigUI } from './promptConfigUI.js';
 import { buildPromptFlow1, buildPromptFlow2 } from './promptFlow2.js';
@@ -268,21 +267,30 @@ window.generateCommentsByAI = async function () {
             const prompt = buildPromptFlow1(lesson, config);
             let commentCount = 0;
 
-            const onCommentReceived = (comment) => {
-                // Append từng comment vào textarea
-                if (commentsInput.value) {
-                    commentsInput.value += '\n';
-                }
-                commentsInput.value += comment;
-                commentCount++;
-                progressDiv.textContent = `📥 Đã nhận ${commentCount} nhận xét...`;
-                // Scroll xuống dưới cùng
+            const onTextUpdate = (fullText) => {
+                commentsInput.value = fullText;
+
+                const nextCount = fullText
+                    .split('\n')
+                    .map((line) => line.trim())
+                    .filter((line) => line.length > 0).length;
+
+                commentCount = nextCount;
+                progressDiv.textContent =
+                    commentCount > 0
+                        ? `📥 Đã nhận ${commentCount} nhận xét...`
+                        : '✍️ AI đang soạn nhận xét...';
+
                 commentsInput.scrollTop = commentsInput.scrollHeight;
             };
 
-            // Pass original lesson as 4th arg so history stores the raw lesson text,
-            // not the full built prompt (fixes bug where history saved the whole prompt).
-            await generateCommentsFromGemini(prompt, onCommentReceived, false, lesson);
+            // Flow 1 đã build prompt sẵn ở đây, còn originalLesson được dùng để lưu history đúng mô tả gốc.
+            await generateCommentsFromGemini(prompt, {
+                onTextUpdate,
+                isJSONMode: false,
+                originalLesson: lesson,
+                isPromptReady: true,
+            });
 
             progressDiv.style.background = 'rgba(76, 175, 80, 0.15)';
             progressDiv.style.borderColor = 'rgba(76, 175, 80, 0.4)';
@@ -290,7 +298,7 @@ window.generateCommentsByAI = async function () {
             progressDiv.textContent = '✅ Hoàn thành! Bạn có thể chỉnh sửa nhận xét';
             setTimeout(() => progressDiv.remove(), 3000);
 
-            Toast.show(`✨ Đã sinh ${config.numComments} nhận xét!`, 'success');
+            Toast.show(`✨ Đã sinh ${commentCount || config.numComments} nhận xét!`, 'success');
 
             // Reload lịch sử
             renderHistory();
@@ -301,7 +309,8 @@ window.generateCommentsByAI = async function () {
             progressDiv.style.borderColor = 'rgba(220, 53, 69, 0.4)';
             progressDiv.style.color = '#ff6b7a';
             progressDiv.textContent = '❌ Lỗi khi gọi AI!';
-            Toast.show('❌ Lỗi khi gọi AI!', 'error');
+            setTimeout(() => progressDiv.remove(), 4000);
+            Toast.show('❌ Lỗi khi gọi AI: ' + e.message, 'error');
         } finally {
             // Enable buttons khi xong
             enableButtons();
@@ -345,7 +354,11 @@ window.generateCommentsByAI = async function () {
 
             // Gọi Gemini API với unified prompt Flow 2
             // Truyền lesson (mô tả gốc) làm originalLesson để lưu vào lịch sử đúng cách
-            await generateCommentsFromGemini(prompt, onCommentBankReceived, true, lesson);
+            await generateCommentsFromGemini(prompt, {
+                onCommentReceived: onCommentBankReceived,
+                isJSONMode: true,
+                originalLesson: lesson,
+            });
 
             if (
                 !commentBank ||
@@ -381,6 +394,7 @@ window.generateCommentsByAI = async function () {
             progressDiv.style.borderColor = 'rgba(220, 53, 69, 0.4)';
             progressDiv.style.color = '#ff6b7a';
             progressDiv.textContent = '❌ Lỗi khi gọi AI!';
+            setTimeout(() => progressDiv.remove(), 4000);
             Toast.show('❌ Lỗi khi gọi AI: ' + e.message, 'error');
         } finally {
             // Enable buttons khi xong

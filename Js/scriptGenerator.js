@@ -261,8 +261,8 @@ export class ScriptGenerator {
   uiSuccess("✅ PHASE 1 hoàn tất: Nhập xong " + sendQueue.length + " HS");
 
   // ===== PHASE 1.5: WAIT FOR SERVER =====
-  uiLog("⏳ Chờ server lưu dữ liệu (1-4 giây)...", "pause");
-  await wait(1000 + Math.random() * 3000);
+  uiLog("⏳ Chờ server lưu dữ liệu (1 giây)...", "pause");
+  await wait(1000);
   uiSuccess("✅ Dữ liệu đã được lưu. Sẵn sàng gửi!");
   window.__panel.missingInfo.style.display = "none";
   window.__panel.btnSendAll.disabled = false;

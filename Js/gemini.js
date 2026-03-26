@@ -122,55 +122,167 @@ export function updateHistoryPreview(id, lessonPreview) {
     }
 }
 
+function buildGeminiRequest(prompt) {
+    return {
+        contents: [
+            {
+                parts: [{ text: prompt }],
+            },
+        ],
+    };
+}
+
+function extractTextFromGeminiPayload(payload) {
+    if (!payload || !Array.isArray(payload.candidates)) {
+        return '';
+    }
+
+    return payload.candidates
+        .flatMap((candidate) => candidate?.content?.parts || [])
+        .map((part) => part?.text || '')
+        .join('');
+}
+
+function splitComments(fullText) {
+    return fullText
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0);
+}
+
+async function requestGeminiOnce(prompt) {
+    const res = await fetch(`${API_BASE}/api/gemini`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildGeminiRequest(prompt)),
+    });
+
+    if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || 'Gọi Gemini thất bại');
+    }
+
+    const data = await res.json();
+    return extractTextFromGeminiPayload(data);
+}
+
+async function requestGeminiStream(prompt, onTextUpdate) {
+    const res = await fetch(`${API_BASE}/api/gemini?stream=1`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildGeminiRequest(prompt)),
+    });
+
+    if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || 'Gọi Gemini stream thất bại');
+    }
+
+    if (!res.body) {
+        throw new Error('Trình duyệt không hỗ trợ stream response');
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let sseBuffer = '';
+    let fullText = '';
+
+    const consumeSSEBuffer = (flush = false) => {
+        const eventBlocks = sseBuffer.split('\n\n');
+        if (!flush) {
+            sseBuffer = eventBlocks.pop() || '';
+        } else {
+            sseBuffer = '';
+        }
+
+        eventBlocks.forEach((block) => {
+            const dataPayload = block
+                .split('\n')
+                .filter((line) => line.startsWith('data:'))
+                .map((line) => line.slice(5).trimStart())
+                .join('\n')
+                .trim();
+
+            if (!dataPayload || dataPayload === '[DONE]') {
+                return;
+            }
+
+            try {
+                const parsed = JSON.parse(dataPayload);
+                const textChunk = extractTextFromGeminiPayload(parsed);
+
+                if (!textChunk) {
+                    return;
+                }
+
+                fullText += textChunk;
+                if (onTextUpdate) {
+                    onTextUpdate(fullText, textChunk);
+                }
+            } catch (e) {
+                console.warn('Bỏ qua 1 stream chunk không parse được:', e);
+            }
+        });
+    };
+
+    while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+            break;
+        }
+
+        sseBuffer += decoder.decode(value, { stream: true }).replace(/\r/g, '');
+        consumeSSEBuffer(false);
+    }
+
+    sseBuffer += decoder.decode();
+    consumeSSEBuffer(true);
+
+    return fullText;
+}
+
 export async function generateCommentsFromGemini(
     lessonText,
-    onCommentReceived,
-    isJSONMode = false,
-    originalLesson = null,
+    {
+        onCommentReceived = null,
+        onTextUpdate = null,
+        isJSONMode = false,
+        originalLesson = null,
+        isPromptReady = false,
+    } = {},
 ) {
     // Kiểm tra cache (chỉ cho mode normal, không cache JSON mode)
     if (!isJSONMode) {
         const cacheKey = lessonText.trim();
         if (commentCache.has(cacheKey)) {
             const cachedComments = commentCache.get(cacheKey);
-            if (onCommentReceived) {
+
+            if (onTextUpdate) {
+                onTextUpdate(cachedComments.join('\n'), cachedComments.join('\n'));
+            } else if (onCommentReceived) {
                 cachedComments.forEach((comment) => onCommentReceived(comment));
             }
+
             return cachedComments.join('\n');
         }
     }
 
     // Chọn hàm build prompt phù hợp
-    // Nếu isJSONMode, lessonText là prompt hoàn chỉnh (từ promptFlow2.js)
-    // Nếu không, lessonText là lesson description
+    // Nếu isJSONMode hoặc isPromptReady, lessonText đã là prompt hoàn chỉnh
+    // Nếu không, lessonText là lesson description cần build prompt lại
     let prompt;
-    if (isJSONMode) {
-        prompt = lessonText; // Đã là prompt hoàn chỉnh từ buildFlow2Prompt()
+    if (isJSONMode || isPromptReady) {
+        prompt = lessonText;
     } else {
         prompt = useUserConfig ? buildPromptWithUserConfig(lessonText) : buildPrompt(lessonText);
     }
-
-    const res = await fetch(`${API_BASE}/api/gemini`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            contents: [
-                {
-                    parts: [{ text: prompt }],
-                },
-            ],
-        }),
-    });
-
-    if (!res.ok) {
-        throw new Error('Gọi Gemini thất bại');
-    }
-
-    const data = await res.json();
-    const fullText = data.candidates[0].content.parts[0].text;
+    let fullText = '';
 
     // Nếu là JSON mode, trả về JSON string, gọi callback 1 lần với toàn bộ kết quả
     if (isJSONMode) {
+        fullText = await requestGeminiOnce(prompt);
+
         // Lưu vào localStorage cho Flow 2 (lưu fullText là chuỗi JSON chứa COMMENT_BANK)
         saveCommentToHistory(lessonText, fullText, originalLesson);
         if (onCommentReceived) {
@@ -179,11 +291,35 @@ export async function generateCommentsFromGemini(
         return fullText;
     }
 
-    // Tách nhận xét theo dòng và gọi callback cho mỗi cái (streaming effect)
-    const comments = fullText
-        .split('\n')
-        .map((line) => line.trim())
-        .filter((line) => line.length > 0);
+    let streamReceivedText = false;
+
+    try {
+        fullText = await requestGeminiStream(prompt, (nextText, textChunk) => {
+            streamReceivedText = streamReceivedText || textChunk.length > 0;
+
+            if (onTextUpdate) {
+                onTextUpdate(nextText, textChunk);
+            }
+        });
+
+        if (!fullText.trim()) {
+            throw new Error('Stream trả về rỗng');
+        }
+    } catch (e) {
+        if (streamReceivedText) {
+            throw e;
+        }
+
+        console.warn('Stream không khả dụng, fallback sang one-shot:', e);
+        fullText = await requestGeminiOnce(prompt);
+
+        if (onTextUpdate) {
+            onTextUpdate(fullText, fullText);
+        }
+    }
+
+    // Tách nhận xét theo dòng và gọi callback cho mỗi cái
+    const comments = splitComments(fullText);
 
     // Cache kết quả (chỉ mode normal)
     const cacheKey = lessonText.trim();
@@ -192,8 +328,8 @@ export async function generateCommentsFromGemini(
     // Lưu vào localStorage (truyền originalLesson nếu có)
     saveCommentToHistory(lessonText, comments, originalLesson);
 
-    // Gọi callback để hiển thị từng nhận xét
-    if (onCommentReceived) {
+    // Gọi callback từng nhận xét nếu caller không dùng UI update trực tiếp từ stream
+    if (onCommentReceived && !onTextUpdate) {
         comments.forEach((comment) => onCommentReceived(comment));
     }
 
