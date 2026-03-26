@@ -99,6 +99,29 @@ export function deleteFromHistory(id) {
     }
 }
 
+/**
+ * Cập nhật tên hiển thị (lessonPreview) của item trong lịch sử
+ */
+export function updateHistoryPreview(id, lessonPreview) {
+    try {
+        const trimmedPreview = lessonPreview.trim();
+        if (!trimmedPreview) {
+            return getCommentHistory();
+        }
+
+        const history = getCommentHistory();
+        const updated = history.map((item) =>
+            item.id === id ? { ...item, lessonPreview: trimmedPreview } : item,
+        );
+
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        return updated;
+    } catch (e) {
+        console.error('Lỗi khi cập nhật lessonPreview:', e);
+        return getCommentHistory();
+    }
+}
+
 export async function generateCommentsFromGemini(
     lessonText,
     onCommentReceived,

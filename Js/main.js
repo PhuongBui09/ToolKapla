@@ -6,6 +6,7 @@ import {
     generateCommentsFromGemini,
     getCommentHistory,
     deleteFromHistory,
+    updateHistoryPreview,
     setUseUserConfig,
 } from './gemini.js';
 import { initPromptConfigUI } from './promptConfigUI.js';
@@ -70,12 +71,17 @@ function renderHistory() {
 
         // Thêm badge hiển thị Flow 1 hay Flow 2
         const flowBadge = item.flowType === 'flow2' ? ' 🔄' : ' ✍️';
-        textDiv.innerHTML = `
-      <div style="font-weight: 600; color: #00d4ff; font-size: 13px;">${item.lessonPreview}${flowBadge}</div>
-      <div style="color: #999; font-size: 12px; margin-top: 4px;">${new Date(
-          item.timestamp,
-      ).toLocaleString('vi-VN')}</div>
-    `;
+        const titleDiv = document.createElement('div');
+        titleDiv.style.cssText =
+            'font-weight: 600; color: #00d4ff; font-size: 13px; word-break: break-word;';
+        titleDiv.textContent = `${item.lessonPreview}${flowBadge}`;
+
+        const timeDiv = document.createElement('div');
+        timeDiv.style.cssText = 'color: #999; font-size: 12px; margin-top: 4px;';
+        timeDiv.textContent = new Date(item.timestamp).toLocaleString('vi-VN');
+
+        textDiv.appendChild(titleDiv);
+        textDiv.appendChild(timeDiv);
 
         // Click để load nhận xét và mô tả
         textDiv.addEventListener('click', () => {
@@ -111,11 +117,43 @@ function renderHistory() {
             updateScriptTabInfo();
         });
 
+        const actionDiv = document.createElement('div');
+        actionDiv.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-left: 12px;';
+
+        const editBtn = document.createElement('button');
+        editBtn.textContent = '✏️';
+        editBtn.title = 'Sửa tên lịch sử';
+        editBtn.style.cssText =
+            'background: rgba(255, 193, 7, 0.18); color: #ffd666; border: 1px solid rgba(255, 193, 7, 0.35); padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.3s;';
+        editBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+
+            const nextPreview = window.prompt(
+                'Nhập tên mới cho mục lịch sử:',
+                item.lessonPreview || '',
+            );
+
+            if (nextPreview === null) {
+                return;
+            }
+
+            const trimmedPreview = nextPreview.trim();
+            if (!trimmedPreview) {
+                Toast.show('⚠️ Tên lịch sử không được để trống!', 'warning');
+                return;
+            }
+
+            updateHistoryPreview(item.id, trimmedPreview);
+            renderHistory();
+            Toast.show('✓ Đã cập nhật tên lịch sử!', 'success');
+        });
+
         // Button xóa
         const deleteBtn = document.createElement('button');
         deleteBtn.textContent = '🗑️';
+        deleteBtn.title = 'Xóa khỏi lịch sử';
         deleteBtn.style.cssText =
-            'background: rgba(220, 53, 69, 0.2); color: #ff6b7a; border: 1px solid rgba(220, 53, 69, 0.3); padding: 6px 10px; border-radius: 8px; cursor: pointer; margin-left: 10px; font-size: 14px; transition: all 0.3s;';
+            'background: rgba(220, 53, 69, 0.2); color: #ff6b7a; border: 1px solid rgba(220, 53, 69, 0.3); padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.3s;';
         deleteBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             deleteFromHistory(item.id);
@@ -126,16 +164,20 @@ function renderHistory() {
         itemDiv.addEventListener('mouseenter', () => {
             itemDiv.style.background = 'rgba(0, 212, 255, 0.2)';
             itemDiv.style.borderColor = 'rgba(0, 212, 255, 0.6)';
+            editBtn.style.background = 'rgba(255, 193, 7, 0.32)';
             deleteBtn.style.background = 'rgba(220, 53, 69, 0.4)';
         });
         itemDiv.addEventListener('mouseleave', () => {
             itemDiv.style.background = 'rgba(0, 212, 255, 0.1)';
             itemDiv.style.borderColor = 'rgba(0, 212, 255, 0.3)';
+            editBtn.style.background = 'rgba(255, 193, 7, 0.18)';
             deleteBtn.style.background = 'rgba(220, 53, 69, 0.2)';
         });
 
         itemDiv.appendChild(textDiv);
-        itemDiv.appendChild(deleteBtn);
+        actionDiv.appendChild(editBtn);
+        actionDiv.appendChild(deleteBtn);
+        itemDiv.appendChild(actionDiv);
         container.appendChild(itemDiv);
     });
 }

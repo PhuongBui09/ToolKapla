@@ -183,16 +183,13 @@ export class ScriptGeneratorFlow2 {
 
       for (let i = 0; i < sendQueue.length; i++) {
         const btn = sendQueue[i];
-        if (i === 0) await wait(800 + Math.random() * 400);
-        btn.scrollIntoView({ behavior: "smooth", block: "center" });
-        await wait(300 + Math.random() * 400);
-        btn.focus();
-        await wait(200 + Math.random() * 300);
-        btn.click();
-        await wait(600 + Math.random() * 800);
-        btn.blur();
-        await wait(700 + Math.random() * 1000);
-        progressBar.style.width = (66 + (i + 1) / sendQueue.length * 34) + "%";
+
+        btn.click(); // click ngay
+
+        // delay rất nhỏ để tránh nghẽn server
+        await wait(80);
+
+        progressBar.style.width = ((i + 1) / sendQueue.length * 100) + "%";
       }
 
       css(status, { ...COLORS.success, background: COLORS.success.bg, borderColor: COLORS.success.border });
@@ -253,8 +250,8 @@ export class ScriptGeneratorFlow2 {
   uiSuccess("✅ PHASE 1 hoàn tất: Nhập xong " + sendQueue.length + " HS");
 
   // ===== PHASE 1.5: WAIT FOR SERVER =====
-  uiLog("⏳ Chờ server lưu dữ liệu (5-8 giây)...", "pause");
-  await wait(5000 + Math.random() * 3000);
+  uiLog("⏳ Chờ server lưu dữ liệu (1-4 giây)...", "pause");
+  await wait(1000 + Math.random() * 3000);
   uiSuccess("✅ Dữ liệu đã được lưu. Sẵn sàng gửi!");
   window.__panel.missingInfo.style.display = "none";
   window.__panel.btnSendAll.disabled = false;
