@@ -235,6 +235,15 @@ function getConfigFromUI() {
     };
 }
 
+function notifyFallbackModel(meta) {
+    if (!meta?.fallbackUsed || !meta?.modelUsed) {
+        return;
+    }
+
+    const primaryModel = meta.primaryModel || 'model chính';
+    Toast.show(`Đang dùng model dự phòng: ${meta.modelUsed} (thay cho ${primaryModel})`, 'warning');
+}
+
 window.generateCommentsByAI = async function () {
     const flowType = document.querySelector('input[name="flowType"]:checked').value;
     const lesson = document.getElementById('lessonDescription').value.trim();
@@ -287,6 +296,7 @@ window.generateCommentsByAI = async function () {
             // Flow 1 đã build prompt sẵn ở đây, còn originalLesson được dùng để lưu history đúng mô tả gốc.
             await generateCommentsFromGemini(prompt, {
                 onTextUpdate,
+                onResponseMeta: notifyFallbackModel,
                 isJSONMode: false,
                 originalLesson: lesson,
                 isPromptReady: true,
@@ -356,6 +366,7 @@ window.generateCommentsByAI = async function () {
             // Truyền lesson (mô tả gốc) làm originalLesson để lưu vào lịch sử đúng cách
             await generateCommentsFromGemini(prompt, {
                 onCommentReceived: onCommentBankReceived,
+                onResponseMeta: notifyFallbackModel,
                 isJSONMode: true,
                 originalLesson: lesson,
             });

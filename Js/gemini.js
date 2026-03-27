@@ -150,7 +150,143 @@ function splitComments(fullText) {
         .filter((line) => line.length > 0);
 }
 
-async function requestGeminiOnce(prompt) {
+function parseRetryDelayMs(retryDelay) {
+    if (typeof retryDelay !== 'string') {
+        return null;
+    }
+
+    const match = retryDelay.trim().match(/^([\d.]+)s$/i);
+    if (!match) {
+        return null;
+    }
+
+    const seconds = Number(match[1]);
+    return Number.isFinite(seconds) ? Math.ceil(seconds * 1000) : null;
+}
+
+function formatRetryDelay(retryDelayMs) {
+    if (!Number.isFinite(retryDelayMs) || retryDelayMs <= 0) {
+        return null;
+    }
+
+    const seconds = Math.ceil(retryDelayMs / 1000);
+    if (seconds < 60) {
+        return `${seconds} giây`;
+    }
+
+    const minutes = Math.floor(seconds / 60);
+    const remainSeconds = seconds % 60;
+    return remainSeconds > 0 ? `${minutes} phút ${remainSeconds} giây` : `${minutes} phút`;
+}
+
+function parseGeminiErrorPayload(errorText) {
+    if (!errorText) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(errorText);
+    } catch {
+        return null;
+    }
+}
+
+function createGeminiApiError(errorText, fallbackMessage, status = null) {
+    const payload = parseGeminiErrorPayload(errorText);
+    const apiError = payload?.error || null;
+    const details = Array.isArray(apiError?.details) ? apiError.details : [];
+    const quotaFailure = details.find(
+        (detail) => detail?.['@type'] === 'type.googleapis.com/google.rpc.QuotaFailure',
+    );
+    const retryInfo = details.find(
+        (detail) => detail?.['@type'] === 'type.googleapis.com/google.rpc.RetryInfo',
+    );
+    const violation = quotaFailure?.violations?.[0] || null;
+    const retryDelayMs = parseRetryDelayMs(retryInfo?.retryDelay);
+    const retryDelayText = formatRetryDelay(retryDelayMs);
+    const errorCode = apiError?.code || status || null;
+    const apiStatus = apiError?.status || null;
+    const quotaId = violation?.quotaId || '';
+    const quotaValue = violation?.quotaValue || '';
+    const quotaModel = violation?.quotaDimensions?.model || '';
+    const isQuotaExceeded =
+        errorCode === 429 ||
+        apiStatus === 'RESOURCE_EXHAUSTED' ||
+        quotaId.includes('FreeTier') ||
+        quotaId.includes('PerDay');
+
+    let message = apiError?.message?.trim() || errorText || fallbackMessage;
+
+    if (isQuotaExceeded) {
+        const quotaParts = [];
+
+        if (quotaValue && quotaModel) {
+            quotaParts.push(`Giới hạn hiện tại là ${quotaValue} request cho model ${quotaModel}.`);
+        } else if (quotaValue) {
+            quotaParts.push(`Giới hạn hiện tại là ${quotaValue} request.`);
+        }
+
+        if (quotaId.includes('FreeTier')) {
+            quotaParts.push('Đây là quota free tier từ Gemini API.');
+        }
+
+        if (retryDelayText) {
+            quotaParts.push(`Google gợi ý thử lại sau khoảng ${retryDelayText}.`);
+        }
+
+        quotaParts.push('Ứng dụng sẽ không tự gọi lại thêm để tránh tốn quota.');
+        message = `Đã vượt quota Gemini hiện tại. ${quotaParts.join(' ')}`.trim();
+    }
+
+    const err = new Error(message);
+    err.name = 'GeminiApiError';
+    err.status = status || errorCode;
+    err.errorCode = errorCode;
+    err.apiStatus = apiStatus;
+    err.retryDelayMs = retryDelayMs;
+    err.isQuotaExceeded = isQuotaExceeded;
+    err.shouldFallbackToOneShot = !isQuotaExceeded && Boolean(status >= 500);
+    err.rawResponse = errorText;
+    return err;
+}
+
+function createFallbackFriendlyError(message) {
+    const err = new Error(message);
+    err.shouldFallbackToOneShot = true;
+    return err;
+}
+
+function shouldFallbackToOneShot(error) {
+    return Boolean(error?.shouldFallbackToOneShot);
+}
+
+function extractResponseMeta(res) {
+    const modelUsed = res.headers.get('X-Gemini-Model-Used') || '';
+    const primaryModel = res.headers.get('X-Gemini-Primary-Model') || '';
+    const fallbackUsed = res.headers.get('X-Gemini-Model-Fallback') === 'true';
+    const attemptedModels = (res.headers.get('X-Gemini-Model-Attempts') || '')
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+    return {
+        modelUsed,
+        primaryModel,
+        fallbackUsed,
+        attemptedModels,
+    };
+}
+
+function getResponseMetaKey(meta) {
+    return JSON.stringify({
+        modelUsed: meta?.modelUsed || '',
+        primaryModel: meta?.primaryModel || '',
+        fallbackUsed: Boolean(meta?.fallbackUsed),
+        attemptedModels: Array.isArray(meta?.attemptedModels) ? meta.attemptedModels : [],
+    });
+}
+
+async function requestGeminiOnce(prompt, onResponseMeta = null) {
     const res = await fetch(`${API_BASE}/api/gemini`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -159,14 +295,18 @@ async function requestGeminiOnce(prompt) {
 
     if (!res.ok) {
         const errorText = await res.text();
-        throw new Error(errorText || 'Gọi Gemini thất bại');
+        throw createGeminiApiError(errorText, 'Gọi Gemini thất bại', res.status);
+    }
+
+    if (onResponseMeta) {
+        onResponseMeta(extractResponseMeta(res));
     }
 
     const data = await res.json();
     return extractTextFromGeminiPayload(data);
 }
 
-async function requestGeminiStream(prompt, onTextUpdate) {
+async function requestGeminiStream(prompt, onTextUpdate, onResponseMeta = null) {
     const res = await fetch(`${API_BASE}/api/gemini?stream=1`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -175,11 +315,15 @@ async function requestGeminiStream(prompt, onTextUpdate) {
 
     if (!res.ok) {
         const errorText = await res.text();
-        throw new Error(errorText || 'Gọi Gemini stream thất bại');
+        throw createGeminiApiError(errorText, 'Gọi Gemini stream thất bại', res.status);
+    }
+
+    if (onResponseMeta) {
+        onResponseMeta(extractResponseMeta(res));
     }
 
     if (!res.body) {
-        throw new Error('Trình duyệt không hỗ trợ stream response');
+        throw createFallbackFriendlyError('Trình duyệt không hỗ trợ stream response');
     }
 
     const reader = res.body.getReader();
@@ -247,6 +391,7 @@ export async function generateCommentsFromGemini(
     {
         onCommentReceived = null,
         onTextUpdate = null,
+        onResponseMeta = null,
         isJSONMode = false,
         originalLesson = null,
         isPromptReady = false,
@@ -281,7 +426,22 @@ export async function generateCommentsFromGemini(
 
     // Nếu là JSON mode, trả về JSON string, gọi callback 1 lần với toàn bộ kết quả
     if (isJSONMode) {
-        fullText = await requestGeminiOnce(prompt);
+        let lastResponseMetaKey = null;
+        const reportResponseMeta = (meta) => {
+            if (!onResponseMeta) {
+                return;
+            }
+
+            const metaKey = getResponseMetaKey(meta);
+            if (metaKey === lastResponseMetaKey) {
+                return;
+            }
+
+            lastResponseMetaKey = metaKey;
+            onResponseMeta(meta);
+        };
+
+        fullText = await requestGeminiOnce(prompt, reportResponseMeta);
 
         // Lưu vào localStorage cho Flow 2 (lưu fullText là chuỗi JSON chứa COMMENT_BANK)
         saveCommentToHistory(lessonText, fullText, originalLesson);
@@ -292,26 +452,48 @@ export async function generateCommentsFromGemini(
     }
 
     let streamReceivedText = false;
+    let lastResponseMetaKey = null;
+    const reportResponseMeta = (meta) => {
+        if (!onResponseMeta) {
+            return;
+        }
+
+        const metaKey = getResponseMetaKey(meta);
+        if (metaKey === lastResponseMetaKey) {
+            return;
+        }
+
+        lastResponseMetaKey = metaKey;
+        onResponseMeta(meta);
+    };
 
     try {
-        fullText = await requestGeminiStream(prompt, (nextText, textChunk) => {
-            streamReceivedText = streamReceivedText || textChunk.length > 0;
+        fullText = await requestGeminiStream(
+            prompt,
+            (nextText, textChunk) => {
+                streamReceivedText = streamReceivedText || textChunk.length > 0;
 
-            if (onTextUpdate) {
-                onTextUpdate(nextText, textChunk);
-            }
-        });
+                if (onTextUpdate) {
+                    onTextUpdate(nextText, textChunk);
+                }
+            },
+            reportResponseMeta,
+        );
 
         if (!fullText.trim()) {
-            throw new Error('Stream trả về rỗng');
+            throw createFallbackFriendlyError('Stream trả về rỗng');
         }
     } catch (e) {
         if (streamReceivedText) {
             throw e;
         }
 
+        if (!shouldFallbackToOneShot(e)) {
+            throw e;
+        }
+
         console.warn('Stream không khả dụng, fallback sang one-shot:', e);
-        fullText = await requestGeminiOnce(prompt);
+        fullText = await requestGeminiOnce(prompt, reportResponseMeta);
 
         if (onTextUpdate) {
             onTextUpdate(fullText, fullText);
