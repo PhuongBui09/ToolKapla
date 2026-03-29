@@ -52,26 +52,36 @@ export function getCommentHistory() {
 /**
  * Lưu nhận xét vào localStorage
  */
-export function saveCommentToHistory(lessonText, comments, originalLesson = null) {
+export function saveCommentToHistory(
+    lessonText,
+    comments,
+    originalLesson = null,
+    historyOptions = {},
+) {
     try {
         // Nếu là Flow 2 (có originalLesson), dùng originalLesson để lưu mô tả
         // Nếu là Flow 1 (không có originalLesson), dùng lessonText
         const descriptionToSave = originalLesson || lessonText;
-        const preview = getLessonPreview(descriptionToSave);
+        const preview = historyOptions.lessonPreview?.trim() || getLessonPreview(descriptionToSave);
         const history = getCommentHistory();
 
         // Xác định flow type: Flow 2 nếu comments là string, Flow 1 nếu array
         const flowType = typeof comments === 'string' ? 'flow2' : 'flow1';
-
-        // Thêm item mới lên đầu
-        history.unshift({
-            id: Date.now(),
+        const timestamp = Date.now();
+        const historyItem = {
+            id: timestamp,
             flowType,
             lessonPreview: preview,
             lessonDescription: descriptionToSave,
             comments,
-            timestamp: Date.now(),
-        });
+            timestamp,
+            source: historyOptions.source || 'manual',
+            automationId: historyOptions.automationId || null,
+            automationLabel: historyOptions.automationLabel || null,
+        };
+
+        // Thêm item mới lên đầu
+        history.unshift(historyItem);
 
         // Giới hạn tối đa 50 items
         if (history.length > 50) {
@@ -79,8 +89,10 @@ export function saveCommentToHistory(lessonText, comments, originalLesson = null
         }
 
         localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+        return historyItem;
     } catch (e) {
         console.error('Lỗi khi lưu history:', e);
+        return null;
     }
 }
 
@@ -392,9 +404,12 @@ export async function generateCommentsFromGemini(
         onCommentReceived = null,
         onTextUpdate = null,
         onResponseMeta = null,
+        onHistorySaved = null,
         isJSONMode = false,
         originalLesson = null,
         isPromptReady = false,
+        historyOptions = null,
+        persistHistory = true,
     } = {},
 ) {
     // Kiểm tra cache (chỉ cho mode normal, không cache JSON mode)
@@ -444,7 +459,17 @@ export async function generateCommentsFromGemini(
         fullText = await requestGeminiOnce(prompt, reportResponseMeta);
 
         // Lưu vào localStorage cho Flow 2 (lưu fullText là chuỗi JSON chứa COMMENT_BANK)
-        saveCommentToHistory(lessonText, fullText, originalLesson);
+        if (persistHistory) {
+            const savedItem = saveCommentToHistory(
+                lessonText,
+                fullText,
+                originalLesson,
+                historyOptions || {},
+            );
+            if (onHistorySaved) {
+                onHistorySaved(savedItem);
+            }
+        }
         if (onCommentReceived) {
             onCommentReceived(fullText);
         }
@@ -508,7 +533,17 @@ export async function generateCommentsFromGemini(
     commentCache.set(cacheKey, comments);
 
     // Lưu vào localStorage (truyền originalLesson nếu có)
-    saveCommentToHistory(lessonText, comments, originalLesson);
+    if (persistHistory) {
+        const savedItem = saveCommentToHistory(
+            lessonText,
+            comments,
+            originalLesson,
+            historyOptions || {},
+        );
+        if (onHistorySaved) {
+            onHistorySaved(savedItem);
+        }
+    }
 
     // Gọi callback từng nhận xét nếu caller không dùng UI update trực tiếp từ stream
     if (onCommentReceived && !onTextUpdate) {

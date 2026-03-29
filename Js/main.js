@@ -10,9 +10,11 @@ import {
 } from './gemini.js';
 import { initPromptConfigUI } from './promptConfigUI.js';
 import { buildPromptFlow1, buildPromptFlow2 } from './promptFlow2.js';
+import { initAutoCommentManager } from './autoCommentManager.js';
 
 const generator = new ScriptGenerator();
 let tabManager;
+window.toolkaplaAiBusy = false;
 
 // Helper: Extract JSON từ response (xử lý markdown code blocks)
 function extractJSON(jsonString) {
@@ -26,6 +28,7 @@ function extractJSON(jsonString) {
 
 // Hàm để disable buttons khi đang sinh comments
 function disableButtons() {
+    window.toolkaplaAiBusy = true;
     document.querySelectorAll('button').forEach((btn) => (btn.disabled = true));
     document.getElementById('commentsInput').disabled = true;
 }
@@ -34,6 +37,7 @@ function disableButtons() {
 function enableButtons() {
     document.querySelectorAll('button').forEach((btn) => (btn.disabled = false));
     document.getElementById('commentsInput').disabled = false;
+    window.toolkaplaAiBusy = false;
 }
 
 /**
@@ -62,21 +66,19 @@ function renderHistory() {
 
     history.forEach((item) => {
         const itemDiv = document.createElement('div');
-        itemDiv.style.cssText =
-            'padding: 12px; margin: 8px 0; background: rgba(0, 212, 255, 0.1); border: 1.5px solid rgba(0, 212, 255, 0.3); border-radius: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.3s; backdrop-filter: blur(5px);';
+        itemDiv.className = 'history-card';
 
         const textDiv = document.createElement('div');
-        textDiv.style.cssText = 'flex: 1; cursor: pointer;';
+        textDiv.className = 'history-card__body';
 
         // Thêm badge hiển thị Flow 1 hay Flow 2
         const flowBadge = item.flowType === 'flow2' ? ' 🔄' : ' ✍️';
         const titleDiv = document.createElement('div');
-        titleDiv.style.cssText =
-            'font-weight: 600; color: #00d4ff; font-size: 13px; word-break: break-word;';
+        titleDiv.className = 'history-card__title';
         titleDiv.textContent = `${item.lessonPreview}${flowBadge}`;
 
         const timeDiv = document.createElement('div');
-        timeDiv.style.cssText = 'color: #999; font-size: 12px; margin-top: 4px;';
+        timeDiv.className = 'history-card__meta';
         timeDiv.textContent = new Date(item.timestamp).toLocaleString('vi-VN');
 
         textDiv.appendChild(titleDiv);
@@ -117,13 +119,12 @@ function renderHistory() {
         });
 
         const actionDiv = document.createElement('div');
-        actionDiv.style.cssText = 'display: flex; align-items: center; gap: 8px; margin-left: 12px;';
+        actionDiv.className = 'history-card__actions';
 
         const editBtn = document.createElement('button');
         editBtn.textContent = '✏️';
         editBtn.title = 'Sửa tên lịch sử';
-        editBtn.style.cssText =
-            'background: rgba(255, 193, 7, 0.18); color: #ffd666; border: 1px solid rgba(255, 193, 7, 0.35); padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.3s;';
+        editBtn.className = 'history-action-btn history-action-btn--edit';
         editBtn.addEventListener('click', (e) => {
             e.stopPropagation();
 
@@ -151,26 +152,12 @@ function renderHistory() {
         const deleteBtn = document.createElement('button');
         deleteBtn.textContent = '🗑️';
         deleteBtn.title = 'Xóa khỏi lịch sử';
-        deleteBtn.style.cssText =
-            'background: rgba(220, 53, 69, 0.2); color: #ff6b7a; border: 1px solid rgba(220, 53, 69, 0.3); padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.3s;';
+        deleteBtn.className = 'history-action-btn history-action-btn--delete';
         deleteBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             deleteFromHistory(item.id);
             renderHistory();
             Toast.show('✓ Đã xóa khỏi lịch sử!', 'info');
-        });
-
-        itemDiv.addEventListener('mouseenter', () => {
-            itemDiv.style.background = 'rgba(0, 212, 255, 0.2)';
-            itemDiv.style.borderColor = 'rgba(0, 212, 255, 0.6)';
-            editBtn.style.background = 'rgba(255, 193, 7, 0.32)';
-            deleteBtn.style.background = 'rgba(220, 53, 69, 0.4)';
-        });
-        itemDiv.addEventListener('mouseleave', () => {
-            itemDiv.style.background = 'rgba(0, 212, 255, 0.1)';
-            itemDiv.style.borderColor = 'rgba(0, 212, 255, 0.3)';
-            editBtn.style.background = 'rgba(255, 193, 7, 0.18)';
-            deleteBtn.style.background = 'rgba(220, 53, 69, 0.2)';
         });
 
         itemDiv.appendChild(textDiv);
@@ -245,6 +232,10 @@ function notifyFallbackModel(meta) {
 }
 
 window.generateCommentsByAI = async function () {
+    if (window.toolkaplaAiBusy) {
+        return Toast.show('Đang có tiến trình AI khác, vui lòng đợi hoàn thành.', 'warning');
+    }
+
     const flowType = document.querySelector('input[name="flowType"]:checked').value;
     const lesson = document.getElementById('lessonDescription').value.trim();
 
@@ -498,6 +489,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Khởi tạo UI cấu hình prompt
     initPromptConfigUI();
+
+    initAutoCommentManager({
+        switchTab: (tabName) => tabManager.switchTab(tabName),
+    });
 
     // Load lịch sử
     renderHistory();

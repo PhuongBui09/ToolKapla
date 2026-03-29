@@ -34,240 +34,541 @@
                 <button class="tab-btn" data-tab="script-output">📋 Script</button>
                 <button class="tab-btn" data-tab="configure">⚙️ Cấu Hình</button>
                 <button class="tab-btn" data-tab="history">📚 Lịch Sử</button>
+                <button class="tab-btn" data-tab="auto-comments">⏰ Tự Động 48h</button>
             </div>
 
             <!-- Tab 1: Tạo Nhận Xét & Script -->
             <div class="tab-content active" id="tab-generate-comments">
-                <!-- CHỌN FLOW -->
-                <div class="form-section">
-                    <fieldset>
-                        <legend>🎯 Chọn cách sinh nhận xét</legend>
-                        <div style="display: flex; gap: 20px; padding: 12px 0;">
-                            <label class="radio-label">
-                                <input type="radio" name="flowType" value="flow1" checked />
-                                <span>Flow 1 – Nhận xét chung</span>
-                            </label>
-                            <label class="radio-label">
-                                <input type="radio" name="flowType" value="flow2" />
-                                <span>Flow 2 – Theo điểm (YEU/KHA/GIOI)</span>
-                            </label>
+                <div class="tab-shell">
+                    <section class="tab-hero tab-hero--generate">
+                        <div class="tab-hero__copy">
+                            <p class="tab-eyebrow">Tạo nhận xét và script</p>
+                            <h3>Đi từ mô tả buổi học tới nhận xét hoàn chỉnh trong một luồng</h3>
+                            <p class="tab-lead">
+                                Chọn flow phù hợp, nhập nội dung buổi học rồi để AI sinh nhận xét.
+                                Sau đó bạn có thể chỉnh lại và tạo script ngay.
+                            </p>
                         </div>
-                    </fieldset>
-                </div>
 
-                <div class="form-section">
-                    <fieldset>
-                        <legend>
-                            📝 Mô tả buổi học
-                            <span class="highlight-suggest" style="font-size: 12px"
-                                >(Dùng cho cả Flow 1 & Flow 2)</span
-                            >
-                        </legend>
-                        <textarea
-                            id="lessonDescription"
-                            placeholder="Ví dụ: Học scratch, Mục tiêu
+                        <div class="tab-hero__stats">
+                            <div class="tab-stat">
+                                <strong>2 Flow</strong>
+                                <span>Nhận xét chung hoặc chia theo mức điểm</span>
+                            </div>
+                            <div class="tab-stat">
+                                <strong>1 Luồng</strong>
+                                <span>Mô tả buổi học → AI → script</span>
+                            </div>
+                            <div class="tab-stat">
+                                <strong>Chỉnh tay</strong>
+                                <span>Nhận xét sinh xong vẫn sửa trực tiếp được</span>
+                            </div>
+                            <div class="tab-stat">
+                                <strong>Copy nhanh</strong>
+                                <span>Script tạo xong chuyển thẳng sang tab Script</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <div class="generate-layout">
+                        <div class="generate-layout__primary">
+                            <div class="form-section">
+                                <fieldset>
+                                    <legend>🎯 Chọn cách sinh nhận xét</legend>
+                                    <div class="flow-switcher">
+                                        <label class="radio-label">
+                                            <input type="radio" name="flowType" value="flow1" checked />
+                                            <span>Flow 1 – Nhận xét chung</span>
+                                        </label>
+                                        <label class="radio-label">
+                                            <input type="radio" name="flowType" value="flow2" />
+                                            <span>Flow 2 – Theo điểm (YEU/KHA/GIOI)</span>
+                                        </label>
+                                    </div>
+                                </fieldset>
+                            </div>
+
+                            <div class="form-section form-section--tall">
+                                <fieldset>
+                                    <legend>
+                                        📝 Mô tả buổi học
+                                        <span class="legend-hint">(Dùng cho cả Flow 1 & Flow 2)</span>
+                                    </legend>
+                                    <textarea
+                                        id="lessonDescription"
+                                        placeholder="Ví dụ: Học scratch, Mục tiêu
 Hiểu và thực hành được chức năng cảm biến chuyển động trong Scratch 3.0..."
-                        ></textarea>
-                    </fieldset>
+                                    ></textarea>
+                                </fieldset>
+                            </div>
+
+                            <button type="button" class="action-wide action-wide--primary" onclick="generateCommentsByAI()">
+                                ✨ Sinh nhận xét bằng AI
+                            </button>
+                        </div>
+
+                        <div class="generate-layout__secondary">
+                            <div class="form-section form-section--result">
+                                <fieldset>
+                                    <legend>💬 Kết quả nhận xét</legend>
+                                    <textarea
+                                        id="commentsInput"
+                                        placeholder="Nhập nhận xét ở đây hoặc AI tự sinh ra..."
+                                    ></textarea>
+                                </fieldset>
+                            </div>
+
+                            <button type="button" class="action-wide action-wide--secondary" onclick="generateScriptsUI()">
+                                🔨 Tạo Script
+                            </button>
+                        </div>
+                    </div>
                 </div>
-
-                <button
-                    type="button"
-                    onclick="generateCommentsByAI()"
-                    style="width: 100%; margin-bottom: 20px; display: block"
-                >
-                    ✨ Sinh nhận xét bằng AI
-                </button>
-
-                <div class="form-section">
-                    <fieldset>
-                        <legend>💬 Kết quả nhận xét</legend>
-                        <textarea
-                            id="commentsInput"
-                            placeholder="Nhập nhận xét ở đây hoặc AI tự sinh ra..."
-                        ></textarea>
-                    </fieldset>
-                </div>
-
-                <button
-                    type="button"
-                    onclick="generateScriptsUI()"
-                    style="width: 100%; margin: 20px 0; display: block"
-                >
-                    🔨 Tạo Script
-                </button>
             </div>
 
             <!-- Tab 2: Script Output -->
             <div class="tab-content" id="tab-script-output">
-                <div class="script-section">
-                    <div class="script-box">
-                        <div class="script-legend">
-                            <span>📋 Script: Thêm nhận xét, điểm danh, điểm & gửi</span>
-                            <button
-                                type="button"
-                                class="copy-btn"
-                                onclick="copyScript('scriptOutput')"
-                            >
-                                📋 Copy
-                            </button>
+                <div class="tab-shell">
+                    <section class="tab-hero tab-hero--script">
+                        <div class="tab-hero__copy">
+                            <p class="tab-eyebrow">Script đầu ra</p>
+                            <h3>Kiểm tra nhanh đoạn script trước khi copy và đem đi dùng</h3>
+                            <p class="tab-lead">
+                                Khi bạn bấm tạo script ở tab trước, nội dung sẽ xuất hiện ở đây với
+                                định dạng dễ đọc hơn và có thể copy ngay.
+                            </p>
                         </div>
-                        <pre><code id="scriptOutput" class="language-js">/* Chưa có script, bấm "Tạo Script" để hiển thị */</code></pre>
+
+                        <div class="tab-hero__stats">
+                            <div class="tab-stat">
+                                <strong>Đọc dễ hơn</strong>
+                                <span>Mã được hiển thị có syntax highlight</span>
+                            </div>
+                            <div class="tab-stat">
+                                <strong>Copy 1 chạm</strong>
+                                <span>Bấm là lưu vào clipboard ngay</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <div class="script-section">
+                        <div class="script-box script-box--featured">
+                            <div class="script-legend">
+                                <span>📋 Script: Thêm nhận xét, điểm danh, điểm & gửi</span>
+                                <button
+                                    type="button"
+                                    class="copy-btn"
+                                    onclick="copyScript('scriptOutput')"
+                                >
+                                    📋 Copy
+                                </button>
+                            </div>
+                            <pre><code id="scriptOutput" class="language-js">/* Chưa có script, bấm "Tạo Script" để hiển thị */</code></pre>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Tab 3: Cấu Hình -->
             <div class="tab-content" id="tab-configure">
-                <!-- Phần cấu hình prompt AI -->
-                <div class="form-section">
-                    <fieldset>
-                        <legend>🤖 Cấu Hình Prompt AI</legend>
+                <div class="tab-shell">
+                    <section class="tab-hero tab-hero--configure">
+                        <div class="tab-hero__copy">
+                            <p class="tab-eyebrow">Tinh chỉnh hệ thống</p>
+                            <h3>Điều chỉnh giọng văn, độ dài và cách cho điểm theo đúng nhu cầu</h3>
+                            <p class="tab-lead">
+                                Các cài đặt ở đây chỉ thay đổi cách AI viết và cách script gán điểm,
+                                không làm thay đổi quy trình sử dụng hiện tại của bạn.
+                            </p>
+                        </div>
 
-                        <!-- Số lượng nhận xét -->
-                        <div class="config-group">
-                            <label for="configNumComments">📊 Số lượng nhận xét</label>
-                            <div class="input-with-unit">
-                                <input
-                                    type="number"
-                                    id="configNumComments"
-                                    min="10"
-                                    max="25"
-                                    value="20"
-                                />
-                                <span class="unit">nhận xét</span>
+                        <div class="tab-hero__stats">
+                            <div class="tab-stat">
+                                <strong>Prompt AI</strong>
+                                <span>Kiểm soát số lượng, tone và độ khác biệt</span>
                             </div>
-                            <small style="color: #999">Từ 10 đến 25 nhận xét</small>
+                            <div class="tab-stat">
+                                <strong>Điểm số</strong>
+                                <span>Chọn cố định hoặc random trong khoảng</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <div class="configure-layout">
+                        <div class="configure-layout__main">
+                            <!-- Phần cấu hình prompt AI -->
+                            <div class="form-section">
+                                <fieldset>
+                                    <legend>🤖 Cấu Hình Prompt AI</legend>
+
+                                    <!-- Số lượng nhận xét -->
+                                    <div class="config-group">
+                                        <label for="configNumComments">📊 Số lượng nhận xét</label>
+                                        <div class="input-with-unit">
+                                            <input
+                                                type="number"
+                                                id="configNumComments"
+                                                min="10"
+                                                max="25"
+                                                value="20"
+                                            />
+                                            <span class="unit">nhận xét</span>
+                                        </div>
+                                        <small style="color: #999">Từ 10 đến 25 nhận xét</small>
+                                    </div>
+
+                                    <!-- Bắt buộc tất cả mục tiêu -->
+                                    <div class="config-group">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="configIncludeAllObjectives" checked />
+                                            <span
+                                                >🎯 Bắt buộc mỗi nhận xét bao gồm TẤT CẢ mục tiêu/hoạt
+                                                động</span
+                                            >
+                                        </label>
+                                        <small style="color: #999"
+                                            >Đảm bảo AI không bỏ sót mục tiêu nào</small
+                                        >
+                                    </div>
+
+                                    <!-- Mức độ khác biệt -->
+                                    <div class="config-group">
+                                        <label for="configCommentVariety">✨ Mức độ khác biệt nhận xét</label>
+                                        <select id="configCommentVariety">
+                                            <option value="low">
+                                                Ít - Nhận xét tương tự (chỉ thay đổi từ)
+                                            </option>
+                                            <option value="medium" selected>
+                                                Vừa - Thay đổi cách diễn đạt & trọng tâm
+                                            </option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Độ dài nhận xét -->
+                                    <div class="config-group">
+                                        <label for="configCommentLength">📄 Độ dài mỗi nhận xét</label>
+                                        <select id="configCommentLength">
+                                            <option value="1-2" selected>1–2 câu (ngắn gọn)</option>
+                                            <option value="2-3">2–3 câu (chi tiết hơn)</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Giọng văn -->
+                                    <div class="config-group">
+                                        <label for="configTone">🎤 Giọng văn</label>
+                                        <select id="configTone">
+                                            <option value="pedagogical" selected>
+                                                Sư phạm - Chuyên nghiệp, tích cực
+                                            </option>
+                                            <option value="neutral"
+                                                >Trung tính - Khách quan, cân bằng</option
+                                            >
+                                            <option value="friendly"
+                                                >Thân thiện - Gần gũi, ấm áp</option
+                                            >
+                                        </select>
+                                    </div>
+
+                                    <!-- Cho phép emoji -->
+                                    <div class="config-group">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="configAllowEmoji" />
+                                            <span>😊 Cho phép sử dụng emoji trong nhận xét</span>
+                                        </label>
+                                    </div>
+
+                                    <!-- Cấm từ chung chung -->
+                                    <div class="config-group">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="configBanGenericWords" checked />
+                                            <span
+                                                >⛔ Cấm các từ chung chung (quy trình, tổng thể, nền
+                                                tảng...)</span
+                                            >
+                                        </label>
+                                    </div>
+
+                                    <!-- Nút khôi phục -->
+                                    <div class="config-actions">
+                                        <button type="button" id="resetConfigBtn" class="btn-secondary">
+                                            🔄 Khôi phục mặc định
+                                        </button>
+                                    </div>
+                                </fieldset>
+                            </div>
                         </div>
 
-                        <!-- Bắt buộc tất cả mục tiêu -->
-                        <div class="config-group">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="configIncludeAllObjectives" checked />
-                                <span
-                                    >🎯 Bắt buộc mỗi nhận xét bao gồm TẤT CẢ mục tiêu/hoạt
-                                    động</span
-                                >
-                            </label>
-                            <small style="color: #999">Đảm bảo AI không bỏ sót mục tiêu nào</small>
-                        </div>
+                        <div class="configure-layout__side">
+                            <!-- Phần cấu hình điểm -->
+                            <div class="score-box">
+                                <fieldset>
+                                    <legend>⭐ Chọn Điểm</legend>
 
-                        <!-- Mức độ khác biệt -->
-                        <div class="config-group">
-                            <label for="configCommentVariety">✨ Mức độ khác biệt nhận xét</label>
-                            <select id="configCommentVariety">
-                                <option value="low">
-                                    Ít - Nhận xét tương tự (chỉ thay đổi từ)
-                                </option>
-                                <option value="medium" selected>
-                                    Vừa - Thay đổi cách diễn đạt & trọng tâm
-                                </option>
-                            </select>
-                        </div>
+                                    <div class="score-option">
+                                        <label>
+                                            <input type="radio" name="scoreMode" value="fixed" checked />
+                                            Điểm cố định
+                                        </label>
+                                        <input type="number" id="fixedScore" min="1" max="10" value="9" />
+                                    </div>
 
-                        <!-- Độ dài nhận xét -->
-                        <div class="config-group">
-                            <label for="configCommentLength">📄 Độ dài mỗi nhận xét</label>
-                            <select id="configCommentLength">
-                                <option value="1-2" selected>1–2 câu (ngắn gọn)</option>
-                                <option value="2-3">2–3 câu (chi tiết hơn)</option>
-                            </select>
-                        </div>
+                                    <div class="score-option">
+                                        <label>
+                                            <input type="radio" name="scoreMode" value="range" />
+                                            Random từ
+                                        </label>
+                                        <input type="number" id="scoreMin" min="1" max="10" value="8" />
+                                        <span style="color: #ccc">đến</span>
+                                        <input type="number" id="scoreMax" min="1" max="10" value="9" />
+                                    </div>
+                                </fieldset>
+                            </div>
 
-                        <!-- Giọng văn -->
-                        <div class="config-group">
-                            <label for="configTone">🎤 Giọng văn</label>
-                            <select id="configTone">
-                                <option value="pedagogical" selected>
-                                    Sư phạm - Chuyên nghiệp, tích cực
-                                </option>
-                                <option value="neutral">Trung tính - Khách quan, cân bằng</option>
-                                <option value="friendly">Thân thiện - Gần gũi, ấm áp</option>
-                            </select>
+                            <!-- Hướng dẫn -->
+                            <div class="form-section helper-card">
+                                <fieldset>
+                                    <legend>ℹ️ Hướng Dẫn</legend>
+                                    <div class="helper-card__content">
+                                        <p>
+                                            <strong>Cấu hình Prompt AI:</strong> Điều chỉnh cách AI sinh
+                                            nhận xét.
+                                        </p>
+                                        <p>
+                                            <strong>Điểm cố định:</strong> Tất cả học sinh sẽ được điểm
+                                            này.
+                                        </p>
+                                        <p>
+                                            <strong>Random từ X đến Y:</strong> Mỗi học sinh sẽ được
+                                            random một điểm trong khoảng này.
+                                        </p>
+                                    </div>
+                                </fieldset>
+                            </div>
                         </div>
-
-                        <!-- Cho phép emoji -->
-                        <div class="config-group">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="configAllowEmoji" />
-                                <span>😊 Cho phép sử dụng emoji trong nhận xét</span>
-                            </label>
-                        </div>
-
-                        <!-- Cấm từ chung chung -->
-                        <div class="config-group">
-                            <label class="checkbox-label">
-                                <input type="checkbox" id="configBanGenericWords" checked />
-                                <span
-                                    >⛔ Cấm các từ chung chung (quy trình, tổng thể, nền
-                                    tảng...)</span
-                                >
-                            </label>
-                        </div>
-
-                        <!-- Nút khôi phục -->
-                        <div style="margin-top: 20px; display: flex; gap: 10px">
-                            <button type="button" id="resetConfigBtn" class="btn-secondary">
-                                🔄 Khôi phục mặc định
-                            </button>
-                        </div>
-                    </fieldset>
-                </div>
-
-                <!-- Phần cấu hình điểm -->
-                <div class="score-box">
-                    <fieldset>
-                        <legend>⭐ Chọn Điểm</legend>
-
-                        <div class="score-option">
-                            <label>
-                                <input type="radio" name="scoreMode" value="fixed" checked />
-                                Điểm cố định
-                            </label>
-                            <input type="number" id="fixedScore" min="1" max="10" value="9" />
-                        </div>
-
-                        <div class="score-option">
-                            <label>
-                                <input type="radio" name="scoreMode" value="range" />
-                                Random từ
-                            </label>
-                            <input type="number" id="scoreMin" min="1" max="10" value="8" />
-                            <span style="color: #ccc">đến</span>
-                            <input type="number" id="scoreMax" min="1" max="10" value="9" />
-                        </div>
-                    </fieldset>
-                </div>
-
-                <!-- Hướng dẫn -->
-                <div class="form-section" style="margin-top: 20px">
-                    <fieldset>
-                        <legend>ℹ️ Hướng Dẫn</legend>
-                        <div style="color: #b0b0b0; font-size: 14px; line-height: 1.8">
-                            <p>
-                                <strong>Cấu hình Prompt AI:</strong> Điều chỉnh cách AI sinh nhận
-                                xét
-                            </p>
-                            <p style="margin-top: 10px">
-                                <strong>Điểm cố định:</strong> Tất cả học sinh sẽ được điểm này
-                            </p>
-                            <p style="margin-top: 10px">
-                                <strong>Random từ X đến Y:</strong> Mỗi học sinh sẽ được random một
-                                điểm trong khoảng này
-                            </p>
-                        </div>
-                    </fieldset>
+                    </div>
                 </div>
             </div>
 
             <!-- Tab 4: Lịch Sử -->
             <div class="tab-content" id="tab-history">
-                <div class="form-section">
-                    <fieldset>
-                        <legend>📚 Lịch sử nhận xét gần nhất</legend>
-                        <div id="historyContainer"></div>
-                        <p id="historyEmpty">Chưa có nhận xét nào</p>
-                    </fieldset>
+                <div class="tab-shell">
+                    <section class="tab-hero tab-hero--history">
+                        <div class="tab-hero__copy">
+                            <p class="tab-eyebrow">Lịch sử thủ công</p>
+                            <h3>Toàn bộ nhận xét bạn đã tạo thủ công được gom lại ở đây</h3>
+                            <p class="tab-lead">
+                                Bấm vào một bản ghi để nạp lại mô tả buổi học và nhận xét. Bạn cũng
+                                có thể đổi tên hoặc xoá từng mục ngay tại đây.
+                            </p>
+                        </div>
+
+                        <div class="tab-hero__stats">
+                            <div class="tab-stat">
+                                <strong>Tải lại nhanh</strong>
+                                <span>Nhấp một lần để đưa dữ liệu về tab tạo nhận xét</span>
+                            </div>
+                            <div class="tab-stat">
+                                <strong>Giữ gọn</strong>
+                                <span>Chỉ hiển thị lịch sử tạo thủ công, không trộn auto</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <div class="form-section history-panel">
+                        <fieldset>
+                            <legend>📚 Lịch sử nhận xét gần nhất</legend>
+                            <p class="history-note">
+                                Mẹo: bấm vào một dòng để nạp lại nội dung cũ, hoặc dùng nút sửa/xóa
+                                ở bên phải nếu cần dọn danh sách.
+                            </p>
+                            <div id="historyContainer"></div>
+                            <p id="historyEmpty">Chưa có nhận xét nào</p>
+                        </fieldset>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 5: Tự Động 48h -->
+            <div class="tab-content" id="tab-auto-comments">
+                <div class="auto-comment-dashboard">
+                    <div class="auto-comment-hero">
+                        <div class="auto-comment-hero__content">
+                            <p class="auto-comment-eyebrow">⏰ Quy trình tự động 48 giờ</p>
+                            <h3>Tạo mẫu, theo dõi trạng thái và xem kết quả ở một chỗ</h3>
+                            <p class="auto-comment-summary" id="autoCommentSummary">
+                                Chưa có mẫu tự động nào. Tạo 1 mẫu để app tự làm mới nhận xét mỗi
+                                48 giờ.
+                            </p>
+                        </div>
+
+                        <div class="auto-comment-overview">
+                            <div class="auto-overview-pill">
+                                <strong id="autoEntriesCount">0</strong>
+                                <span>Mẫu đã lưu</span>
+                            </div>
+                            <div class="auto-overview-pill">
+                                <strong id="autoDueCount">0</strong>
+                                <span>Đến hạn</span>
+                            </div>
+                            <div class="auto-overview-pill">
+                                <strong id="autoRunCount">0</strong>
+                                <span>Lần auto đã lưu</span>
+                            </div>
+                            <div class="auto-overview-pill is-wide">
+                                <strong id="autoLatestRunLabel">Chưa có</strong>
+                                <span>Lần chạy gần nhất</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="auto-comment-launch-grid">
+                        <button
+                            type="button"
+                            class="auto-launch-card is-primary"
+                            data-open-panel="form"
+                        >
+                            <span class="auto-launch-card__icon">✍️</span>
+                            <div class="auto-launch-card__body">
+                                <strong>Thêm Form</strong>
+                                <p>Tạo mới hoặc chỉnh sửa một mẫu nhận xét tự động.</p>
+                                <span class="auto-launch-card__meta" id="autoFormCardMeta">
+                                    Bắt đầu tạo mẫu đầu tiên
+                                </span>
+                            </div>
+                        </button>
+
+                        <button type="button" class="auto-launch-card" data-open-panel="list">
+                            <span class="auto-launch-card__icon">🗂️</span>
+                            <div class="auto-launch-card__body">
+                                <strong>Danh Sách Đã Lưu</strong>
+                                <p>Xem nhanh mẫu đang có, chạy ngay, sửa hoặc xoá.</p>
+                                <span class="auto-launch-card__meta" id="autoListCardMeta">
+                                    0 mẫu đang hoạt động
+                                </span>
+                            </div>
+                        </button>
+
+                        <button type="button" class="auto-launch-card" data-open-panel="history">
+                            <span class="auto-launch-card__icon">🧾</span>
+                            <div class="auto-launch-card__body">
+                                <strong>Lịch Sử Auto</strong>
+                                <p>Kết quả AI chạy sau 48h được lưu riêng hoàn toàn.</p>
+                                <span class="auto-launch-card__meta" id="autoHistoryCardMeta">
+                                    Chưa có lần chạy nào
+                                </span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <p class="auto-comment-note auto-comment-note--compact">
+                        App sẽ kiểm tra khi bạn mở trang và định kỳ trong lúc trang còn mở. Vì đây
+                        là app frontend, nó không thể tự chạy nền khi trình duyệt đã đóng.
+                    </p>
+                </div>
+
+                <div class="auto-modal" id="autoCommentModal" aria-hidden="true">
+                    <div class="auto-modal__backdrop" data-close-modal></div>
+                    <div class="auto-modal__dialog" role="dialog" aria-modal="true">
+                        <div class="auto-modal__header">
+                            <div>
+                                <p class="auto-modal__eyebrow">Tự động 48 giờ</p>
+                                <h3 id="autoModalTitle">Thêm form</h3>
+                            </div>
+                            <button
+                                type="button"
+                                class="auto-modal__close"
+                                data-close-modal
+                                aria-label="Đóng"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <div class="auto-modal__switcher">
+                            <button type="button" class="auto-modal-tab" data-open-panel="form">
+                                Thêm form
+                            </button>
+                            <button type="button" class="auto-modal-tab" data-open-panel="list">
+                                Danh sách đã lưu
+                            </button>
+                            <button
+                                type="button"
+                                class="auto-modal-tab"
+                                data-open-panel="history"
+                            >
+                                Lịch sử auto
+                            </button>
+                        </div>
+
+                        <div class="auto-modal__body">
+                            <section class="auto-modal-panel" data-panel="form">
+                                <form id="autoCommentForm" class="auto-comment-form">
+                                    <input type="hidden" id="autoCommentEntryId" />
+
+                                    <div class="config-group">
+                                        <label for="autoLessonPreview">🏷️ lessonPreview</label>
+                                        <input
+                                            type="text"
+                                            id="autoLessonPreview"
+                                            placeholder="Ví dụ: Scratch buổi 1 - cảm biến chuyển động"
+                                        />
+                                        <small
+                                            >Tên ngắn để hiển thị trong tab auto và bản ghi tự
+                                            động</small
+                                        >
+                                    </div>
+
+                                    <div class="config-group">
+                                        <label for="autoFlowType">🎯 flowType</label>
+                                        <select id="autoFlowType">
+                                            <option value="flow1">Flow 1 - Nhận xét chung</option>
+                                            <option value="flow2">Flow 2 - Theo điểm</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="config-group">
+                                        <label for="autoLessonDescription">📝 lessonDescription</label>
+                                        <textarea
+                                            id="autoLessonDescription"
+                                            placeholder="Nhập mô tả buổi học để hệ thống dùng lại mỗi 48h khi gọi AI..."
+                                        ></textarea>
+                                    </div>
+
+                                    <div class="auto-comment-form__actions">
+                                        <button type="submit" id="autoCommentSaveBtn">
+                                            💾 Lưu mẫu tự động
+                                        </button>
+                                        <button
+                                            type="button"
+                                            id="autoCommentCancelBtn"
+                                            class="btn-secondary"
+                                            style="display: none"
+                                        >
+                                            Hủy sửa
+                                        </button>
+                                    </div>
+                                </form>
+                            </section>
+
+                            <section class="auto-modal-panel" data-panel="list">
+                                <p class="auto-comment-note">
+                                    Chọn mẫu cần chạy ngay, sửa nhanh hoặc nạp sang tab tạo nhận
+                                    xét.
+                                </p>
+                                <div id="autoCommentList" class="auto-comment-list"></div>
+                                <p id="autoCommentEmpty">Chưa có mẫu nào được lưu</p>
+                            </section>
+
+                            <section class="auto-modal-panel" data-panel="history">
+                                <p class="auto-comment-note">
+                                    Các lần AI chạy sau mỗi 48h sẽ được lưu riêng ở đây, không đi
+                                    vào tab Lịch Sử thủ công.
+                                </p>
+                                <div id="autoRunHistoryContainer" class="auto-run-history-list"></div>
+                                <p id="autoRunHistoryEmpty">Chưa có lần chạy tự động nào</p>
+                            </section>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
