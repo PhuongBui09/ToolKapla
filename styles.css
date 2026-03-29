@@ -97,94 +97,6 @@ body {
     gap: 22px;
 }
 
-.tab-hero {
-    position: relative;
-    overflow: hidden;
-    display: grid;
-    grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.95fr);
-    gap: 18px;
-    border-radius: 24px;
-    padding: 26px;
-    border: 1px solid rgba(0, 212, 255, 0.18);
-    box-shadow: 0 22px 55px rgba(0, 0, 0, 0.26);
-}
-
-.tab-hero--generate {
-    background:
-        radial-gradient(circle at top right, rgba(0, 212, 255, 0.16), transparent 30%),
-        linear-gradient(145deg, rgba(5, 22, 44, 0.94), rgba(13, 33, 58, 0.9));
-}
-
-.tab-hero--script {
-    background:
-        radial-gradient(circle at top right, rgba(255, 193, 7, 0.16), transparent 28%),
-        linear-gradient(145deg, rgba(29, 20, 52, 0.94), rgba(15, 28, 56, 0.92));
-}
-
-.tab-hero--configure {
-    background:
-        radial-gradient(circle at top right, rgba(34, 197, 94, 0.14), transparent 28%),
-        linear-gradient(145deg, rgba(12, 33, 44, 0.94), rgba(12, 28, 51, 0.9));
-}
-
-.tab-hero--history {
-    background:
-        radial-gradient(circle at top right, rgba(244, 114, 182, 0.14), transparent 28%),
-        linear-gradient(145deg, rgba(25, 20, 44, 0.94), rgba(12, 24, 44, 0.92));
-}
-
-.tab-eyebrow {
-    color: #7dd3fc;
-    text-transform: uppercase;
-    letter-spacing: 0.18em;
-    font-size: 11px;
-    font-weight: 700;
-}
-
-.tab-hero__copy h3 {
-    margin: 8px 0 10px;
-    color: #f6fbff;
-    font-size: 31px;
-    line-height: 1.12;
-}
-
-.tab-lead {
-    color: #b6c3e1;
-    font-size: 14px;
-    line-height: 1.8;
-    max-width: 62ch;
-}
-
-.tab-hero__stats {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-}
-
-.tab-stat {
-    min-height: 102px;
-    padding: 16px;
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 10px;
-}
-
-.tab-stat strong {
-    color: #f7fbff;
-    font-size: 20px;
-    line-height: 1.1;
-}
-
-.tab-stat span {
-    color: #9fb5db;
-    font-size: 12px;
-    line-height: 1.6;
-}
-
 .generate-layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(360px, 0.95fr);
@@ -1084,6 +996,7 @@ body.auto-modal-open {
 ========================= */
 .script-section {
     margin-top: 0;
+    min-width: 0;
 }
 
 .script-box {
@@ -1094,6 +1007,8 @@ body.auto-modal-open {
     padding: 26px;
     box-shadow: 0 18px 46px rgba(0, 0, 0, 0.26);
     transition: all 0.3s ease;
+    width: 100%;
+    min-width: 0;
 }
 
 .script-box:hover {
@@ -1129,8 +1044,11 @@ body.auto-modal-open {
 pre {
     margin: 0;
     padding: 18px;
+    width: 100%;
+    max-width: 100%;
     white-space: pre;
     overflow-x: auto;
+    overflow-y: hidden;
     font-size: 13px;
     line-height: 1.6;
     border-radius: 18px;
@@ -1139,6 +1057,7 @@ pre {
 }
 
 code {
+    display: block;
     font-family: 'JetBrains Mono', monospace;
     background: transparent;
     padding: 0;
@@ -1388,19 +1307,9 @@ code {
         min-height: 120px;
     }
 
-    .tab-hero,
     .generate-layout,
-    .configure-layout,
-    .tab-hero__stats {
+    .configure-layout {
         grid-template-columns: 1fr;
-    }
-
-    .tab-hero {
-        padding: 20px;
-    }
-
-    .tab-hero__copy h3 {
-        font-size: 25px;
     }
 
     .score-option {
@@ -1485,15 +1394,6 @@ code {
         padding: 8px 10px;
         font-size: 11px;
         font-weight: 500;
-    }
-
-    .tab-hero {
-        padding: 18px;
-        border-radius: 20px;
-    }
-
-    .tab-hero__copy h3 {
-        font-size: 22px;
     }
 
     .form-section,
