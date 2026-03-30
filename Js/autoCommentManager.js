@@ -13,14 +13,14 @@ const MAX_RUN_HISTORY = 50;
 const STATE_REFRESH_INTERVAL_MS = 60 * 1000;
 
 const FLOW_LABELS = {
-    flow1: 'Flow 1 - Nhan xet chung',
-    flow2: 'Flow 2 - Theo diem',
+    flow1: 'Flow 1 - Nhận xét chung',
+    flow2: 'Flow 2 - Theo điểm',
 };
 
 const PANEL_TITLES = {
-    form: 'Them form tu dong',
-    list: 'Danh sach mau da luu',
-    history: 'Lich su chay tu dong',
+    form: 'Thêm form tự động',
+    list: 'Danh sách mẫu đã lưu',
+    history: 'Lịch sử chạy tự động',
 };
 
 function createId(prefix = 'auto') {
@@ -29,7 +29,7 @@ function createId(prefix = 'auto') {
 
 function formatDateTime(timestamp) {
     if (!timestamp) {
-        return 'Chua co';
+        return 'Chưa có';
     }
 
     return new Date(timestamp).toLocaleString('vi-VN');
@@ -37,12 +37,12 @@ function formatDateTime(timestamp) {
 
 function formatRelativeCountdown(targetTime) {
     if (!targetTime) {
-        return 'Chua xac dinh';
+        return 'Chưa xác định';
     }
 
     const diffMs = targetTime - Date.now();
     if (diffMs <= 0) {
-        return 'Den han';
+        return 'Đến hạn';
     }
 
     const totalMinutes = Math.ceil(diffMs / (60 * 1000));
@@ -52,18 +52,18 @@ function formatRelativeCountdown(targetTime) {
     const parts = [];
 
     if (days > 0) {
-        parts.push(`${days} ngay`);
+        parts.push(`${days} ngày`);
     }
 
     if (hours > 0) {
-        parts.push(`${hours} gio`);
+        parts.push(`${hours} giờ`);
     }
 
     if (minutes > 0 && days === 0) {
-        parts.push(`${minutes} phut`);
+        parts.push(`${minutes} phút`);
     }
 
-    return parts.join(' ') || 'Duoi 1 phut';
+    return parts.join(' ') || 'Dưới 1 phút';
 }
 
 function clone(value) {
@@ -80,7 +80,7 @@ function readStorageArray(storageKey) {
         const parsed = JSON.parse(raw);
         return Array.isArray(parsed) ? parsed : [];
     } catch (error) {
-        console.error(`Loi khi doc storage ${storageKey}:`, error);
+        console.error(`Lỗi khi đọc storage ${storageKey}:`, error);
         return [];
     }
 }
@@ -214,10 +214,10 @@ export class AutoCommentManager {
             this.startPolling();
 
             if (migrated) {
-                Toast.show('Da chuyen du lieu auto cu len backend', 'info');
+                Toast.show('Đã chuyển dữ liệu auto cũ lên backend', 'info');
             }
         } catch (error) {
-            console.error('Loi khi khoi tao auto manager:', error);
+            console.error('Lỗi khi khởi tạo auto manager:', error);
         }
     }
 
@@ -371,7 +371,7 @@ export class AutoCommentManager {
 
         if (!response.ok || payload?.ok === false) {
             const error = new Error(
-                payload?.error || payload?.message || `Yeu cau that bai (${response.status})`,
+                payload?.error || payload?.message || `Yêu cầu thất bại (${response.status})`,
             );
             error.status = response.status;
             error.payload = payload;
@@ -397,9 +397,9 @@ export class AutoCommentManager {
             this.applyStatePayload(payload);
             return true;
         } catch (error) {
-            console.error('Khong the dong bo auto state:', error);
+            console.error('Không thể đồng bộ auto state:', error);
             this.loadingState = false;
-            this.lastErrorMessage = error.message || 'Khong the tai du lieu auto tu server';
+            this.lastErrorMessage = error.message || 'Không thể tải dữ liệu auto từ server';
             this.render();
             this.renderRunHistory();
 
@@ -443,11 +443,11 @@ export class AutoCommentManager {
 
             return true;
         } catch (error) {
-            console.error('Khong the migrate du lieu auto cu:', error);
+            console.error('Không thể migrate dữ liệu auto cũ:', error);
 
             if (localStorage.getItem(BACKEND_MIGRATION_KEY) !== 'done') {
                 Toast.show(
-                    'Du lieu auto cu van con o may nay vi backend chua san sang de migrate.',
+                    'Dữ liệu auto cũ vẫn còn ở máy này vì backend chưa sẵn sàng để migrate.',
                     'warning',
                 );
             }
@@ -482,7 +482,7 @@ export class AutoCommentManager {
         this.lessonPreviewInput.value = '';
         this.flowTypeInput.value = 'flow1';
         this.lessonDescriptionInput.value = '';
-        this.saveBtn.textContent = 'Luu mau tu dong';
+        this.saveBtn.textContent = 'Lưu mẫu tự động';
         this.saveBtn.disabled = false;
         this.cancelBtn.style.display = 'none';
     }
@@ -497,7 +497,7 @@ export class AutoCommentManager {
         this.lessonPreviewInput.value = entry.lessonPreview;
         this.flowTypeInput.value = entry.flowType;
         this.lessonDescriptionInput.value = entry.lessonDescription;
-        this.saveBtn.textContent = 'Cap nhat mau';
+        this.saveBtn.textContent = 'Cập nhật mẫu';
         this.cancelBtn.style.display = 'inline-flex';
         this.openPanel('form');
         this.lessonPreviewInput.focus();
@@ -513,7 +513,7 @@ export class AutoCommentManager {
         const lessonDescription = this.lessonDescriptionInput.value.trim();
 
         if (!lessonPreview || !lessonDescription) {
-            Toast.show('Vui long nhap day du ten ngan va mo ta buoi hoc', 'warning');
+            Toast.show('Vui lòng nhập đầy đủ tên ngắn và mô tả buổi học', 'warning');
             return;
         }
 
@@ -536,10 +536,13 @@ export class AutoCommentManager {
             this.applyStatePayload(payload);
             this.resetForm();
             this.openPanel('list');
-            Toast.show(existingId ? 'Da cap nhat mau tu dong' : 'Da luu mau tu dong moi', 'success');
+            Toast.show(
+                existingId ? 'Đã cập nhật mẫu tự động' : 'Đã lưu mẫu tự động mới',
+                'success',
+            );
         } catch (error) {
-            console.error('Khong the luu mau auto:', error);
-            Toast.show(error.message || 'Khong the luu mau tu dong', 'error');
+            console.error('Không thể lưu mẫu auto:', error);
+            Toast.show(error.message || 'Không thể lưu mẫu tự động', 'error');
         } finally {
             this.submitInFlight = false;
             this.saveBtn.disabled = false;
@@ -552,7 +555,7 @@ export class AutoCommentManager {
             return;
         }
 
-        if (!window.confirm(`Xoa mau "${entry.lessonPreview}"?`)) {
+        if (!window.confirm(`Xóa mẫu "${entry.lessonPreview}"?`)) {
             return;
         }
 
@@ -567,10 +570,10 @@ export class AutoCommentManager {
                 this.resetForm();
             }
 
-            Toast.show('Da xoa mau tu dong', 'info');
+            Toast.show('Đã xóa mẫu tự động', 'info');
         } catch (error) {
-            console.error('Khong the xoa mau auto:', error);
-            Toast.show(error.message || 'Khong the xoa mau tu dong', 'error');
+            console.error('Không thể xóa mẫu auto:', error);
+            Toast.show(error.message || 'Không thể xóa mẫu tự động', 'error');
         }
     }
 
@@ -586,10 +589,10 @@ export class AutoCommentManager {
             });
 
             this.applyStatePayload(payload);
-            Toast.show(`Da xoa ban ghi tu dong "${runItem.lessonPreview}"`, 'info');
+            Toast.show(`Đã xóa bản ghi tự động "${runItem.lessonPreview}"`, 'info');
         } catch (error) {
-            console.error('Khong the xoa lich su auto:', error);
-            Toast.show(error.message || 'Khong the xoa lich su auto', 'error');
+            console.error('Không thể xóa lịch sử auto:', error);
+            Toast.show(error.message || 'Không thể xóa lịch sử auto', 'error');
         }
     }
 
@@ -600,7 +603,7 @@ export class AutoCommentManager {
         }
 
         this.applyDataToMainForm(entry);
-        Toast.show('Da nap mau vao tab Tao Nhan Xet', 'success');
+        Toast.show('Đã nạp mẫu vào tab Tạo nhận xét', 'success');
     }
 
     loadRunHistoryIntoMainForm(runId) {
@@ -619,8 +622,8 @@ export class AutoCommentManager {
                     window.flow2CommentBank,
                 );
             } catch (error) {
-                console.error('Loi parse auto Flow 2 comments:', error);
-                Toast.show('Khong tai duoc ket qua Flow 2 da luu', 'error');
+                console.error('Lỗi parse auto Flow 2 comments:', error);
+                Toast.show('Không tải được kết quả Flow 2 đã lưu', 'error');
                 return;
             }
         } else {
@@ -630,7 +633,7 @@ export class AutoCommentManager {
             document.getElementById('commentsInput').value = text;
         }
 
-        Toast.show('Da nap ket qua tu lich su tu dong', 'success');
+        Toast.show('Đã nạp kết quả từ lịch sử tự động', 'success');
     }
 
     applyDataToMainForm(item) {
@@ -672,7 +675,10 @@ export class AutoCommentManager {
 
         if (entry.lastStatus === 'running') {
             if (manual) {
-                Toast.show('Mau nay dang duoc server xu ly, vui long doi them mot chut.', 'warning');
+                Toast.show(
+                    'Mẫu này đang được server xử lý, vui lòng đợi thêm một chút.',
+                    'warning',
+                );
             }
             return false;
         }
@@ -694,13 +700,13 @@ export class AutoCommentManager {
             this.applyStatePayload(payload);
             Toast.show(
                 manual
-                    ? `Da chay AI va luu vao lich su tu dong cho "${entry.lessonPreview}"`
-                    : `Server da lam moi va luu rieng cho "${entry.lessonPreview}"`,
+                    ? `Đã chạy AI và lưu vào lịch sử tự động cho "${entry.lessonPreview}"`
+                    : `Server đã làm mới và lưu riêng cho "${entry.lessonPreview}"`,
                 'success',
             );
             return true;
         } catch (error) {
-            console.error('Khong the chay mau auto:', error);
+            console.error('Không thể chạy mẫu auto:', error);
 
             if (error.payload?.state) {
                 this.applyStatePayload(error.payload);
@@ -708,7 +714,7 @@ export class AutoCommentManager {
                 await this.refreshState({ silent: true });
             }
 
-            Toast.show(`Khong the lam moi "${entry.lessonPreview}": ${error.message}`, 'error');
+            Toast.show(`Không thể làm mới "${entry.lessonPreview}": ${error.message}`, 'error');
             return false;
         }
     }
@@ -751,18 +757,20 @@ export class AutoCommentManager {
         this.entriesCount.textContent = String(totalEntries);
         this.dueCount.textContent = String(dueEntries);
         this.runCount.textContent = String(runCount);
-        this.latestRunLabel.textContent = latestRun ? formatDateTime(latestRun.timestamp) : 'Chua co';
+        this.latestRunLabel.textContent = latestRun ? formatDateTime(latestRun.timestamp) : 'Chưa có';
 
         this.formCardMeta.textContent =
-            totalEntries === 0 ? 'Bat dau tao mau dau tien' : 'Them moi hoac cap nhat mau hien co';
+            totalEntries === 0
+                ? 'Bắt đầu tạo mẫu đầu tiên'
+                : 'Thêm mới hoặc cập nhật mẫu hiện có';
         this.listCardMeta.textContent =
             totalEntries === 0
-                ? 'Chua co mau nao'
-                : `${totalEntries} mau dang luu • ${dueEntries} mau den han`;
+                ? 'Chưa có mẫu nào'
+                : `${totalEntries} mẫu đang lưu • ${dueEntries} mẫu đến hạn`;
         this.historyCardMeta.textContent =
             runCount === 0
-                ? 'Chua co lan chay nao'
-                : `Da luu ${runCount} ket qua auto rieng biet`;
+                ? 'Chưa có lần chạy nào'
+                : `Đã lưu ${runCount} kết quả auto riêng biệt`;
     }
 
     render() {
@@ -771,16 +779,16 @@ export class AutoCommentManager {
         this.renderOverview();
 
         if (this.loadingState) {
-            this.summary.textContent = 'Dang dong bo mau tu dong tu server...';
+            this.summary.textContent = 'Đang đồng bộ mẫu tự động từ server...';
             this.emptyState.style.display = 'block';
-            this.emptyState.textContent = 'Dang tai du lieu auto...';
+            this.emptyState.textContent = 'Đang tải dữ liệu auto...';
             return;
         }
 
         if (this.lastErrorMessage && entries.length === 0) {
             this.summary.textContent = this.lastErrorMessage;
             this.emptyState.style.display = 'block';
-            this.emptyState.textContent = 'Khong the tai du lieu auto tu server.';
+            this.emptyState.textContent = 'Không thể tải dữ liệu auto từ server.';
             return;
         }
 
@@ -788,12 +796,12 @@ export class AutoCommentManager {
         const dueEntries = entries.filter((entry) => this.isEntryDue(entry)).length;
         this.summary.textContent =
             totalEntries === 0
-                ? 'Chua co mau tu dong nao. Tao 1 mau de server tu lam moi nhan xet sau moi chu ky 48 gio.'
-                : `${totalEntries} mau dang luu, ${dueEntries} mau da den han. Server se xu ly tu dong va luu ket qua rieng, khong chen vao tab Lich Su thu cong.`;
+                ? 'Chưa có mẫu tự động nào. Tạo 1 mẫu để hệ thống tự làm mới nhận xét sau mỗi chu kỳ 48 giờ.'
+                : `${totalEntries} mẫu đang lưu, ${dueEntries} mẫu đã đến hạn. Server sẽ xử lý tự động và lưu kết quả riêng, không chèn vào tab Lịch Sử thủ công.`;
 
         if (entries.length === 0) {
             this.emptyState.style.display = 'block';
-            this.emptyState.textContent = 'Chua co mau tu dong nao';
+            this.emptyState.textContent = 'Chưa có mẫu tự động nào';
             return;
         }
 
@@ -821,19 +829,19 @@ export class AutoCommentManager {
             const disabledAttr = entry.lastStatus === 'running' ? 'disabled' : '';
             const lastRunText =
                 entry.lastStatus === 'running'
-                    ? 'Dang duoc server goi AI...'
+                    ? 'Đang được server gọi AI...'
                     : entry.lastGeneratedAt
-                      ? `Lan cuoi: ${formatDateTime(entry.lastGeneratedAt)}`
-                      : 'Chua tung chay AI';
+                      ? `Lần cuối: ${formatDateTime(entry.lastGeneratedAt)}`
+                      : 'Chưa từng chạy AI';
 
             const statusText =
                 entry.lastStatus === 'error'
-                    ? `Loi gan nhat: ${entry.lastError}`
+                    ? `Lỗi gần nhất: ${entry.lastError}`
                     : entry.lastStatus === 'running'
-                      ? 'Server dang xu ly mau nay'
+                      ? 'Server đang xử lý mẫu này'
                       : entry.lastStatus === 'success'
-                        ? 'Lan chay gan nhat da duoc luu vao lich su tu dong'
-                        : 'Dang cho lan chay dau tien';
+                        ? 'Lần chạy gần nhất đã được lưu vào lịch sử tự động'
+                        : 'Đang chờ lần chạy đầu tiên';
 
             item.innerHTML = `
                 <div class="auto-comment-card__header">
@@ -841,30 +849,30 @@ export class AutoCommentManager {
                         <h3>${this.escapeHtml(entry.lessonPreview)}</h3>
                         <div class="auto-comment-meta">
                             <span>${this.escapeHtml(flowLabel)}</span>
-                            <span>Tao luc ${this.escapeHtml(formatDateTime(entry.createdAt))}</span>
+                            <span>Tạo lúc ${this.escapeHtml(formatDateTime(entry.createdAt))}</span>
                             <span>${this.escapeHtml(lastRunText)}</span>
                         </div>
                     </div>
-                    <div class="auto-comment-badge">${entry.runCount} lan</div>
+                    <div class="auto-comment-badge">${entry.runCount} lần</div>
                 </div>
                 <p class="auto-comment-description">${this.escapeHtml(entry.lessonDescription)}</p>
                 <div class="auto-comment-status">
                     <span>${this.escapeHtml(statusText)}</span>
-                    <span>Lan tiep theo: ${this.escapeHtml(formatDateTime(nextRunAt))} (${this.escapeHtml(formatRelativeCountdown(nextRunAt))})</span>
+                    <span>Lần tiếp theo: ${this.escapeHtml(formatDateTime(nextRunAt))} (${this.escapeHtml(formatRelativeCountdown(nextRunAt))})</span>
                 </div>
                 ${this.renderRecentRuns(entry.recentRuns)}
                 <div class="auto-comment-actions">
                     <button type="button" class="copy-btn" data-action="run" data-entry-id="${entry.id}" ${disabledAttr}>
-                        Chay ngay
+                        Chạy ngay
                     </button>
                     <button type="button" class="btn-secondary" data-action="load" data-entry-id="${entry.id}" ${disabledAttr}>
-                        Nap vao tab tao
+                        Nạp vào tab tạo
                     </button>
                     <button type="button" class="btn-secondary auto-comment-edit-btn" data-action="edit" data-entry-id="${entry.id}" ${disabledAttr}>
-                        Sua
+                        Sửa
                     </button>
                     <button type="button" class="auto-comment-danger-btn" data-action="delete" data-entry-id="${entry.id}" ${disabledAttr}>
-                        Xoa
+                        Xóa
                     </button>
                 </div>
             `;
@@ -879,19 +887,19 @@ export class AutoCommentManager {
 
         if (this.loadingState && this.runHistory.length === 0) {
             this.runHistoryEmpty.style.display = 'block';
-            this.runHistoryEmpty.textContent = 'Dang tai lich su auto...';
+            this.runHistoryEmpty.textContent = 'Đang tải lịch sử auto...';
             return;
         }
 
         if (this.lastErrorMessage && this.runHistory.length === 0) {
             this.runHistoryEmpty.style.display = 'block';
-            this.runHistoryEmpty.textContent = 'Khong the tai lich su auto tu server.';
+            this.runHistoryEmpty.textContent = 'Không thể tải lịch sử auto từ server.';
             return;
         }
 
         if (this.runHistory.length === 0) {
             this.runHistoryEmpty.style.display = 'block';
-            this.runHistoryEmpty.textContent = 'Chua co lan chay auto nao';
+            this.runHistoryEmpty.textContent = 'Chưa có lần chạy auto nào';
             return;
         }
 
@@ -912,10 +920,10 @@ export class AutoCommentManager {
                 </div>
                 <div class="auto-run-history-item__actions">
                     <button type="button" class="btn-secondary" data-run-action="load" data-run-id="${item.id}">
-                        Nap ket qua
+                        Nạp kết quả
                     </button>
                     <button type="button" class="auto-comment-danger-btn" data-run-action="delete" data-run-id="${item.id}">
-                        Xoa
+                        Xóa
                     </button>
                 </div>
             `;
@@ -926,17 +934,17 @@ export class AutoCommentManager {
 
     renderRecentRuns(recentRuns) {
         if (!Array.isArray(recentRuns) || recentRuns.length === 0) {
-            return '<div class="auto-comment-run-log empty">Chua co lich su chay noi bo.</div>';
+            return '<div class="auto-comment-run-log empty">Chưa có lịch sử chạy nội bộ.</div>';
         }
 
         const items = recentRuns
             .map((run) => {
-                const statusLabel = run.status === 'success' ? 'Thanh cong' : 'That bai';
-                const sourceLabel = run.triggeredBy === 'cron' ? 'Tu dong' : 'Thu cong';
+                const statusLabel = run.status === 'success' ? 'Thành công' : 'Thất bại';
+                const sourceLabel = run.triggeredBy === 'cron' ? 'Tự động' : 'Thủ công';
                 const details =
                     run.status === 'success'
-                        ? `${sourceLabel} • Da luu vao lich su tu dong`
-                        : this.escapeHtml(run.error || 'Khong co chi tiet loi');
+                        ? `${sourceLabel} • Đã lưu vào lịch sử tự động`
+                        : this.escapeHtml(run.error || 'Không có chi tiết lỗi');
 
                 return `<div class="auto-comment-run-log__item">
                     <strong>${statusLabel}</strong>
@@ -953,7 +961,7 @@ export class AutoCommentManager {
         let result = '';
 
         if (bank.XUATSAR?.comments) {
-            result += '=== NHAN XET MUC XUAT SAC (Diem 10) ===\n';
+            result += '=== NHẬN XÉT MỨC XUẤT SẮC (Điểm 10) ===\n';
             bank.XUATSAR.comments.forEach((comment, index) => {
                 result += `${index + 1}. ${comment}\n`;
             });
@@ -961,7 +969,7 @@ export class AutoCommentManager {
         }
 
         if (bank.GIOI?.comments) {
-            result += '=== NHAN XET MUC GIOI (Diem 9) ===\n';
+            result += '=== NHẬN XÉT MỨC GIỎI (Điểm 9) ===\n';
             bank.GIOI.comments.forEach((comment, index) => {
                 result += `${index + 1}. ${comment}\n`;
             });
@@ -969,7 +977,7 @@ export class AutoCommentManager {
         }
 
         if (bank.KHA?.comments) {
-            result += '=== NHAN XET MUC KHA (Diem 7-8) ===\n';
+            result += '=== NHẬN XÉT MỨC KHÁ (Điểm 7-8) ===\n';
             bank.KHA.comments.forEach((comment, index) => {
                 result += `${index + 1}. ${comment}\n`;
             });
@@ -977,7 +985,7 @@ export class AutoCommentManager {
         }
 
         if (bank.YEU?.comments) {
-            result += '=== NHAN XET MUC YEU (Diem 0-6) ===\n';
+            result += '=== NHẬN XÉT MỨC YẾU (Điểm 0-6) ===\n';
             bank.YEU.comments.forEach((comment, index) => {
                 result += `${index + 1}. ${comment}\n`;
             });

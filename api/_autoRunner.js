@@ -73,7 +73,7 @@ async function runEntryById(entryId, { triggeredBy = 'manual' } = {}) {
     const { text, meta } = await requestGeminiText(prompt);
 
     if (!String(text || '').trim()) {
-      throw new Error('Gemini tra ve noi dung rong cho mau auto nay.');
+      throw new Error('Gemini trả về nội dung rỗng cho mẫu auto này.');
     }
 
     const comments = runningEntry.flowType === 'flow2' ? text : splitComments(text);
