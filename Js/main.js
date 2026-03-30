@@ -47,6 +47,25 @@ function updateScriptTabInfo() {
     // Không cần cập nhật tab này nữa vì đã gộp vào tab 1
 }
 
+function normalizeSearchTerm(value) {
+    return String(value || '')
+        .trim()
+        .toLowerCase();
+}
+
+function getSearchableHistoryContent(item) {
+    const commentsText = Array.isArray(item?.comments)
+        ? item.comments.join('\n')
+        : typeof item?.comments === 'string'
+          ? item.comments
+          : JSON.stringify(item?.comments || '');
+
+    return [item?.lessonPreview, item?.lessonDescription, commentsText]
+        .map((value) => String(value || ''))
+        .join('\n')
+        .toLowerCase();
+}
+
 /**
  * Hiển thị lịch sử nhận xét
  */
@@ -54,17 +73,27 @@ function renderHistory() {
     const history = getCommentHistory();
     const container = document.getElementById('historyContainer');
     const emptyMsg = document.getElementById('historyEmpty');
+    const searchInput = document.getElementById('historySearchInput');
+    const searchTerm = normalizeSearchTerm(searchInput?.value);
+    const filteredHistory = searchTerm
+        ? history.filter((item) => getSearchableHistoryContent(item).includes(searchTerm))
+        : history;
 
     container.innerHTML = '';
 
-    if (history.length === 0) {
+    if (filteredHistory.length === 0) {
         emptyMsg.style.display = 'block';
+        emptyMsg.textContent =
+            history.length === 0
+                ? 'Chưa có nhận xét nào'
+                : 'Không tìm thấy mục lịch sử nào khớp với từ khóa.';
         return;
     }
 
     emptyMsg.style.display = 'none';
+    emptyMsg.textContent = 'Chưa có nhận xét nào';
 
-    history.forEach((item) => {
+    filteredHistory.forEach((item) => {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'history-card';
 
@@ -493,6 +522,11 @@ document.addEventListener('DOMContentLoaded', () => {
     initAutoCommentManager({
         switchTab: (tabName) => tabManager.switchTab(tabName),
     });
+
+    const historySearchInput = document.getElementById('historySearchInput');
+    if (historySearchInput) {
+        historySearchInput.addEventListener('input', renderHistory);
+    }
 
     // Load lịch sử
     renderHistory();

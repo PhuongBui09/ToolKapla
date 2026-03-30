@@ -107,6 +107,36 @@ function summarizeRecentRuns(recentRuns, runCount = 0) {
     }`;
 }
 
+function normalizeSearchTerm(value) {
+    return String(value || '')
+        .trim()
+        .toLowerCase();
+}
+
+function getSearchableCommentsText(comments) {
+    if (Array.isArray(comments)) {
+        return comments.join('\n');
+    }
+
+    if (typeof comments === 'string') {
+        return comments;
+    }
+
+    return JSON.stringify(comments || '');
+}
+
+function getSearchableRunHistoryContent(item) {
+    return [
+        item?.lessonPreview,
+        item?.lessonDescription,
+        getSearchableCommentsText(item?.comments),
+        formatModelUsageLabel(item),
+    ]
+        .map((value) => String(value || ''))
+        .join('\n')
+        .toLowerCase();
+}
+
 function clone(value) {
     return JSON.parse(JSON.stringify(value));
 }
@@ -235,6 +265,7 @@ export class AutoCommentManager {
         this.switchTab = switchTab;
         this.entries = [];
         this.runHistory = [];
+        this.runHistorySearchTerm = '';
         this.activePanel = 'form';
         this.refreshIntervalId = null;
         this.loadingState = true;
@@ -277,6 +308,7 @@ export class AutoCommentManager {
         this.summary = document.getElementById('autoCommentSummary');
         this.runHistoryContainer = document.getElementById('autoRunHistoryContainer');
         this.runHistoryEmpty = document.getElementById('autoRunHistoryEmpty');
+        this.runHistorySearchInput = document.getElementById('autoRunHistorySearchInput');
         this.entriesCount = document.getElementById('autoEntriesCount');
         this.dueCount = document.getElementById('autoDueCount');
         this.runCount = document.getElementById('autoRunCount');
@@ -381,6 +413,13 @@ export class AutoCommentManager {
                 void this.deleteRunHistory(runId);
             }
         });
+
+        if (this.runHistorySearchInput) {
+            this.runHistorySearchInput.addEventListener('input', () => {
+                this.runHistorySearchTerm = this.runHistorySearchInput.value;
+                this.renderRunHistory();
+            });
+        }
     }
 
     startPolling() {
@@ -914,8 +953,16 @@ export class AutoCommentManager {
     renderRunHistory() {
         this.runHistoryContainer.innerHTML = '';
         this.renderOverview();
+        const searchTerm = normalizeSearchTerm(
+            this.runHistorySearchInput?.value || this.runHistorySearchTerm,
+        );
+        const filteredRunHistory = searchTerm
+            ? this.runHistory.filter((item) =>
+                  getSearchableRunHistoryContent(item).includes(searchTerm),
+              )
+            : this.runHistory;
 
-        if (this.loadingState && this.runHistory.length === 0) {
+        if (this.loadingState && filteredRunHistory.length === 0) {
             this.runHistoryEmpty.style.display = 'block';
             this.runHistoryEmpty.textContent = 'Đang tải lịch sử auto...';
             return;
@@ -927,15 +974,19 @@ export class AutoCommentManager {
             return;
         }
 
-        if (this.runHistory.length === 0) {
+        if (filteredRunHistory.length === 0) {
             this.runHistoryEmpty.style.display = 'block';
-            this.runHistoryEmpty.textContent = 'Chưa có lần chạy auto nào';
+            this.runHistoryEmpty.textContent =
+                this.runHistory.length === 0
+                    ? 'Chưa có lần chạy auto nào'
+                    : 'Không tìm thấy lần chạy tự động nào khớp với từ khóa.';
             return;
         }
 
         this.runHistoryEmpty.style.display = 'none';
+        this.runHistoryEmpty.textContent = 'Chưa có lần chạy auto nào';
 
-        this.runHistory.forEach((item) => {
+        filteredRunHistory.forEach((item) => {
             const flowBadge = item.flowType === 'flow2' ? ' 🔄' : ' ✍️';
             const modelLabel = formatModelUsageLabel(item);
             const card = document.createElement('div');

@@ -423,6 +423,32 @@ legend {
     margin-bottom: 16px;
 }
 
+.history-search {
+    margin-bottom: 16px;
+}
+
+.history-search-input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(0, 212, 255, 0.18);
+    background: rgba(9, 18, 38, 0.72);
+    color: #eef4ff;
+    font-size: 14px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.history-search-input::placeholder {
+    color: #7f92ba;
+}
+
+.history-search-input:focus {
+    outline: none;
+    border-color: rgba(0, 212, 255, 0.42);
+    box-shadow: 0 0 0 4px rgba(0, 212, 255, 0.12);
+    background: rgba(9, 18, 38, 0.9);
+}
+
 .history-card {
     padding: 14px;
     background: rgba(0, 212, 255, 0.08);

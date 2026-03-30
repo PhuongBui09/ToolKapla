@@ -285,6 +285,14 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
                                 Mẹo: bấm vào một dòng để nạp lại nội dung cũ, hoặc dùng nút sửa/xóa
                                 ở bên phải nếu cần dọn danh sách.
                             </p>
+                            <div class="history-search">
+                                <input
+                                    type="search"
+                                    id="historySearchInput"
+                                    class="history-search-input"
+                                    placeholder="Tìm theo tên, mô tả hoặc nội dung nhận xét..."
+                                />
+                            </div>
                             <div id="historyContainer"></div>
                             <p id="historyEmpty">Chưa có nhận xét nào</p>
                         </fieldset>
@@ -456,8 +464,7 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
 
                             <section class="auto-modal-panel" data-panel="list">
                                 <p class="auto-comment-note">
-                                    Chọn mẫu cần chạy ngay, sửa nhanh hoặc nạp sang tab tạo nhận
-                                    xét.
+                                    Chọn mẫu cần chạy ngay, sửa nhanh hoặc xóa nếu không còn dùng.
                                 </p>
                                 <div id="autoCommentList" class="auto-comment-list"></div>
                                 <p id="autoCommentEmpty">Chưa có mẫu nào được lưu</p>
@@ -468,6 +475,14 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
                                     Các lần AI chạy sau mỗi 48h sẽ được lưu riêng ở đây, không đi
                                     vào tab Lịch Sử thủ công.
                                 </p>
+                                <div class="history-search">
+                                    <input
+                                        type="search"
+                                        id="autoRunHistorySearchInput"
+                                        class="history-search-input"
+                                        placeholder="Tìm theo tên mẫu, mô tả hoặc nội dung đã lưu..."
+                                    />
+                                </div>
                                 <div id="autoRunHistoryContainer" class="auto-run-history-list"></div>
                                 <p id="autoRunHistoryEmpty">Chưa có lần chạy tự động nào</p>
                             </section>
