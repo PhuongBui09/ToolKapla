@@ -19,6 +19,12 @@ function normalizeRecentRun(item) {
     error: item?.status === 'error' ? String(item?.error || '') : '',
     autoRunId: item?.autoRunId || null,
     triggeredBy: item?.triggeredBy === 'cron' ? 'cron' : 'manual',
+    modelUsed: String(item?.modelUsed || '').trim(),
+    primaryModel: String(item?.primaryModel || '').trim(),
+    fallbackUsed: Boolean(item?.fallbackUsed),
+    attemptedModels: Array.isArray(item?.attemptedModels)
+      ? item.attemptedModels.map((model) => String(model || '').trim()).filter(Boolean)
+      : [],
   };
 }
 
@@ -61,6 +67,12 @@ function normalizeRunHistoryItem(item) {
     comments: item?.comments ?? '',
     timestamp,
     source: 'auto-refresh',
+    modelUsed: String(item?.modelUsed || '').trim(),
+    primaryModel: String(item?.primaryModel || '').trim(),
+    fallbackUsed: Boolean(item?.fallbackUsed),
+    attemptedModels: Array.isArray(item?.attemptedModels)
+      ? item.attemptedModels.map((model) => String(model || '').trim()).filter(Boolean)
+      : [],
   };
 }
 

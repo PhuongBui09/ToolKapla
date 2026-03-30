@@ -23,6 +23,17 @@ function splitComments(fullText) {
     .filter((line) => line.length > 0);
 }
 
+function normalizeModelMeta(meta) {
+  return {
+    modelUsed: String(meta?.modelUsed || '').trim(),
+    primaryModel: String(meta?.primaryModel || '').trim(),
+    fallbackUsed: Boolean(meta?.fallbackUsed),
+    attemptedModels: Array.isArray(meta?.attemptedModels)
+      ? meta.attemptedModels.map((model) => String(model || '').trim()).filter(Boolean)
+      : [],
+  };
+}
+
 async function runEntryById(entryId, { triggeredBy = 'manual' } = {}) {
   const entryLockName = `entry:${entryId}`;
   const lockToken = await acquireLock(entryLockName, 300);
@@ -71,6 +82,7 @@ async function runEntryById(entryId, { triggeredBy = 'manual' } = {}) {
       startedAt,
     );
     const { text, meta } = await requestGeminiText(prompt);
+    const modelMeta = normalizeModelMeta(meta);
 
     if (!String(text || '').trim()) {
       throw new Error('Gemini trả về nội dung rỗng cho mẫu auto này.');
@@ -85,6 +97,7 @@ async function runEntryById(entryId, { triggeredBy = 'manual' } = {}) {
       lessonDescription: runningEntry.lessonDescription,
       comments,
       timestamp: startedAt,
+      ...modelMeta,
     });
 
     const runHistory = await getRunHistory();
@@ -109,6 +122,7 @@ async function runEntryById(entryId, { triggeredBy = 'manual' } = {}) {
                   status: 'success',
                   autoRunId: runItem.id,
                   triggeredBy,
+                  ...modelMeta,
                 },
                 ...(Array.isArray(item.recentRuns) ? item.recentRuns : []),
               ].slice(0, MAX_RECENT_RUNS),

@@ -6,6 +6,7 @@ const DEFAULT_FALLBACK_MODELS = [
   'gemini-2.5-flash-lite',
 ];
 const QUOTA_COOLDOWN_MS = 30 * 1000;
+const TEMP_UNAVAILABLE_COOLDOWN_MS = 60 * 1000;
 const MISSING_MODEL_COOLDOWN_MS = 6 * 60 * 60 * 1000;
 const modelCooldowns = new Map();
 
@@ -127,14 +128,22 @@ function classifyGeminiFailure(statusCode, errorText) {
     normalizedMessage.includes('Quota exceeded');
   const isMissingModel =
     statusCode === 404 || apiStatus === 'NOT_FOUND' || normalizedMessageLower.includes('not found');
+  const isTemporaryUnavailable =
+    statusCode === 503 ||
+    apiStatus === 'UNAVAILABLE' ||
+    normalizedMessageLower.includes('high demand') ||
+    normalizedMessageLower.includes('please try again later');
+  const retryDelayMs = parseRetryDelayMs(retryInfo && retryInfo.retryDelay);
 
   return {
-    retryDelayMs: parseRetryDelayMs(retryInfo && retryInfo.retryDelay),
-    shouldTryNextModel: isQuotaError || isMissingModel,
+    retryDelayMs,
+    shouldTryNextModel: isQuotaError || isMissingModel || isTemporaryUnavailable,
     cooldownMs: isQuotaError
-      ? parseRetryDelayMs(retryInfo && retryInfo.retryDelay) || QUOTA_COOLDOWN_MS
+      ? retryDelayMs || QUOTA_COOLDOWN_MS
       : isMissingModel
         ? MISSING_MODEL_COOLDOWN_MS
+        : isTemporaryUnavailable
+          ? retryDelayMs || TEMP_UNAVAILABLE_COOLDOWN_MS
         : 0,
   };
 }

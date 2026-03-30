@@ -863,44 +863,6 @@ legend {
     font-size: 13px;
 }
 
-.auto-comment-run-log {
-    margin-top: 14px;
-    display: grid;
-    gap: 8px;
-}
-
-.auto-comment-run-log.empty {
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 12px 14px;
-    color: #9ba4c7;
-    font-size: 13px;
-}
-
-.auto-comment-run-log__item {
-    display: grid;
-    gap: 4px;
-    border-radius: 12px;
-    padding: 12px 14px;
-    background: rgba(10, 16, 32, 0.4);
-}
-
-.auto-comment-run-log__item strong {
-    color: #f4f8ff;
-    font-size: 13px;
-}
-
-.auto-comment-run-log__item span {
-    color: #92a7cf;
-    font-size: 12px;
-}
-
-.auto-comment-run-log__item small {
-    color: #cfd8f8;
-    line-height: 1.6;
-    font-size: 12px;
-}
-
 .auto-comment-actions {
     display: flex;
     flex-wrap: wrap;

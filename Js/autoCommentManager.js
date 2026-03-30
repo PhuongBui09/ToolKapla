@@ -66,6 +66,47 @@ function formatRelativeCountdown(targetTime) {
     return parts.join(' ') || 'Dưới 1 phút';
 }
 
+function normalizeModelMeta(item) {
+    return {
+        modelUsed: String(item?.modelUsed || '').trim(),
+        primaryModel: String(item?.primaryModel || '').trim(),
+        fallbackUsed: Boolean(item?.fallbackUsed),
+        attemptedModels: Array.isArray(item?.attemptedModels)
+            ? item.attemptedModels.map((model) => String(model || '').trim()).filter(Boolean)
+            : [],
+    };
+}
+
+function formatModelUsageLabel(item) {
+    const meta = normalizeModelMeta(item);
+
+    if (meta.fallbackUsed && meta.modelUsed) {
+        const primaryLabel = meta.primaryModel || 'model chính';
+        return `Model dự phòng: ${meta.modelUsed} (thay cho ${primaryLabel})`;
+    }
+
+    if (meta.attemptedModels.length > 1 && meta.modelUsed) {
+        return `Đã thử ${meta.attemptedModels.length} model, dùng ${meta.modelUsed}`;
+    }
+
+    return '';
+}
+
+function summarizeRecentRuns(recentRuns, runCount = 0) {
+    const items = Array.isArray(recentRuns) ? recentRuns : [];
+
+    if (items.length === 0) {
+        return runCount > 0 ? `Đã chạy ${runCount} lần` : 'Chưa có lần chạy nào';
+    }
+
+    const successCount = items.filter((item) => item.status === 'success').length;
+    const errorCount = items.length - successCount;
+
+    return `${items.length} lần gần nhất: ${successCount} thành công${
+        errorCount > 0 ? `, ${errorCount} lỗi` : ''
+    }`;
+}
+
 function clone(value) {
     return JSON.parse(JSON.stringify(value));
 }
@@ -116,6 +157,7 @@ function normalizeEntry(entry) {
                   error: run?.status === 'error' ? String(run?.error || '') : '',
                   autoRunId: run?.autoRunId || null,
                   triggeredBy: run?.triggeredBy === 'cron' ? 'cron' : 'manual',
+                  ...normalizeModelMeta(run),
               }))
             : [],
     };
@@ -133,6 +175,7 @@ function normalizeRunHistoryItem(item) {
         comments: item?.comments ?? '',
         timestamp,
         source: 'auto-refresh',
+        ...normalizeModelMeta(item),
     };
 }
 
@@ -315,10 +358,6 @@ export class AutoCommentManager {
             if (action === 'run') {
                 void this.runEntryById(entryId, { manual: true });
                 return;
-            }
-
-            if (action === 'load') {
-                this.loadEntryIntoMainForm(entryId);
             }
         });
 
@@ -596,16 +635,6 @@ export class AutoCommentManager {
         }
     }
 
-    loadEntryIntoMainForm(entryId) {
-        const entry = this.getEntryById(entryId);
-        if (!entry) {
-            return;
-        }
-
-        this.applyDataToMainForm(entry);
-        Toast.show('Đã nạp mẫu vào tab Tạo nhận xét', 'success');
-    }
-
     loadRunHistoryIntoMainForm(runId) {
         const runItem = this.getRunHistoryItemById(runId);
         if (!runItem) {
@@ -698,12 +727,16 @@ export class AutoCommentManager {
             });
 
             this.applyStatePayload(payload);
+            const fallbackLabel = formatModelUsageLabel(payload?.meta);
             Toast.show(
                 manual
                     ? `Đã chạy AI và lưu vào lịch sử tự động cho "${entry.lessonPreview}"`
                     : `Server đã làm mới và lưu riêng cho "${entry.lessonPreview}"`,
                 'success',
             );
+            if (manual && payload?.meta?.fallbackUsed && fallbackLabel) {
+                Toast.show(fallbackLabel, 'warning');
+            }
             return true;
         } catch (error) {
             console.error('Không thể chạy mẫu auto:', error);
@@ -833,14 +866,15 @@ export class AutoCommentManager {
                     : entry.lastGeneratedAt
                       ? `Lần cuối: ${formatDateTime(entry.lastGeneratedAt)}`
                       : 'Chưa từng chạy AI';
+            const recentRunSummary = summarizeRecentRuns(entry.recentRuns, entry.runCount);
 
             const statusText =
                 entry.lastStatus === 'error'
-                    ? `Lỗi gần nhất: ${entry.lastError}`
+                    ? `Lần gần nhất bị lỗi. ${recentRunSummary}`
                     : entry.lastStatus === 'running'
                       ? 'Server đang xử lý mẫu này'
                       : entry.lastStatus === 'success'
-                        ? 'Lần chạy gần nhất đã được lưu vào lịch sử tự động'
+                        ? recentRunSummary
                         : 'Đang chờ lần chạy đầu tiên';
 
             item.innerHTML = `
@@ -860,13 +894,9 @@ export class AutoCommentManager {
                     <span>${this.escapeHtml(statusText)}</span>
                     <span>Lần tiếp theo: ${this.escapeHtml(formatDateTime(nextRunAt))} (${this.escapeHtml(formatRelativeCountdown(nextRunAt))})</span>
                 </div>
-                ${this.renderRecentRuns(entry.recentRuns)}
                 <div class="auto-comment-actions">
                     <button type="button" class="copy-btn" data-action="run" data-entry-id="${entry.id}" ${disabledAttr}>
                         Chạy ngay
-                    </button>
-                    <button type="button" class="btn-secondary" data-action="load" data-entry-id="${entry.id}" ${disabledAttr}>
-                        Nạp vào tab tạo
                     </button>
                     <button type="button" class="btn-secondary auto-comment-edit-btn" data-action="edit" data-entry-id="${entry.id}" ${disabledAttr}>
                         Sửa
@@ -907,6 +937,7 @@ export class AutoCommentManager {
 
         this.runHistory.forEach((item) => {
             const flowBadge = item.flowType === 'flow2' ? ' 🔄' : ' ✍️';
+            const modelLabel = formatModelUsageLabel(item);
             const card = document.createElement('div');
             card.className = 'auto-run-history-item';
 
@@ -916,6 +947,7 @@ export class AutoCommentManager {
                     <div class="auto-run-history-item__meta">
                         <span>${this.escapeHtml(formatDateTime(item.timestamp))}</span>
                         <span>${this.escapeHtml(FLOW_LABELS[item.flowType] || FLOW_LABELS.flow1)}</span>
+                        ${modelLabel ? `<span>${this.escapeHtml(modelLabel)}</span>` : ''}
                     </div>
                 </div>
                 <div class="auto-run-history-item__actions">
@@ -930,31 +962,6 @@ export class AutoCommentManager {
 
             this.runHistoryContainer.appendChild(card);
         });
-    }
-
-    renderRecentRuns(recentRuns) {
-        if (!Array.isArray(recentRuns) || recentRuns.length === 0) {
-            return '<div class="auto-comment-run-log empty">Chưa có lịch sử chạy nội bộ.</div>';
-        }
-
-        const items = recentRuns
-            .map((run) => {
-                const statusLabel = run.status === 'success' ? 'Thành công' : 'Thất bại';
-                const sourceLabel = run.triggeredBy === 'cron' ? 'Tự động' : 'Thủ công';
-                const details =
-                    run.status === 'success'
-                        ? `${sourceLabel} • Đã lưu vào lịch sử tự động`
-                        : this.escapeHtml(run.error || 'Không có chi tiết lỗi');
-
-                return `<div class="auto-comment-run-log__item">
-                    <strong>${statusLabel}</strong>
-                    <span>${this.escapeHtml(formatDateTime(run.timestamp))}</span>
-                    <small>${details}</small>
-                </div>`;
-            })
-            .join('');
-
-        return `<div class="auto-comment-run-log">${items}</div>`;
     }
 
     formatCommentBankForDisplay(bank) {
