@@ -14,7 +14,7 @@ const {
 } = require('./_autoStorage');
 const { acquireLock, releaseLock } = require('./_redis');
 
-const RETRY_COOLDOWN_MS = 30 * 60 * 1000;
+const RETRY_COOLDOWN_MS = 5 * 60 * 1000;
 
 function splitComments(fullText) {
   return String(fullText || '')

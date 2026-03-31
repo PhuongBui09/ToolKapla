@@ -386,11 +386,6 @@ export class AutoCommentManager {
                 void this.deleteEntry(entryId);
                 return;
             }
-
-            if (action === 'run') {
-                void this.runEntryById(entryId, { manual: true });
-                return;
-            }
         });
 
         this.runHistoryContainer.addEventListener('click', (event) => {
@@ -409,9 +404,6 @@ export class AutoCommentManager {
                 return;
             }
 
-            if (runAction === 'delete') {
-                void this.deleteRunHistory(runId);
-            }
         });
 
         if (this.runHistorySearchInput) {
@@ -546,13 +538,24 @@ export class AutoCommentManager {
         return (entry.scheduleAnchorAt || entry.updatedAt || entry.createdAt) + AUTO_REFRESH_MS;
     }
 
+    getNextActionAt(entry) {
+        const retryAfterAt = Number(entry.retryAfterAt) || 0;
+        return retryAfterAt > 0 ? retryAfterAt : this.getNextRunAt(entry);
+    }
+
     isEntryDue(entry) {
         if (entry.lastStatus === 'running') {
             return false;
         }
 
         const now = Date.now();
-        return now >= this.getNextRunAt(entry) && now >= (Number(entry.retryAfterAt) || 0);
+        const retryAfterAt = Number(entry.retryAfterAt) || 0;
+
+        if (retryAfterAt > 0) {
+            return now >= retryAfterAt;
+        }
+
+        return now >= this.getNextRunAt(entry);
     }
 
     resetForm() {
@@ -560,7 +563,7 @@ export class AutoCommentManager {
         this.lessonPreviewInput.value = '';
         this.flowTypeInput.value = 'flow1';
         this.lessonDescriptionInput.value = '';
-        this.saveBtn.textContent = 'Lưu mẫu tự động';
+        this.saveBtn.textContent = 'Lưu mẫu và chạy AI';
         this.saveBtn.disabled = false;
         this.cancelBtn.style.display = 'none';
     }
@@ -575,7 +578,7 @@ export class AutoCommentManager {
         this.lessonPreviewInput.value = entry.lessonPreview;
         this.flowTypeInput.value = entry.flowType;
         this.lessonDescriptionInput.value = entry.lessonDescription;
-        this.saveBtn.textContent = 'Cập nhật mẫu';
+        this.saveBtn.textContent = 'Cập nhật và chạy AI';
         this.cancelBtn.style.display = 'inline-flex';
         this.openPanel('form');
         this.lessonPreviewInput.focus();
@@ -615,9 +618,17 @@ export class AutoCommentManager {
             this.resetForm();
             this.openPanel('list');
             Toast.show(
-                existingId ? 'Đã cập nhật mẫu tự động' : 'Đã lưu mẫu tự động mới',
-                'success',
+                payload?.message ||
+                    (existingId
+                        ? 'Đã cập nhật mẫu tự động và chạy AI.'
+                        : 'Đã lưu mẫu tự động mới và chạy AI.'),
+                payload?.autoRunOk === false ? 'warning' : 'success',
             );
+
+            const fallbackLabel = formatModelUsageLabel(payload?.meta);
+            if (payload?.meta?.fallbackUsed && fallbackLabel) {
+                Toast.show(fallbackLabel, 'warning');
+            }
         } catch (error) {
             console.error('Không thể lưu mẫu auto:', error);
             Toast.show(error.message || 'Không thể lưu mẫu tự động', 'error');
@@ -633,7 +644,11 @@ export class AutoCommentManager {
             return;
         }
 
-        if (!window.confirm(`Xóa mẫu "${entry.lessonPreview}"?`)) {
+        if (
+            !window.confirm(
+                `Xóa mẫu "${entry.lessonPreview}" và toàn bộ lịch sử auto liên quan?`,
+            )
+        ) {
             return;
         }
 
@@ -648,29 +663,10 @@ export class AutoCommentManager {
                 this.resetForm();
             }
 
-            Toast.show('Đã xóa mẫu tự động', 'info');
+            Toast.show('Đã xóa mẫu tự động và lịch sử auto liên quan', 'info');
         } catch (error) {
             console.error('Không thể xóa mẫu auto:', error);
             Toast.show(error.message || 'Không thể xóa mẫu tự động', 'error');
-        }
-    }
-
-    async deleteRunHistory(runId) {
-        const runItem = this.getRunHistoryItemById(runId);
-        if (!runItem) {
-            return;
-        }
-
-        try {
-            const payload = await this.request(`/api/auto-runs?id=${encodeURIComponent(runId)}`, {
-                method: 'DELETE',
-            });
-
-            this.applyStatePayload(payload);
-            Toast.show(`Đã xóa bản ghi tự động "${runItem.lessonPreview}"`, 'info');
-        } catch (error) {
-            console.error('Không thể xóa lịch sử auto:', error);
-            Toast.show(error.message || 'Không thể xóa lịch sử auto', 'error');
         }
     }
 
@@ -721,74 +717,6 @@ export class AutoCommentManager {
         }
 
         this.closeModal();
-    }
-
-    markEntryStateLocally(entryId, updates) {
-        this.entries = this.entries.map((entry) =>
-            entry.id === entryId
-                ? normalizeEntry({
-                      ...entry,
-                      ...updates,
-                  })
-                : entry,
-        );
-        this.render();
-    }
-
-    async runEntryById(entryId, { manual = false } = {}) {
-        const entry = this.getEntryById(entryId);
-        if (!entry) {
-            return false;
-        }
-
-        if (entry.lastStatus === 'running') {
-            if (manual) {
-                Toast.show(
-                    'Mẫu này đang được server xử lý, vui lòng đợi thêm một chút.',
-                    'warning',
-                );
-            }
-            return false;
-        }
-
-        const startedAt = Date.now();
-        this.markEntryStateLocally(entryId, {
-            lastStatus: 'running',
-            lastAttemptAt: startedAt,
-            lastError: '',
-            retryAfterAt: 0,
-        });
-
-        try {
-            const payload = await this.request('/api/auto-run-now', {
-                method: 'POST',
-                body: { id: entryId },
-            });
-
-            this.applyStatePayload(payload);
-            const fallbackLabel = formatModelUsageLabel(payload?.meta);
-            Toast.show(
-                manual
-                    ? `Đã chạy AI và lưu vào lịch sử tự động cho "${entry.lessonPreview}"`
-                    : `Server đã làm mới và lưu riêng cho "${entry.lessonPreview}"`,
-                'success',
-            );
-            if (manual && payload?.meta?.fallbackUsed && fallbackLabel) {
-                Toast.show(fallbackLabel, 'warning');
-            }
-            return true;
-        } catch (error) {
-            console.error('Không thể chạy mẫu auto:', error);
-
-            if (error.payload?.state) {
-                this.applyStatePayload(error.payload);
-            } else {
-                await this.refreshState({ silent: true });
-            }
-
-            Toast.show(`Không thể làm mới "${entry.lessonPreview}": ${error.message}`, 'error');
-            return false;
-        }
     }
 
     openPanel(panelName = 'form') {
@@ -868,8 +796,8 @@ export class AutoCommentManager {
         const dueEntries = entries.filter((entry) => this.isEntryDue(entry)).length;
         this.summary.textContent =
             totalEntries === 0
-                ? 'Chưa có mẫu tự động nào. Tạo 1 mẫu để hệ thống tự làm mới nhận xét sau mỗi chu kỳ 48 giờ.'
-                : `${totalEntries} mẫu đang lưu, ${dueEntries} mẫu đã đến hạn. Server sẽ xử lý tự động và lưu kết quả riêng, không chèn vào tab Lịch Sử thủ công.`;
+                ? 'Chưa có mẫu tự động nào. Lưu 1 mẫu để hệ thống chạy AI ngay rồi tự vận hành về sau.'
+                : `${totalEntries} mẫu đang lưu, ${dueEntries} mẫu đến hạn hoặc đang chờ retry. Server sẽ tự chạy ngay khi lưu, tự thử lại mỗi 5 phút nếu lỗi và làm mới lại sau mỗi 48 giờ kể từ lần thành công gần nhất.`;
 
         if (entries.length === 0) {
             this.emptyState.style.display = 'block';
@@ -880,7 +808,7 @@ export class AutoCommentManager {
         this.emptyState.style.display = 'none';
 
         entries.forEach((entry) => {
-            const nextRunAt = this.getNextRunAt(entry);
+            const nextActionAt = this.getNextActionAt(entry);
             const item = document.createElement('article');
             item.className = 'auto-comment-card';
 
@@ -904,17 +832,18 @@ export class AutoCommentManager {
                     ? 'Đang được server gọi AI...'
                     : entry.lastGeneratedAt
                       ? `Lần cuối: ${formatDateTime(entry.lastGeneratedAt)}`
-                      : 'Chưa từng chạy AI';
+                      : 'Chưa có lần chạy thành công';
             const recentRunSummary = summarizeRecentRuns(entry.recentRuns, entry.runCount);
+            const nextActionLabel = Number(entry.retryAfterAt) > 0 ? 'Lần thử lại' : 'Lần tự động kế tiếp';
 
             const statusText =
                 entry.lastStatus === 'error'
-                    ? `Lần gần nhất bị lỗi. ${recentRunSummary}`
+                    ? `Lần gần nhất bị lỗi. Hệ thống sẽ tự thử lại mỗi 5 phút cho tới khi thành công. ${recentRunSummary}`
                     : entry.lastStatus === 'running'
                       ? 'Server đang xử lý mẫu này'
                       : entry.lastStatus === 'success'
                         ? recentRunSummary
-                        : 'Đang chờ lần chạy đầu tiên';
+                        : 'Đang chờ lần chạy đầu tiên ngay sau khi lưu mẫu.';
 
             item.innerHTML = `
                 <div class="auto-comment-card__header">
@@ -931,12 +860,9 @@ export class AutoCommentManager {
                 <p class="auto-comment-description">${this.escapeHtml(entry.lessonDescription)}</p>
                 <div class="auto-comment-status">
                     <span>${this.escapeHtml(statusText)}</span>
-                    <span>Lần tiếp theo: ${this.escapeHtml(formatDateTime(nextRunAt))} (${this.escapeHtml(formatRelativeCountdown(nextRunAt))})</span>
+                    <span>${this.escapeHtml(nextActionLabel)}: ${this.escapeHtml(formatDateTime(nextActionAt))} (${this.escapeHtml(formatRelativeCountdown(nextActionAt))})</span>
                 </div>
                 <div class="auto-comment-actions">
-                    <button type="button" class="copy-btn" data-action="run" data-entry-id="${entry.id}" ${disabledAttr}>
-                        Chạy ngay
-                    </button>
                     <button type="button" class="btn-secondary auto-comment-edit-btn" data-action="edit" data-entry-id="${entry.id}" ${disabledAttr}>
                         Sửa
                     </button>
@@ -1004,9 +930,6 @@ export class AutoCommentManager {
                 <div class="auto-run-history-item__actions">
                     <button type="button" class="btn-secondary" data-run-action="load" data-run-id="${item.id}">
                         Nạp kết quả
-                    </button>
-                    <button type="button" class="auto-comment-danger-btn" data-run-action="delete" data-run-id="${item.id}">
-                        Xóa
                     </button>
                 </div>
             `;

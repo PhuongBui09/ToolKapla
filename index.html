@@ -373,8 +373,9 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
                     </div>
 
                     <p class="auto-comment-note auto-comment-note--compact">
-                        Mẫu đã lưu sẽ được backend xử lý theo chu kỳ 48 giờ. Khi mở tab này, giao
-                        diện sẽ đồng bộ trạng thái và lịch sử mới nhất từ server.
+                        Lưu mẫu xong hệ thống sẽ chạy AI ngay. Nếu lỗi, backend sẽ tự thử lại mỗi
+                        5 phút cho tới khi thành công; sau đó cứ mỗi 48 giờ hệ thống sẽ tự làm mới
+                        lại comment.
                     </p>
                 </div>
 
@@ -448,7 +449,7 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
 
                                     <div class="auto-comment-form__actions">
                                         <button type="submit" id="autoCommentSaveBtn">
-                                            💾 Lưu mẫu tự động
+                                            💾 Lưu mẫu và chạy AI
                                         </button>
                                         <button
                                             type="button"
@@ -464,7 +465,8 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
 
                             <section class="auto-modal-panel" data-panel="list">
                                 <p class="auto-comment-note">
-                                    Chọn mẫu cần chạy ngay, sửa nhanh hoặc xóa nếu không còn dùng.
+                                    Mẫu lưu xong sẽ tự chạy và tự làm mới về sau. Ở đây bạn chỉ cần
+                                    sửa hoặc xóa nếu không còn dùng.
                                 </p>
                                 <div id="autoCommentList" class="auto-comment-list"></div>
                                 <p id="autoCommentEmpty">Chưa có mẫu nào được lưu</p>

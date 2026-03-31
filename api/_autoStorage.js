@@ -85,7 +85,12 @@ function isEntryDue(entry, now = Date.now()) {
     return false;
   }
 
-  return now >= getNextRunAt(entry) && now >= (Number(entry.retryAfterAt) || 0);
+  const retryAfterAt = Number(entry.retryAfterAt) || 0;
+  if (retryAfterAt > 0) {
+    return now >= retryAfterAt;
+  }
+
+  return now >= getNextRunAt(entry);
 }
 
 async function getEntries() {
@@ -199,11 +204,13 @@ async function upsertEntry(payload) {
 async function deleteEntry(entryId) {
   const entries = await getEntries();
   const nextEntries = entries.filter((entry) => entry.id !== entryId);
-  await saveEntries(nextEntries);
+  const runHistory = await getRunHistory();
+  const nextRunHistory = runHistory.filter((item) => item.entryId !== entryId);
+  await Promise.all([saveEntries(nextEntries), saveRunHistory(nextRunHistory)]);
   return {
     state: {
       entries: nextEntries,
-      runHistory: await getRunHistory(),
+      runHistory: nextRunHistory,
     },
   };
 }

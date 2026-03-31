@@ -1,5 +1,6 @@
 const { applyCors } = require('./_http');
 const { getEntries, upsertEntry, deleteEntry } = require('./_autoStorage');
+const { runEntryById } = require('./_autoRunner');
 
 module.exports = async (req, res) => {
   if (applyCors(req, res, ['GET', 'POST', 'DELETE', 'OPTIONS'])) {
@@ -15,11 +16,28 @@ module.exports = async (req, res) => {
     }
 
     if (req.method === 'POST') {
-      const result = await upsertEntry(req.body || {});
+      const savedResult = await upsertEntry(req.body || {});
+      const autoRunResult = await runEntryById(savedResult.entry.id, { triggeredBy: 'manual' });
+      const autoRunOk = Boolean(autoRunResult?.ok);
+      const isUpdate = Boolean(req.body?.id);
+
       return res.status(200).json({
         ok: true,
-        message: req.body?.id ? 'Đã cập nhật mẫu auto.' : 'Đã tạo mẫu auto mới.',
-        ...result,
+        message: autoRunOk
+          ? isUpdate
+            ? 'Đã cập nhật mẫu auto và chạy AI ngay.'
+            : 'Đã tạo mẫu auto mới và chạy AI ngay.'
+          : isUpdate
+            ? 'Đã cập nhật mẫu auto. AI sẽ tự thử lại sau mỗi 5 phút cho tới khi thành công.'
+            : 'Đã tạo mẫu auto mới. AI sẽ tự thử lại sau mỗi 5 phút cho tới khi thành công.',
+        autoRunAttempted: true,
+        autoRunOk,
+        autoRunError: autoRunOk ? '' : autoRunResult?.message || 'Không thể chạy AI ngay lúc lưu mẫu.',
+        autoRunStatus: autoRunResult?.status || null,
+        entry: autoRunResult?.entry || savedResult.entry,
+        runItem: autoRunResult?.runItem || null,
+        meta: autoRunResult?.meta || null,
+        state: autoRunResult?.state || savedResult.state,
       });
     }
 
