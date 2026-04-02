@@ -883,10 +883,12 @@ export class AutoCommentManager {
 
         this.formCardMeta.textContent =
             totalEntries === 0 ? 'Bắt đầu tạo mẫu đầu tiên' : 'Thêm mới hoặc cập nhật mẫu hiện có';
-        this.listCardMeta.textContent =
-            totalEntries === 0
-                ? 'Chưa có mẫu nào'
-                : `${totalEntries} mẫu đang lưu • ${dueEntries} mẫu đến hạn`;
+        if (this.listCardMeta) {
+            this.listCardMeta.textContent =
+                totalEntries === 0
+                    ? 'Chưa có mẫu nào'
+                    : `${totalEntries} mẫu đang lưu • ${dueEntries} mẫu đến hạn`;
+        }
         this.historyCardMeta.textContent =
             runCount === 0 ? 'Chưa có lần chạy nào' : `Đã lưu ${runCount} kết quả auto riêng biệt`;
     }
