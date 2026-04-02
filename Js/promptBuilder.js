@@ -1,24 +1,25 @@
 /**
  * promptBuilder.js
- * Xây dựng prompt động dựa trên cấu hình người dùng
+ * Xây dựng prompt động dựa theo yêu cầu sinh nhận xét ngắn gọn, tự nhiên
  */
 
 // Phần prompt mặc định (core)
 const BASE_PROMPT = `
 Bạn là giáo viên trực tiếp đứng lớp và đang viết nhận xét gửi cho phụ huynh SAU BUỔI HỌC.
 
-Dựa trên phần mô tả buổi học dưới đây, hãy viết nhận xét mô tả CỤ THỂ học sinh đã học và đã làm những gì trong buổi học, đồng thời nêu ngắn gọn thái độ học tập (ví dụ: tập trung, hợp tác, chủ động).
+Dựa trên phần mô tả buổi học dưới đây, hãy viết nhận xét mô tả CỤ THỂ học sinh đã làm gì trong buổi học, đồng thời nêu ngắn gọn thái độ học tập.
 
 NGUYÊN TẮC BẮT BUỘC:
-- MỖI nhận xét PHẢI đề cập ĐẦY ĐỦ TẤT CẢ các mục tiêu và hoạt động được nêu trong phần mô tả buổi học
-- Không được bỏ sót bất kỳ mục tiêu hoặc hoạt động nào
-- Không được gộp mục tiêu thành các khái niệm chung chung
-- Mỗi mục tiêu phải được thể hiện bằng hành động cụ thể mà học sinh đã thực hiện
-- Ngoài mô tả hành động, phải có thêm một ý ngắn gọn về thái độ học tập
+- Mỗi nhận xét chỉ mô tả 1 mục tiêu hoặc 1 hoạt động cụ thể
+- Không gộp nhiều mục tiêu trong một nhận xét
+- Các nhận xét phải phân bổ đều các mục tiêu, giống như mỗi nhận xét là một học sinh khác nhau
+- Hãy tưởng tượng mỗi nhận xét dành cho một học sinh khác nhau
 
 YÊU CẦU DIỄN ĐẠT:
-- Diễn đạt đơn giản, rõ ràng để phụ huynh KHÔNG biết lập trình vẫn hiểu buổi học
-- Ưu tiên mô tả: công cụ sử dụng, thao tác học sinh làm, sản phẩm hoặc kết quả đạt được
+- Văn phong giống giáo viên thật, không học thuật, không báo cáo
+- Câu ngắn, rõ, mỗi câu chỉ 1-2 ý
+- Tránh từ: "vận dụng", "thông qua", "qua đó", "rèn luyện", "giúp học sinh"
+- Ưu tiên dùng động từ cụ thể: "thêm", "tạo", "sử dụng", "chỉnh sửa"
 - Chỉ dùng từ "học sinh", KHÔNG dùng từ "con"
 
 ĐỊNH DẠNG:
@@ -30,60 +31,44 @@ YÊU CẦU DIỄN ĐẠT:
  * Build instruction dựa trên cấu hình
  */
 function buildInstructions(config) {
-    let instructions = [];
+    const instructions = [];
 
-    // Số lượng nhận xét
-    instructions.push(
-        `- Viết CHÍNH XÁC ${config.numComments} nhận xét (không nhiều hơn, không ít hơn)`,
-    );
+    instructions.push(`- Viết CHÍNH XÁC ${config.numComments} nhận xét (không nhiều hơn, không ít hơn)`);
 
-    // Yêu cầu bao gồm tất cả mục tiêu
-    if (config.includeAllObjectives) {
-        instructions.push(`- Bắt buộc: Mỗi nhận xét phải bao gồm TẤT CẢ các mục tiêu/hoạt động`);
-    } else {
-        instructions.push(`- Được phép: Một số nhận xét có thể tập trung vào một vài mục tiêu`);
-    }
+    instructions.push(`- Mỗi nhận xét chỉ mô tả 1 mục tiêu hoặc 1 hoạt động`);
+    instructions.push(`- Phân bổ đều mục tiêu/nội dung trên mỗi nhận xét`);
+    instructions.push(`- Mỗi nhận xét giả định dành cho một học sinh khác nhau để tạo phong cách tự nhiên`);
 
-    // Mức độ khác biệt
     if (config.commentVariety === 'low') {
-        instructions.push(`- Các nhận xét có thể tương tự nhau (chỉ thay đổi cách dùng từ)`);
+        instructions.push(`- Ví dụ khác nhau nhẹ, vẫn ưu tiên cấu trúc ngắn, tự nhiên`);
     } else {
-        instructions.push(`- Thay đổi cách diễn đạt, thứ tự mô tả, và trọng tâm giữa các nhận xét`);
+        instructions.push(`- Thay đổi câu chữ, thứ tự, góc nhìn giữa các nhận xét`);
     }
 
-    // Độ dài nhận xét + cấu trúc câu
     if (config.commentLength === '1-2') {
         instructions.push(`- Mỗi nhận xét dài 1–2 câu`);
-        instructions.push(`- Một câu mô tả hành động cụ thể, một câu nêu thái độ học tập tốt trong buổi học`);
-        instructions.push(
-            `- KHÔNG dùng các cụm: "qua đó", "qua bài học", "giúp học sinh", "rèn luyện"`,
-        );
+        instructions.push(`- Câu 1: mô tả hành động cụ thể học sinh làm`);
+        instructions.push(`- Câu 2: nêu thái độ học tập ngắn (1-2 từ hoặc cụm từ)`);
+        instructions.push(`- Không trộn nội dung hành động và thái độ vào cùng một câu`);
     } else if (config.commentLength === '2-3') {
         instructions.push(`- Mỗi nhận xét dài 2–3 câu`);
-        instructions.push(
-            `- Cấu trúc BẮT BUỘC: Câu 1 mô tả hành động, Câu 2 (hoặc 3) nêu thái độ học tập tốt trong buổi học`,
-        );
+        instructions.push(`- Câu 1: hành động cụ thể, Câu 2 (hoặc 3): thái độ học tập`);
     }
 
-    // Giọng văn
     if (config.tone === 'pedagogical') {
-        instructions.push(`- Giọng văn: Tích cực, mang tính sư phạm, chuyên nghiệp`);
+        instructions.push(`- Giọng văn: Tích cực, thân thiện, như lời giáo viên nhận xét`);
     } else if (config.tone === 'neutral') {
-        instructions.push(`- Giọng văn: Trung tính, khách quan`);
+        instructions.push(`- Giọng văn: Trung tính, khách quan, giản dị`);
     } else if (config.tone === 'friendly') {
-        instructions.push(`- Giọng văn: Thân thiện, gần gũi`);
+        instructions.push(`- Giọng văn: Thân thiện, gần gũi, đơn giản`);
     }
 
-    // Emoji
     if (!config.allowEmoji) {
         instructions.push(`- KHÔNG dùng emoji hoặc ký hiệu đặc biệt`);
     }
 
-    // Từ chung chung
     if (config.banGenericWords) {
-        instructions.push(
-            `- KHÔNG dùng các từ chung chung như: "quy trình", "tổng thể", "hoàn chỉnh", "nền tảng", "tư duy"`,
-        );
+        instructions.push(`- KHÔNG dùng từ chung chung: "quy trình", "tổng thể", "hoàn chỉnh", "nền tảng", "tư duy"`);
     }
 
     return instructions.join('\n');
@@ -95,12 +80,7 @@ function buildInstructions(config) {
 export function buildPromptWithConfig(lessonContent, config) {
     const instructions = buildInstructions(config);
 
-    return `${BASE_PROMPT}
-
-${instructions}
-
-Phần mô tả buổi học:
-${lessonContent}`.trim();
+    return `${BASE_PROMPT}\n\n${instructions}\n\nPhần mô tả buổi học:\n${lessonContent}`.trim();
 }
 
 /**
@@ -116,7 +96,6 @@ export function getDefaultPromptBase() {
 export function buildDefaultPrompt(lessonContent) {
     const DEFAULT_CONFIG = {
         numComments: 20,
-        includeAllObjectives: true,
         commentVariety: 'medium',
         commentLength: '1-2',
         tone: 'pedagogical',
@@ -126,10 +105,5 @@ export function buildDefaultPrompt(lessonContent) {
 
     const instructions = buildInstructions(DEFAULT_CONFIG);
 
-    return `${BASE_PROMPT}
-
-${instructions}
-
-Phần mô tả buổi học:
-${lessonContent}`.trim();
+    return `${BASE_PROMPT}\n\n${instructions}\n\nPhần mô tả buổi học:\n${lessonContent}`.trim();
 }
