@@ -47,7 +47,12 @@
                                     <legend>🎯 Chọn cách sinh nhận xét</legend>
                                     <div class="flow-switcher">
                                         <label class="radio-label">
-                                            <input type="radio" name="flowType" value="flow1" checked />
+                                            <input
+                                                type="radio"
+                                                name="flowType"
+                                                value="flow1"
+                                                checked
+                                            />
                                             <span>Flow 1 – Nhận xét chung</span>
                                         </label>
                                         <label class="radio-label">
@@ -62,7 +67,9 @@
                                 <fieldset>
                                     <legend>
                                         📝 Mô tả buổi học
-                                        <span class="legend-hint">(Dùng cho cả Flow 1 & Flow 2)</span>
+                                        <span class="legend-hint"
+                                            >(Dùng cho cả Flow 1 & Flow 2)</span
+                                        >
                                     </legend>
                                     <textarea
                                         id="lessonDescription"
@@ -72,7 +79,11 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
                                 </fieldset>
                             </div>
 
-                            <button type="button" class="action-wide action-wide--primary" onclick="generateCommentsByAI()">
+                            <button
+                                type="button"
+                                class="action-wide action-wide--primary"
+                                onclick="generateCommentsByAI()"
+                            >
                                 ✨ Sinh nhận xét bằng AI
                             </button>
                         </div>
@@ -88,7 +99,11 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
                                 </fieldset>
                             </div>
 
-                            <button type="button" class="action-wide action-wide--secondary" onclick="generateScriptsUI()">
+                            <button
+                                type="button"
+                                class="action-wide action-wide--secondary"
+                                onclick="generateScriptsUI()"
+                            >
                                 🔨 Tạo Script
                             </button>
                         </div>
@@ -146,10 +161,14 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
                                     <!-- Bắt buộc tất cả mục tiêu -->
                                     <div class="config-group">
                                         <label class="checkbox-label">
-                                            <input type="checkbox" id="configIncludeAllObjectives" checked />
+                                            <input
+                                                type="checkbox"
+                                                id="configIncludeAllObjectives"
+                                                checked
+                                            />
                                             <span
-                                                >🎯 Bắt buộc mỗi nhận xét bao gồm TẤT CẢ mục tiêu/hoạt
-                                                động</span
+                                                >🎯 Bắt buộc mỗi nhận xét bao gồm TẤT CẢ mục
+                                                tiêu/hoạt động</span
                                             >
                                         </label>
                                         <small style="color: #999"
@@ -159,7 +178,9 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
 
                                     <!-- Mức độ khác biệt -->
                                     <div class="config-group">
-                                        <label for="configCommentVariety">✨ Mức độ khác biệt nhận xét</label>
+                                        <label for="configCommentVariety"
+                                            >✨ Mức độ khác biệt nhận xét</label
+                                        >
                                         <select id="configCommentVariety">
                                             <option value="low">
                                                 Ít - Nhận xét tương tự (chỉ thay đổi từ)
@@ -172,7 +193,9 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
 
                                     <!-- Độ dài nhận xét -->
                                     <div class="config-group">
-                                        <label for="configCommentLength">📄 Độ dài mỗi nhận xét</label>
+                                        <label for="configCommentLength"
+                                            >📄 Độ dài mỗi nhận xét</label
+                                        >
                                         <select id="configCommentLength">
                                             <option value="1-2" selected>1–2 câu (ngắn gọn)</option>
                                             <option value="2-3">2–3 câu (chi tiết hơn)</option>
@@ -186,12 +209,12 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
                                             <option value="pedagogical" selected>
                                                 Sư phạm - Chuyên nghiệp, tích cực
                                             </option>
-                                            <option value="neutral"
-                                                >Trung tính - Khách quan, cân bằng</option
-                                            >
-                                            <option value="friendly"
-                                                >Thân thiện - Gần gũi, ấm áp</option
-                                            >
+                                            <option value="neutral">
+                                                Trung tính - Khách quan, cân bằng
+                                            </option>
+                                            <option value="friendly">
+                                                Thân thiện - Gần gũi, ấm áp
+                                            </option>
                                         </select>
                                     </div>
 
@@ -206,7 +229,11 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
                                     <!-- Cấm từ chung chung -->
                                     <div class="config-group">
                                         <label class="checkbox-label">
-                                            <input type="checkbox" id="configBanGenericWords" checked />
+                                            <input
+                                                type="checkbox"
+                                                id="configBanGenericWords"
+                                                checked
+                                            />
                                             <span
                                                 >⛔ Cấm các từ chung chung (quy trình, tổng thể, nền
                                                 tảng...)</span
@@ -216,7 +243,11 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
 
                                     <!-- Nút khôi phục -->
                                     <div class="config-actions">
-                                        <button type="button" id="resetConfigBtn" class="btn-secondary">
+                                        <button
+                                            type="button"
+                                            id="resetConfigBtn"
+                                            class="btn-secondary"
+                                        >
                                             🔄 Khôi phục mặc định
                                         </button>
                                     </div>
@@ -232,10 +263,21 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
 
                                     <div class="score-option">
                                         <label>
-                                            <input type="radio" name="scoreMode" value="fixed" checked />
+                                            <input
+                                                type="radio"
+                                                name="scoreMode"
+                                                value="fixed"
+                                                checked
+                                            />
                                             Điểm cố định
                                         </label>
-                                        <input type="number" id="fixedScore" min="1" max="10" value="9" />
+                                        <input
+                                            type="number"
+                                            id="fixedScore"
+                                            min="1"
+                                            max="10"
+                                            value="9"
+                                        />
                                     </div>
 
                                     <div class="score-option">
@@ -243,9 +285,21 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
                                             <input type="radio" name="scoreMode" value="range" />
                                             Random từ
                                         </label>
-                                        <input type="number" id="scoreMin" min="1" max="10" value="8" />
+                                        <input
+                                            type="number"
+                                            id="scoreMin"
+                                            min="1"
+                                            max="10"
+                                            value="8"
+                                        />
                                         <span style="color: #ccc">đến</span>
-                                        <input type="number" id="scoreMax" min="1" max="10" value="9" />
+                                        <input
+                                            type="number"
+                                            id="scoreMax"
+                                            min="1"
+                                            max="10"
+                                            value="9"
+                                        />
                                     </div>
                                 </fieldset>
                             </div>
@@ -256,12 +310,12 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
                                     <legend>ℹ️ Hướng Dẫn</legend>
                                     <div class="helper-card__content">
                                         <p>
-                                            <strong>Cấu hình Prompt AI:</strong> Điều chỉnh cách AI sinh
-                                            nhận xét.
+                                            <strong>Cấu hình Prompt AI:</strong> Điều chỉnh cách AI
+                                            sinh nhận xét.
                                         </p>
                                         <p>
-                                            <strong>Điểm cố định:</strong> Tất cả học sinh sẽ được điểm
-                                            này.
+                                            <strong>Điểm cố định:</strong> Tất cả học sinh sẽ được
+                                            điểm này.
                                         </p>
                                         <p>
                                             <strong>Random từ X đến Y:</strong> Mỗi học sinh sẽ được
@@ -308,8 +362,8 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
                             <p class="auto-comment-eyebrow">⏰ Quy trình tự động 48 giờ</p>
                             <h3>Tạo mẫu, theo dõi trạng thái và xem kết quả ở một chỗ</h3>
                             <p class="auto-comment-summary" id="autoCommentSummary">
-                                Chưa có mẫu tự động nào. Tạo 1 mẫu để hệ thống tự làm mới nhận xét mỗi
-                                48 giờ.
+                                Chưa có mẫu tự động nào. Tạo 1 mẫu để hệ thống tự làm mới nhận xét
+                                mỗi 48 giờ.
                             </p>
                         </div>
 
@@ -373,9 +427,9 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
                     </div>
 
                     <p class="auto-comment-note auto-comment-note--compact">
-                        Lưu mẫu xong hệ thống sẽ chạy AI ngay. Nếu lỗi, backend sẽ tự thử lại mỗi
-                        5 phút cho tới khi thành công; sau đó cứ mỗi 48 giờ hệ thống sẽ tự làm mới
-                        lại comment.
+                        Lưu mẫu xong hệ thống sẽ chạy AI ngay. Nếu lỗi, backend sẽ tự thử lại mỗi 5
+                        phút cho tới khi thành công; sau đó cứ mỗi 48 giờ hệ thống sẽ tự làm mới lại
+                        comment.
                     </p>
                 </div>
 
@@ -404,11 +458,7 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
                             <button type="button" class="auto-modal-tab" data-open-panel="list">
                                 Danh sách đã lưu
                             </button>
-                            <button
-                                type="button"
-                                class="auto-modal-tab"
-                                data-open-panel="history"
-                            >
+                            <button type="button" class="auto-modal-tab" data-open-panel="history">
                                 Lịch sử auto
                             </button>
                         </div>
@@ -440,7 +490,9 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
                                     </div>
 
                                     <div class="config-group">
-                                        <label for="autoLessonDescription">📝 lessonDescription</label>
+                                        <label for="autoLessonDescription"
+                                            >📝 lessonDescription</label
+                                        >
                                         <textarea
                                             id="autoLessonDescription"
                                             placeholder="Nhập mô tả buổi học để hệ thống dùng lại mỗi 48h khi gọi AI..."
@@ -493,7 +545,10 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
                                         placeholder="Tìm theo tên mẫu, mô tả hoặc nội dung đã lưu..."
                                     />
                                 </div>
-                                <div id="autoRunHistoryContainer" class="auto-run-history-list"></div>
+                                <div
+                                    id="autoRunHistoryContainer"
+                                    class="auto-run-history-list"
+                                ></div>
                                 <p id="autoRunHistoryEmpty">Chưa có lần chạy tự động nào</p>
                             </section>
                         </div>

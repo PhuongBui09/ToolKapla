@@ -282,7 +282,9 @@ export class AutoCommentManager {
     }
 
     hideSavedListUI() {
-        const launchListButton = document.querySelector('#tab-auto-comments .auto-launch-card[data-open-panel="list"]');
+        const launchListButton = document.querySelector(
+            '#tab-auto-comments .auto-launch-card[data-open-panel="list"]',
+        );
         const modalTab = this.modal?.querySelector('.auto-modal-tab[data-open-panel="list"]');
         const modalPanel = this.modal?.querySelector('.auto-modal-panel[data-panel="list"]');
 
@@ -429,7 +431,7 @@ export class AutoCommentManager {
                 const runItem = this.runHistory.find((item) => item.id === runId);
                 if (runItem) {
                     this.startEdit(runItem.entryId);
-                }            
+                }
                 return;
             }
         });
