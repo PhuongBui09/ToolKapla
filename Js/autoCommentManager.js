@@ -773,7 +773,7 @@ export class AutoCommentManager {
     showEntryDetails(entry) {
         this.modalTitle.textContent = 'Chi tiết mẫu tự động';
         this.modalTabs.forEach((tab) => (tab.style.display = 'none'));
-        this.modalPanels.forEach((panel) => (panel.classList.remove('active')));
+        this.modalPanels.forEach((panel) => panel.classList.remove('active'));
 
         const detailsPanel = this.modal.querySelector('.auto-modal-panel[data-panel="form"]');
         if (detailsPanel) {
