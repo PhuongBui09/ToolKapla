@@ -747,6 +747,45 @@ export class AutoCommentManager {
         this.closeModal();
     }
 
+    openPanel(panelName = 'form') {
+        this.activePanel = PANEL_TITLES[panelName] ? panelName : 'form';
+        this.modal.classList.add('is-open');
+        this.modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('auto-modal-open');
+
+        this.modalTitle.textContent = PANEL_TITLES[this.activePanel];
+
+        this.modalTabs.forEach((button) => {
+            button.classList.toggle('active', button.dataset.openPanel === this.activePanel);
+        });
+
+        this.modalPanels.forEach((panel) => {
+            panel.classList.toggle('active', panel.dataset.panel === this.activePanel);
+        });
+
+        if (this.activePanel === 'form') {
+            window.requestAnimationFrame(() => {
+                this.lessonPreviewInput.focus();
+            });
+        }
+    }
+
+    showEntryDetails(entry) {
+        this.modalTitle.textContent = 'Chi tiết mẫu tự động';
+        this.modalTabs.forEach((tab) => (tab.style.display = 'none'));
+        this.modalPanels.forEach((panel) => (panel.classList.remove('active')));
+
+        const detailsPanel = this.modal.querySelector('.auto-modal-panel[data-panel="form"]');
+        if (detailsPanel) {
+            detailsPanel.classList.add('active');
+            detailsPanel.innerHTML = this.renderEntryDetailsHTML(entry);
+        }
+
+        this.modal.classList.add('is-open');
+        this.modal.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('auto-modal-open');
+    }
+
     renderEntryDetailsHTML(entry) {
         const nextActionAt = this.getNextActionAt(entry);
         const flowLabel = FLOW_LABELS[entry.flowType] || FLOW_LABELS.flow1;
