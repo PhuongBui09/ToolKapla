@@ -389,27 +389,29 @@ export class AutoCommentManager {
             }
         });
 
-        this.listContainer.addEventListener('click', (event) => {
-            const actionButton = event.target.closest('[data-action]');
-            if (!actionButton) {
-                return;
-            }
+        if (this.listContainer) {
+            this.listContainer.addEventListener('click', (event) => {
+                const actionButton = event.target.closest('[data-action]');
+                if (!actionButton) {
+                    return;
+                }
 
-            const { action, entryId } = actionButton.dataset;
-            if (!entryId) {
-                return;
-            }
+                const { action, entryId } = actionButton.dataset;
+                if (!entryId) {
+                    return;
+                }
 
-            if (action === 'edit') {
-                this.startEdit(entryId);
-                return;
-            }
+                if (action === 'edit') {
+                    this.startEdit(entryId);
+                    return;
+                }
 
-            if (action === 'delete') {
-                void this.deleteEntry(entryId);
-                return;
-            }
-        });
+                if (action === 'delete') {
+                    void this.deleteEntry(entryId);
+                    return;
+                }
+            });
+        }
 
         this.runHistoryContainer.addEventListener('click', (event) => {
             const actionButton = event.target.closest('[data-run-action]');
