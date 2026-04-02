@@ -275,10 +275,20 @@ export class AutoCommentManager {
 
     init() {
         this.cacheDom();
+        this.hideSavedListUI();
         this.bindEvents();
-        // this.render(); // Removed: no longer show list
         this.renderRunHistory();
         this.bootstrap();
+    }
+
+    hideSavedListUI() {
+        const launchListButton = document.querySelector('#tab-auto-comments .auto-launch-card[data-open-panel="list"]');
+        const modalTab = this.modal?.querySelector('.auto-modal-tab[data-open-panel="list"]');
+        const modalPanel = this.modal?.querySelector('.auto-modal-panel[data-panel="list"]');
+
+        if (launchListButton) launchListButton.style.display = 'none';
+        if (modalTab) modalTab.style.display = 'none';
+        if (modalPanel) modalPanel.style.display = 'none';
     }
 
     async bootstrap() {
@@ -310,6 +320,7 @@ export class AutoCommentManager {
         this.runHistoryContainer = document.getElementById('autoRunHistoryContainer');
         this.runHistoryEmpty = document.getElementById('autoRunHistoryEmpty');
         this.runHistorySearchInput = document.getElementById('autoRunHistorySearchInput');
+        this.deleteBtn = document.getElementById('autoCommentDeleteBtn');
         this.entriesCount = document.getElementById('autoEntriesCount');
         this.dueCount = document.getElementById('autoDueCount');
         this.runCount = document.getElementById('autoRunCount');
@@ -335,8 +346,17 @@ export class AutoCommentManager {
 
         this.cancelBtn.addEventListener('click', () => {
             this.resetForm();
-            this.openPanel('list');
+            this.openPanel('form');
         });
+
+        if (this.deleteBtn) {
+            this.deleteBtn.addEventListener('click', () => {
+                const entryId = this.entryIdInput.value.trim();
+                if (entryId) {
+                    void this.deleteEntry(entryId);
+                }
+            });
+        }
 
         this.dashboardButtons.forEach((button) => {
             button.addEventListener('click', () => {
@@ -408,11 +428,8 @@ export class AutoCommentManager {
             if (runAction === 'view-details') {
                 const runItem = this.runHistory.find((item) => item.id === runId);
                 if (runItem) {
-                    const entry = this.entries.find((e) => e.id === runItem.entryId);
-                    if (entry) {
-                        this.showEntryDetails(entry);
-                    }
-                }
+                    this.startEdit(runItem.entryId);
+                }            
                 return;
             }
         });
@@ -591,6 +608,9 @@ export class AutoCommentManager {
         this.saveBtn.textContent = 'Lưu mẫu và chạy AI';
         this.saveBtn.disabled = false;
         this.cancelBtn.style.display = 'none';
+        if (this.deleteBtn) {
+            this.deleteBtn.style.display = 'none';
+        }
     }
 
     startEdit(entryId) {
@@ -605,6 +625,9 @@ export class AutoCommentManager {
         this.lessonDescriptionInput.value = entry.lessonDescription;
         this.saveBtn.textContent = 'Cập nhật và chạy AI';
         this.cancelBtn.style.display = 'inline-flex';
+        if (this.deleteBtn) {
+            this.deleteBtn.style.display = 'inline-flex';
+        }
         this.openPanel('form');
         this.lessonPreviewInput.focus();
     }
@@ -641,7 +664,7 @@ export class AutoCommentManager {
 
             this.applyStatePayload(payload);
             this.resetForm();
-            this.openPanel('list');
+            this.openPanel('form');
             Toast.show(
                 payload?.message ||
                     (existingId
@@ -748,6 +771,9 @@ export class AutoCommentManager {
     }
 
     openPanel(panelName = 'form') {
+        if (panelName === 'list') {
+            panelName = 'form';
+        }
         this.activePanel = PANEL_TITLES[panelName] ? panelName : 'form';
         this.modal.classList.add('is-open');
         this.modal.setAttribute('aria-hidden', 'false');
