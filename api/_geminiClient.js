@@ -5,6 +5,12 @@ const DEFAULT_FALLBACK_MODELS = [
   'gemini-2.5-flash',
   'gemini-2.5-flash-lite',
 ];
+const ALL_MODELS = [
+  'gemini-3-flash-preview',
+  'gemini-3.1-flash-lite-preview',
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+];
 const QUOTA_COOLDOWN_MS = 30 * 1000;
 const TEMP_UNAVAILABLE_COOLDOWN_MS = 60 * 1000;
 const MISSING_MODEL_COOLDOWN_MS = 6 * 60 * 60 * 1000;
@@ -56,8 +62,8 @@ function uniqueModels(models) {
   return [...new Set(models.filter(Boolean))];
 }
 
-function getCandidateModels(baseUrl) {
-  const primaryModel = parseModelFromUrl(baseUrl) || 'gemini-3-flash-preview';
+function getCandidateModels(baseUrl, preferredModel = null) {
+  const primaryModel = preferredModel || parseModelFromUrl(baseUrl) || 'gemini-3-flash-preview';
   const configuredFallbacks = parseModelList(process.env.GEMINI_FALLBACK_MODELS);
   const fallbackModels = configuredFallbacks.length
     ? configuredFallbacks
@@ -177,8 +183,8 @@ function extractTextFromGeminiPayload(payload) {
     .join('');
 }
 
-async function fetchWithModelFallback({ baseUrl, apiKey, shouldStream, requestBody }) {
-  const { primaryModel, models } = getCandidateModels(baseUrl);
+async function fetchWithModelFallback({ baseUrl, apiKey, shouldStream, requestBody, preferredModel = null }) {
+  const { primaryModel, models } = getCandidateModels(baseUrl, preferredModel);
   let lastFailure = null;
 
   for (let index = 0; index < models.length; index += 1) {
@@ -265,7 +271,7 @@ function createGeminiRequestError(failure) {
   return error;
 }
 
-async function requestGeminiText(prompt) {
+async function requestGeminiText(prompt, preferredModel = null) {
   const baseUrl = process.env.GEMINI_API_URL || DEFAULT_UPSTREAM_URL;
   const apiKey = process.env.GEMINI_API_KEY;
 
@@ -278,6 +284,7 @@ async function requestGeminiText(prompt) {
     apiKey,
     shouldStream: false,
     requestBody: buildGeminiRequest(prompt),
+    preferredModel,
   });
 
   if (!result.ok) {

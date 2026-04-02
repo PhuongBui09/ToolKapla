@@ -14,6 +14,18 @@ const {
 } = require('./_autoStorage');
 const { acquireLock, releaseLock } = require('./_redis');
 
+const ALL_MODELS = [
+  'gemini-3-flash-preview',
+  'gemini-3.1-flash-lite-preview',
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+];
+
+function getPreferredModelForEntry(entryId) {
+  const hash = entryId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return ALL_MODELS[hash % ALL_MODELS.length];
+}
+
 const RETRY_COOLDOWN_MS = 5 * 60 * 1000;
 
 function splitComments(fullText) {
@@ -81,7 +93,8 @@ async function runEntryById(entryId, { triggeredBy = 'manual' } = {}) {
       runningEntry.promptConfig,
       startedAt,
     );
-    const { text, meta } = await requestGeminiText(prompt);
+    const preferredModel = getPreferredModelForEntry(entryId);
+    const { text, meta } = await requestGeminiText(prompt, preferredModel);
     const modelMeta = normalizeModelMeta(meta);
 
     if (!String(text || '').trim()) {

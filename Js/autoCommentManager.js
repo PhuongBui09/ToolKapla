@@ -285,6 +285,7 @@ export class AutoCommentManager {
         try {
             const migrated = await this.migrateLegacyLocalData();
             await this.refreshState({ silent: false });
+            await this.runDueEntriesIfAny();
             this.startPolling();
 
             if (migrated) {
@@ -478,6 +479,20 @@ export class AutoCommentManager {
             }
 
             return false;
+        }
+    }
+
+    async runDueEntriesIfAny() {
+        try {
+            const response = await this.request('/api/auto-run-due');
+            if (response?.dueCount > 0) {
+                Toast.show(`Đã cập nhật ${response.processedCount} mẫu auto đến hạn`, 'success');
+                // Refresh state sau khi chạy
+                await this.refreshState({ silent: true });
+            }
+        } catch (error) {
+            console.error('Lỗi khi kiểm tra và chạy auto due:', error);
+            // Không show toast để tránh spam
         }
     }
 
