@@ -1,25 +1,27 @@
 /**
  * promptBuilder.js
- * Xây dựng prompt động dựa theo yêu cầu sinh nhận xét ngắn gọn, tự nhiên
+ * Xây dựng prompt động: nhận xét ngắn gọn, tự nhiên, mỗi nhận xét 1 ý duy nhất
  */
 
 // Phần prompt mặc định (core)
 const BASE_PROMPT = `
 Bạn là giáo viên trực tiếp đứng lớp và đang viết nhận xét gửi cho phụ huynh SAU BUỔI HỌC.
 
-Dựa trên phần mô tả buổi học dưới đây, hãy viết nhận xét mô tả CỤ THỂ học sinh đã làm gì trong buổi học, đồng thời nêu ngắn gọn thái độ học tập.
+Dựa trên phần mô tả buổi học dưới đây, hãy viết nhận xét CỤ THỂ học sinh đã làm gì trong buổi học và nêu ngắn gọn thái độ học tập.
 
-NGUYÊN TẮC BẮT BUỘC:
-- Mỗi nhận xét chỉ mô tả 1 mục tiêu hoặc 1 hoạt động cụ thể
-- Không gộp nhiều mục tiêu trong một nhận xét
-- Các nhận xét phải phân bổ đều các mục tiêu, giống như mỗi nhận xét là một học sinh khác nhau
-- Hãy tưởng tượng mỗi nhận xét dành cho một học sinh khác nhau
+NGUYÊN TẮC QUAN TRỌNG:
+- Mỗi nhận xét CHỈ được phép mô tả DUY NHẤT 1 mục tiêu hoặc 1 hoạt động
+- TUYỆT ĐỐI KHÔNG gộp nhiều mục tiêu trong một nhận xét
+- Nếu một nhận xét chứa hơn 1 hành động → không hợp lệ
+- Cấm dùng các từ nối: "và", "sau đó", "đồng thời", "kèm theo"
+- Các nhận xét phải phân bổ đều các mục tiêu
+- Hãy tưởng tượng mỗi nhận xét dành cho một học sinh khác nhau và mỗi học sinh chỉ nổi bật 1 kỹ năng
 
 YÊU CẦU DIỄN ĐẠT:
 - Văn phong giống giáo viên thật, không học thuật, không báo cáo
-- Câu ngắn, rõ, mỗi câu chỉ 1-2 ý
-- Tránh từ: "vận dụng", "thông qua", "qua đó", "rèn luyện", "giúp học sinh"
-- Ưu tiên dùng động từ cụ thể: "thêm", "tạo", "sử dụng", "chỉnh sửa"
+- Câu ngắn (< 20 từ), mỗi câu chỉ 1 ý
+- Tránh từ học thuật: "vận dụng", "thông qua", "qua đó", "rèn luyện"
+- Ưu tiên động từ cụ thể: "thêm", "tạo", "dùng", "chỉnh sửa"
 - Chỉ dùng từ "học sinh", KHÔNG dùng từ "con"
 
 ĐỊNH DẠNG:
@@ -36,23 +38,25 @@ function buildInstructions(config) {
     instructions.push(`- Viết CHÍNH XÁC ${config.numComments} nhận xét (không nhiều hơn, không ít hơn)`);
 
     instructions.push(`- Mỗi nhận xét chỉ mô tả 1 mục tiêu hoặc 1 hoạt động`);
-    instructions.push(`- Phân bổ đều mục tiêu/nội dung trên mỗi nhận xét`);
-    instructions.push(`- Mỗi nhận xét giả định dành cho một học sinh khác nhau để tạo phong cách tự nhiên`);
+    instructions.push(`- Không lặp lại một mục tiêu quá nhiều`);
+    instructions.push(`- Mỗi nhận xét giả định dành cho một học sinh khác nhau và chỉ nổi bật 1 kỹ năng`);
 
     if (config.commentVariety === 'low') {
-        instructions.push(`- Ví dụ khác nhau nhẹ, vẫn ưu tiên cấu trúc ngắn, tự nhiên`);
+        instructions.push(`- Ví dụ khác nhau nhẹ, vẫn ưu tiên câu ngắn, tự nhiên`);
     } else {
-        instructions.push(`- Thay đổi câu chữ, thứ tự, góc nhìn giữa các nhận xét`);
+        instructions.push(`- Thay đổi câu chữ, góc nhìn, hành động và thái độ giữa các nhận xét`);
     }
 
     if (config.commentLength === '1-2') {
         instructions.push(`- Mỗi nhận xét dài 1–2 câu`);
         instructions.push(`- Câu 1: mô tả hành động cụ thể học sinh làm`);
-        instructions.push(`- Câu 2: nêu thái độ học tập ngắn (1-2 từ hoặc cụm từ)`);
-        instructions.push(`- Không trộn nội dung hành động và thái độ vào cùng một câu`);
+        instructions.push(`- Câu 2: nêu thái độ học tập ngắn (1-2 từ/cụm từ)`);
+        instructions.push(`- Không trộn hành động và thái độ trong cùng một câu`);
+        instructions.push(`- Tuyệt đối không dùng: "và", "sau đó", "đồng thời", "kèm theo"`);
     } else if (config.commentLength === '2-3') {
         instructions.push(`- Mỗi nhận xét dài 2–3 câu`);
-        instructions.push(`- Câu 1: hành động cụ thể, Câu 2 (hoặc 3): thái độ học tập`);
+        instructions.push(`- Câu 1: hành động cụ thể; Câu 2 (hoặc 3): thái độ học tập`);
+        instructions.push(`- Nội dung mỗi câu cần ngắn, không quá 20 từ`);
     }
 
     if (config.tone === 'pedagogical') {
@@ -60,7 +64,7 @@ function buildInstructions(config) {
     } else if (config.tone === 'neutral') {
         instructions.push(`- Giọng văn: Trung tính, khách quan, giản dị`);
     } else if (config.tone === 'friendly') {
-        instructions.push(`- Giọng văn: Thân thiện, gần gũi, đơn giản`);
+        instructions.push(`- Giọng văn: Thân thiện, gần gũi`);
     }
 
     if (!config.allowEmoji) {
