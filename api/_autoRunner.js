@@ -114,8 +114,10 @@ async function runEntryById(entryId, { triggeredBy = 'manual' } = {}) {
         });
 
         const runHistory = await getRunHistory();
+        // Remove old runs for this entryId to keep only the latest per entry
+        const filteredRunHistory = runHistory.filter((run) => run.entryId !== runningEntry.id);
         const nextRunHistory = await saveRunHistory(
-            [runItem, ...runHistory].slice(0, MAX_RUN_HISTORY),
+            [runItem, ...filteredRunHistory].slice(0, MAX_RUN_HISTORY),
         );
 
         const latestEntries = await getEntries();

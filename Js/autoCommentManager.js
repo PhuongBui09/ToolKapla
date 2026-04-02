@@ -276,7 +276,7 @@ export class AutoCommentManager {
     init() {
         this.cacheDom();
         this.bindEvents();
-        this.render();
+        // this.render(); // Removed: no longer show list
         this.renderRunHistory();
         this.bootstrap();
     }
@@ -404,6 +404,17 @@ export class AutoCommentManager {
                 this.loadRunHistoryIntoMainForm(runId);
                 return;
             }
+
+            if (runAction === 'view-details') {
+                const runItem = this.runHistory.find((item) => item.id === runId);
+                if (runItem) {
+                    const entry = this.entries.find((e) => e.id === runItem.entryId);
+                    if (entry) {
+                        this.showEntryDetails(entry);
+                    }
+                }
+                return;
+            }
         });
 
         if (this.runHistorySearchInput) {
@@ -457,7 +468,7 @@ export class AutoCommentManager {
         this.runHistory = runHistory.sort((left, right) => right.timestamp - left.timestamp);
         this.loadingState = false;
         this.lastErrorMessage = '';
-        this.render();
+        // this.render(); // Removed: no longer show list
         this.renderRunHistory();
     }
 
@@ -470,7 +481,7 @@ export class AutoCommentManager {
             console.error('Không thể đồng bộ auto state:', error);
             this.loadingState = false;
             this.lastErrorMessage = error.message || 'Không thể tải dữ liệu auto từ server';
-            this.render();
+            // this.render(); // Removed: no longer show list
             this.renderRunHistory();
 
             if (!silent) {
@@ -736,33 +747,56 @@ export class AutoCommentManager {
         this.closeModal();
     }
 
-    openPanel(panelName = 'form') {
-        this.activePanel = PANEL_TITLES[panelName] ? panelName : 'form';
-        this.modal.classList.add('is-open');
-        this.modal.setAttribute('aria-hidden', 'false');
-        document.body.classList.add('auto-modal-open');
+    renderEntryDetailsHTML(entry) {
+        const nextActionAt = this.getNextActionAt(entry);
+        const flowLabel = FLOW_LABELS[entry.flowType] || FLOW_LABELS.flow1;
+        const lastRunText =
+            entry.lastStatus === 'running'
+                ? 'Đang được server gọi AI...'
+                : entry.lastGeneratedAt
+                  ? `Lần cuối: ${formatDateTime(entry.lastGeneratedAt)}`
+                  : 'Chưa có lần chạy thành công';
+        const recentRunSummary = summarizeRecentRuns(entry.recentRuns, entry.runCount);
+        const nextActionLabel =
+            Number(entry.retryAfterAt) > 0 ? 'Lần thử lại' : 'Lần tự động kế tiếp';
 
-        this.modalTitle.textContent = PANEL_TITLES[this.activePanel];
+        const statusText =
+            entry.lastStatus === 'error'
+                ? `Lần gần nhất bị lỗi. Hệ thống sẽ tự thử lại mỗi 5 phút cho tới khi thành công. ${recentRunSummary}`
+                : entry.lastStatus === 'running'
+                  ? 'Server đang xử lý mẫu này'
+                  : entry.lastStatus === 'success'
+                    ? recentRunSummary
+                    : 'Đang chờ lần chạy đầu tiên ngay sau khi lưu mẫu.';
 
-        this.modalTabs.forEach((button) => {
-            button.classList.toggle('active', button.dataset.openPanel === this.activePanel);
-        });
-
-        this.modalPanels.forEach((panel) => {
-            panel.classList.toggle('active', panel.dataset.panel === this.activePanel);
-        });
-
-        if (this.activePanel === 'form') {
-            window.requestAnimationFrame(() => {
-                this.lessonPreviewInput.focus();
-            });
-        }
+        return `
+            <div class="auto-comment-card auto-comment-card--details">
+                <div class="auto-comment-card__header">
+                    <div>
+                        <h3>${this.escapeHtml(entry.lessonPreview)}</h3>
+                        <div class="auto-comment-meta">
+                            <span>${this.escapeHtml(flowLabel)}</span>
+                            <span>Tạo lúc ${this.escapeHtml(formatDateTime(entry.createdAt))}</span>
+                            <span>${this.escapeHtml(lastRunText)}</span>
+                        </div>
+                    </div>
+                    <div class="auto-comment-badge">${entry.runCount} lần</div>
+                </div>
+                <p class="auto-comment-description">${this.escapeHtml(entry.lessonDescription)}</p>
+                <div class="auto-comment-status">
+                    <span>${this.escapeHtml(statusText)}</span>
+                    <span>${this.escapeHtml(nextActionLabel)}: ${this.escapeHtml(formatDateTime(nextActionAt))} (${this.escapeHtml(formatRelativeCountdown(nextActionAt))})</span>
+                </div>
+            </div>
+        `;
     }
 
     closeModal() {
         this.modal.classList.remove('is-open');
         this.modal.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('auto-modal-open');
+        // Reset tabs display
+        this.modalTabs.forEach((tab) => (tab.style.display = ''));
     }
 
     renderOverview() {
@@ -946,6 +980,9 @@ export class AutoCommentManager {
                     </div>
                 </div>
                 <div class="auto-run-history-item__actions">
+                    <button type="button" class="btn-secondary" data-run-action="view-details" data-run-id="${item.id}">
+                        Xem chi tiết
+                    </button>
                     <button type="button" class="btn-secondary" data-run-action="load" data-run-id="${item.id}">
                         Nạp kết quả
                     </button>
