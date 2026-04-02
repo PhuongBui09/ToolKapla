@@ -404,7 +404,6 @@ export class AutoCommentManager {
                 this.loadRunHistoryIntoMainForm(runId);
                 return;
             }
-
         });
 
         if (this.runHistorySearchInput) {
@@ -660,17 +659,18 @@ export class AutoCommentManager {
         }
 
         if (
-            !window.confirm(
-                `Xóa mẫu "${entry.lessonPreview}" và toàn bộ lịch sử auto liên quan?`,
-            )
+            !window.confirm(`Xóa mẫu "${entry.lessonPreview}" và toàn bộ lịch sử auto liên quan?`)
         ) {
             return;
         }
 
         try {
-            const payload = await this.request(`/api/auto-templates?id=${encodeURIComponent(entryId)}`, {
-                method: 'DELETE',
-            });
+            const payload = await this.request(
+                `/api/auto-templates?id=${encodeURIComponent(entryId)}`,
+                {
+                    method: 'DELETE',
+                },
+            );
 
             this.applyStatePayload(payload);
 
@@ -717,7 +717,9 @@ export class AutoCommentManager {
 
     applyDataToMainForm(item) {
         const lessonDescription = document.getElementById('lessonDescription');
-        const flowRadio = document.querySelector(`input[name="flowType"][value="${item.flowType}"]`);
+        const flowRadio = document.querySelector(
+            `input[name="flowType"][value="${item.flowType}"]`,
+        );
 
         if (lessonDescription) {
             lessonDescription.value = item.lessonDescription;
@@ -772,24 +774,24 @@ export class AutoCommentManager {
         this.entriesCount.textContent = String(totalEntries);
         this.dueCount.textContent = String(dueEntries);
         this.runCount.textContent = String(runCount);
-        this.latestRunLabel.textContent = latestRun ? formatDateTime(latestRun.timestamp) : 'Chưa có';
+        this.latestRunLabel.textContent = latestRun
+            ? formatDateTime(latestRun.timestamp)
+            : 'Chưa có';
 
         this.formCardMeta.textContent =
-            totalEntries === 0
-                ? 'Bắt đầu tạo mẫu đầu tiên'
-                : 'Thêm mới hoặc cập nhật mẫu hiện có';
+            totalEntries === 0 ? 'Bắt đầu tạo mẫu đầu tiên' : 'Thêm mới hoặc cập nhật mẫu hiện có';
         this.listCardMeta.textContent =
             totalEntries === 0
                 ? 'Chưa có mẫu nào'
                 : `${totalEntries} mẫu đang lưu • ${dueEntries} mẫu đến hạn`;
         this.historyCardMeta.textContent =
-            runCount === 0
-                ? 'Chưa có lần chạy nào'
-                : `Đã lưu ${runCount} kết quả auto riêng biệt`;
+            runCount === 0 ? 'Chưa có lần chạy nào' : `Đã lưu ${runCount} kết quả auto riêng biệt`;
     }
 
     render() {
-        const entries = this.entries.slice().sort((left, right) => right.updatedAt - left.updatedAt);
+        const entries = this.entries
+            .slice()
+            .sort((left, right) => right.updatedAt - left.updatedAt);
         this.listContainer.innerHTML = '';
         this.renderOverview();
 
@@ -849,7 +851,8 @@ export class AutoCommentManager {
                       ? `Lần cuối: ${formatDateTime(entry.lastGeneratedAt)}`
                       : 'Chưa có lần chạy thành công';
             const recentRunSummary = summarizeRecentRuns(entry.recentRuns, entry.runCount);
-            const nextActionLabel = Number(entry.retryAfterAt) > 0 ? 'Lần thử lại' : 'Lần tự động kế tiếp';
+            const nextActionLabel =
+                Number(entry.retryAfterAt) > 0 ? 'Lần thử lại' : 'Lần tự động kế tiếp';
 
             const statusText =
                 entry.lastStatus === 'error'
