@@ -34,7 +34,7 @@
                 <button class="tab-btn" data-tab="script-output">📋 Script</button>
                 <button class="tab-btn" data-tab="configure">⚙️ Cấu Hình</button>
                 <button class="tab-btn" data-tab="history">📚 Lịch Sử</button>
-                <button class="tab-btn" data-tab="auto-comments">⏰ Tự Động 48h</button>
+                <button class="tab-btn" data-tab="auto-comments">⏰ Tự Động 1 Tháng</button>
             </div>
 
             <!-- Tab 1: Tạo Nhận Xét & Script -->
@@ -354,16 +354,16 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
                 </div>
             </div>
 
-            <!-- Tab 5: Tự Động 48h -->
+            <!-- Tab 5: Tự Động 1 Tháng -->
             <div class="tab-content" id="tab-auto-comments">
                 <div class="auto-comment-dashboard">
                     <div class="auto-comment-hero">
                         <div class="auto-comment-hero__content">
-                            <p class="auto-comment-eyebrow">⏰ Quy trình tự động 48 giờ</p>
+                            <p class="auto-comment-eyebrow">⏰ Quy trình tự động 1 tháng</p>
                             <h3>Tạo mẫu, theo dõi trạng thái và xem kết quả ở một chỗ</h3>
                             <p class="auto-comment-summary" id="autoCommentSummary">
                                 Chưa có mẫu tự động nào. Tạo 1 mẫu để hệ thống tự làm mới nhận xét
-                                mỗi 48 giờ.
+                                mỗi tháng.
                             </p>
                         </div>
 
@@ -407,7 +407,7 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
                             <span class="auto-launch-card__icon">🧾</span>
                             <div class="auto-launch-card__body">
                                 <strong>Lịch Sử Auto</strong>
-                                <p>Kết quả AI chạy sau 48h được lưu riêng hoàn toàn.</p>
+                                <p>Kết quả AI chạy theo chu kỳ 1 tháng được lưu riêng hoàn toàn.</p>
                                 <span class="auto-launch-card__meta" id="autoHistoryCardMeta">
                                     Chưa có lần chạy nào
                                 </span>
@@ -417,8 +417,9 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
 
                     <p class="auto-comment-note auto-comment-note--compact">
                         Lưu mẫu xong hệ thống sẽ chạy AI ngay. Nếu lỗi, backend sẽ tự thử lại mỗi 5
-                        phút cho tới khi thành công; sau đó cứ mỗi 48 giờ hệ thống sẽ tự làm mới lại
-                        comment.
+                        phút cho tới khi thành công; sau đó cứ mỗi 1 tháng hệ thống sẽ tự làm mới lại
+                        comment. Nếu nhiều mẫu cùng đến hạn, hệ thống sẽ tự xử lý theo từng batch
+                        nhỏ để tránh quá tải.
                     </p>
                 </div>
 
@@ -427,7 +428,7 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
                     <div class="auto-modal__dialog" role="dialog" aria-modal="true">
                         <div class="auto-modal__header">
                             <div>
-                                <p class="auto-modal__eyebrow">Tự động 48 giờ</p>
+                                <p class="auto-modal__eyebrow">Tự động 1 tháng</p>
                                 <h3 id="autoModalTitle">Thêm form</h3>
                             </div>
                             <button
@@ -481,7 +482,7 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
                                         >
                                         <textarea
                                             id="autoLessonDescription"
-                                            placeholder="Nhập mô tả buổi học để hệ thống dùng lại mỗi 48h khi gọi AI..."
+                                            placeholder="Nhập mô tả buổi học để hệ thống dùng lại mỗi tháng khi gọi AI..."
                                         ></textarea>
                                     </div>
 
@@ -511,8 +512,9 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
 
                             <section class="auto-modal-panel" data-panel="history">
                                 <p class="auto-comment-note">
-                                    Các lần AI chạy sau mỗi 48h sẽ được lưu riêng ở đây, không đi
-                                    vào tab Lịch Sử thủ công.
+                                    Các lần AI chạy sau mỗi 1 tháng sẽ được lưu riêng ở đây, không đi
+                                    vào tab Lịch Sử thủ công. Nếu backlog lớn, server sẽ tự rút dần
+                                    theo batch qua các lượt chạy nền kế tiếp.
                                 </p>
                                 <div class="history-search">
                                     <input

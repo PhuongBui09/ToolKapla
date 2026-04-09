@@ -5,6 +5,7 @@ const {
     MAX_RUN_HISTORY,
     createId,
     getEntries,
+    getNextRunAt,
     getRunHistory,
     isEntryDue,
     normalizeEntry,
@@ -27,6 +28,38 @@ function getPreferredModelForEntry(entryId) {
 }
 
 const RETRY_COOLDOWN_MS = 5 * 60 * 1000;
+const DEFAULT_DUE_BATCH_SIZE = 3;
+const MAX_DUE_BATCH_SIZE = 20;
+
+function parsePositiveInt(value, fallback, { min = 1, max = Number.MAX_SAFE_INTEGER } = {}) {
+    const parsed = Number.parseInt(String(value || ''), 10);
+
+    if (!Number.isFinite(parsed)) {
+        return fallback;
+    }
+
+    return Math.min(max, Math.max(min, parsed));
+}
+
+function getDueBatchSize() {
+    return parsePositiveInt(process.env.AUTO_DUE_BATCH_SIZE, DEFAULT_DUE_BATCH_SIZE, {
+        min: 1,
+        max: MAX_DUE_BATCH_SIZE,
+    });
+}
+
+function getEntryActionAt(entry) {
+    const retryAfterAt = Number(entry?.retryAfterAt) || 0;
+    return retryAfterAt > 0 ? retryAfterAt : getNextRunAt(entry);
+}
+
+function compareDueEntries(left, right) {
+    return (
+        getEntryActionAt(left) - getEntryActionAt(right) ||
+        (left.updatedAt || 0) - (right.updatedAt || 0) ||
+        String(left.id || '').localeCompare(String(right.id || ''))
+    );
+}
 
 function splitComments(fullText) {
     return String(fullText || '')
@@ -197,7 +230,7 @@ async function runEntryById(entryId, { triggeredBy = 'manual' } = {}) {
     }
 }
 
-async function runDueEntries() {
+async function runDueEntries({ maxToProcess = getDueBatchSize() } = {}) {
     const cronLockToken = await acquireLock('cron:auto-refresh', 900);
 
     if (!cronLockToken) {
@@ -215,10 +248,11 @@ async function runDueEntries() {
 
     try {
         const entries = await getEntries();
-        const dueEntries = entries.filter((entry) => isEntryDue(entry));
+        const dueEntries = entries.filter((entry) => isEntryDue(entry)).sort(compareDueEntries);
+        const scheduledEntries = dueEntries.slice(0, maxToProcess);
         const results = [];
 
-        for (const entry of dueEntries) {
+        for (const entry of scheduledEntries) {
             const result = await runEntryById(entry.id, { triggeredBy: 'cron' });
             results.push({
                 entryId: entry.id,
@@ -229,16 +263,23 @@ async function runDueEntries() {
             });
         }
 
+        const latestEntries = await getEntries();
+        const latestRunHistory = await getRunHistory();
+        const remainingDueCount = latestEntries.filter((entry) => isEntryDue(entry)).length;
+
         return {
             ok: true,
             skipped: false,
             dueCount: dueEntries.length,
+            scheduledCount: scheduledEntries.length,
+            batchSize: maxToProcess,
             processedCount: results.filter((item) => item.ok).length,
             failedCount: results.filter((item) => !item.ok).length,
+            remainingDueCount,
             results,
             state: {
-                entries: await getEntries(),
-                runHistory: await getRunHistory(),
+                entries: latestEntries,
+                runHistory: latestRunHistory,
             },
         };
     } finally {

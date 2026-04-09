@@ -6,11 +6,12 @@ const STORAGE_KEY = 'toolkapla_auto_comment_entries';
 const RUN_HISTORY_KEY = 'toolkapla_auto_comment_run_history';
 const MANUAL_HISTORY_KEY = 'toolkapla_comments_history';
 const BACKEND_MIGRATION_KEY = 'toolkapla_auto_backend_migrated_v2';
-const AUTO_REFRESH_MS = 48 * 60 * 60 * 1000;
+const AUTO_REFRESH_MONTHS = 1;
 const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 const MAX_RECENT_RUNS = 8;
 const MAX_RUN_HISTORY = 50;
 const STATE_REFRESH_INTERVAL_MS = 60 * 1000;
+const FOLLOW_UP_DUE_SWEEP_DELAY_MS = 5 * 1000;
 
 const FLOW_LABELS = {
     flow1: 'Flow 1 - Nhận xét chung',
@@ -209,6 +210,25 @@ function normalizeRunHistoryItem(item) {
     };
 }
 
+function addCalendarMonths(timestamp, monthsToAdd = AUTO_REFRESH_MONTHS) {
+    const baseDate = new Date(Number(timestamp) || Date.now());
+    const originalDay = baseDate.getDate();
+    const targetMonthIndex = baseDate.getMonth() + monthsToAdd;
+    const targetYear = baseDate.getFullYear() + Math.floor(targetMonthIndex / 12);
+    const normalizedTargetMonth = ((targetMonthIndex % 12) + 12) % 12;
+    const lastDayOfTargetMonth = new Date(targetYear, normalizedTargetMonth + 1, 0).getDate();
+
+    return new Date(
+        targetYear,
+        normalizedTargetMonth,
+        Math.min(originalDay, lastDayOfTargetMonth),
+        baseDate.getHours(),
+        baseDate.getMinutes(),
+        baseDate.getSeconds(),
+        baseDate.getMilliseconds(),
+    ).getTime();
+}
+
 function parseStatePayload(payload) {
     const state = payload?.state || payload || {};
 
@@ -268,6 +288,8 @@ export class AutoCommentManager {
         this.runHistorySearchTerm = '';
         this.activePanel = 'form';
         this.refreshIntervalId = null;
+        this.dueSweepTimeoutId = null;
+        this.dueSweepInFlight = false;
         this.loadingState = true;
         this.lastErrorMessage = '';
         this.submitInFlight = false;
@@ -513,17 +535,50 @@ export class AutoCommentManager {
         }
     }
 
-    async runDueEntriesIfAny() {
+    scheduleFollowUpDueSweep(delayMs = FOLLOW_UP_DUE_SWEEP_DELAY_MS) {
+        window.clearTimeout(this.dueSweepTimeoutId);
+        this.dueSweepTimeoutId = window.setTimeout(() => {
+            void this.runDueEntriesIfAny({ silent: true });
+        }, delayMs);
+    }
+
+    async runDueEntriesIfAny({ silent = false } = {}) {
+        if (this.dueSweepInFlight) {
+            return;
+        }
+
+        this.dueSweepInFlight = true;
+
         try {
             const response = await this.request('/api/auto-run-due');
-            if (response?.dueCount > 0) {
-                Toast.show(`Đã cập nhật ${response.processedCount} mẫu auto đến hạn`, 'success');
+            if ((response?.scheduledCount || 0) > 0) {
+                const attemptedCount = Number(response.scheduledCount) || 0;
+                const processedCount = Number(response.processedCount) || 0;
+                const failedCount = Number(response.failedCount) || 0;
+                const remainingDueCount = Number(response.remainingDueCount) || 0;
+                let message = `Đã xử lý ${processedCount}/${attemptedCount} mẫu auto đến hạn`;
+
+                if (remainingDueCount > 0) {
+                    message += `, còn ${remainingDueCount} mẫu chờ batch kế tiếp`;
+                    this.scheduleFollowUpDueSweep();
+                }
+
+                if (!silent) {
+                    Toast.show(message, failedCount > 0 ? 'warning' : 'success');
+                }
                 // Refresh state sau khi chạy
                 await this.refreshState({ silent: true });
+                return;
+            }
+
+            if (response?.skipped && response?.reason === 'locked') {
+                this.scheduleFollowUpDueSweep(10 * 1000);
             }
         } catch (error) {
             console.error('Lỗi khi kiểm tra và chạy auto due:', error);
             // Không show toast để tránh spam
+        } finally {
+            this.dueSweepInFlight = false;
         }
     }
 
@@ -581,7 +636,7 @@ export class AutoCommentManager {
     }
 
     getNextRunAt(entry) {
-        return (entry.scheduleAnchorAt || entry.updatedAt || entry.createdAt) + AUTO_REFRESH_MS;
+        return addCalendarMonths(entry.scheduleAnchorAt || entry.updatedAt || entry.createdAt);
     }
 
     getNextActionAt(entry) {
@@ -919,7 +974,7 @@ export class AutoCommentManager {
         this.summary.textContent =
             totalEntries === 0
                 ? 'Chưa có mẫu tự động nào. Lưu 1 mẫu để hệ thống chạy AI ngay rồi tự vận hành về sau.'
-                : `${totalEntries} mẫu đang lưu, ${dueEntries} mẫu đến hạn hoặc đang chờ retry. Server sẽ tự chạy ngay khi lưu, tự thử lại mỗi 5 phút nếu lỗi và làm mới lại sau mỗi 48 giờ kể từ lần thành công gần nhất.`;
+                : `${totalEntries} mẫu đang lưu, ${dueEntries} mẫu đến hạn hoặc đang chờ retry. Server sẽ tự chạy ngay khi lưu, tự thử lại mỗi 5 phút nếu lỗi và làm mới lại sau mỗi 1 tháng kể từ lần thành công gần nhất. Nếu nhiều mẫu đến hạn cùng lúc, hệ thống sẽ xử lý theo từng batch nhỏ để tránh quá tải.`;
 
         if (entries.length === 0) {
             this.emptyState.style.display = 'block';

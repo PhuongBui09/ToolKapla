@@ -3,7 +3,7 @@ const { getJson, setJson } = require('./_redis');
 
 const ENTRIES_KEY = 'auto:entries';
 const RUN_HISTORY_KEY = 'auto:runs';
-const AUTO_REFRESH_MS = 48 * 60 * 60 * 1000;
+const AUTO_REFRESH_MONTHS = 1;
 const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 const MAX_RECENT_RUNS = 8;
 const MAX_RUN_HISTORY = 50;
@@ -76,8 +76,27 @@ function normalizeRunHistoryItem(item) {
   };
 }
 
+function addCalendarMonths(timestamp, monthsToAdd = AUTO_REFRESH_MONTHS) {
+  const baseDate = new Date(Number(timestamp) || Date.now());
+  const originalDay = baseDate.getDate();
+  const targetMonthIndex = baseDate.getMonth() + monthsToAdd;
+  const targetYear = baseDate.getFullYear() + Math.floor(targetMonthIndex / 12);
+  const normalizedTargetMonth = ((targetMonthIndex % 12) + 12) % 12;
+  const lastDayOfTargetMonth = new Date(targetYear, normalizedTargetMonth + 1, 0).getDate();
+
+  return new Date(
+    targetYear,
+    normalizedTargetMonth,
+    Math.min(originalDay, lastDayOfTargetMonth),
+    baseDate.getHours(),
+    baseDate.getMinutes(),
+    baseDate.getSeconds(),
+    baseDate.getMilliseconds(),
+  ).getTime();
+}
+
 function getNextRunAt(entry) {
-  return (entry.scheduleAnchorAt || entry.updatedAt || entry.createdAt) + AUTO_REFRESH_MS;
+  return addCalendarMonths(entry.scheduleAnchorAt || entry.updatedAt || entry.createdAt);
 }
 
 function isEntryDue(entry, now = Date.now()) {
@@ -265,9 +284,10 @@ async function mergeLegacyState({ entries = [], runHistory = [] } = {}) {
 }
 
 module.exports = {
-  AUTO_REFRESH_MS,
+  AUTO_REFRESH_MONTHS,
   MAX_RECENT_RUNS,
   MAX_RUN_HISTORY,
+  addCalendarMonths,
   createId,
   deleteEntry,
   deleteRunHistoryItem,
