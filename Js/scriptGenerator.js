@@ -52,6 +52,35 @@ export class ScriptGenerator {
   function uiSuccess(text) { uiLog(text, "success"); }
   function uiError(text) { uiLog(text, "error"); }
 
+  const COMMENT_NAME_PATTERNS = [
+    /\{\{\s*student_name\s*\}\}/gi,
+    /\{\s*student_name\s*\}/gi,
+    /\{\{\s*(?:Học sinh|học sinh)\s*\}\}/gu,
+    /\{\s*(?:Học sinh|học sinh)\s*\}/gu
+  ];
+
+  function personalizeComment(text, studentName) {
+    const template = String(text || "").trim();
+    const safeName = String(studentName || "").trim();
+    if (!template || !safeName) return template;
+
+    let result = template;
+    let hasPlaceholder = false;
+
+    COMMENT_NAME_PATTERNS.forEach((pattern) => {
+      result = result.replace(pattern, () => {
+        hasPlaceholder = true;
+        return safeName;
+      });
+    });
+
+    if (hasPlaceholder) {
+      return result;
+    }
+
+    return result.replace(/^\s*(?:Học sinh|học sinh)(?=\s|[,.!?:;])/u, safeName);
+  }
+
   async function typeTextSmart(el, text, fastMode = false) {
     el.focus();
     el.value = "";
@@ -238,9 +267,10 @@ export class ScriptGenerator {
     const name = row.querySelector(".student_name")?.innerText?.trim()
       || row.getAttribute("pname")
       || "HS#" + idx;
-    const chosen = available.length
+    const commentTemplate = available.length
       ? available.splice(Math.floor(Math.random() * available.length), 1)[0]
       : (duplicated.push(name), comments[Math.floor(Math.random() * comments.length)]);
+    const chosen = personalizeComment(commentTemplate, name);
 
     await typeTextSmart(comment, chosen, chosen.length > 120);
     await wait(800 + Math.random() * 400); // Đợi nhận xét được lưu

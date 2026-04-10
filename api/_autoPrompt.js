@@ -8,6 +8,8 @@ const DEFAULT_PROMPT_CONFIG = {
   banGenericWords: true,
 };
 
+const STUDENT_NAME_PLACEHOLDER = '{{student_name}}';
+
 const BASE_PROMPT = `
 Bạn là giáo viên trực tiếp đứng lớp và đang viết nhận xét gửi cho phụ huynh SAU BUỔI HỌC.
 
@@ -24,6 +26,9 @@ YÊU CẦU DIỄN ĐẠT:
 - Diễn đạt đơn giản, rõ ràng để phụ huynh KHÔNG biết lập trình vẫn hiểu buổi học
 - Ưu tiên mô tả: công cụ sử dụng, thao tác học sinh làm, sản phẩm hoặc kết quả đạt được
 - Chỉ dùng từ "học sinh", KHÔNG dùng từ "con"
+- MỖI nhận xét PHẢI chứa đúng placeholder "${STUDENT_NAME_PLACEHOLDER}" ở vị trí tự nhiên trong câu
+- Giữ nguyên placeholder "${STUDENT_NAME_PLACEHOLDER}", KHÔNG được đổi thành tên thật hoặc placeholder khác
+- Ví dụ hợp lệ: "${STUDENT_NAME_PLACEHOLDER} đã ...", hoặc "Trong buổi học này, ${STUDENT_NAME_PLACEHOLDER} đã ..."
 
 CẤM TUYỆT ĐỐI:
 - KHÔNG mô tả học sinh hỗ trợ, giúp đỡ, hướng dẫn, kèm cặp hoặc ảnh hưởng đến các bạn khác

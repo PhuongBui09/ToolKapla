@@ -41,6 +41,35 @@ export class ScriptGeneratorFlow2 {
   function uiSuccess(text) { uiLog(text, "success"); }
   function uiError(text) { uiLog(text, "error"); }
 
+  const COMMENT_NAME_PATTERNS = [
+    /\{\{\s*student_name\s*\}\}/gi,
+    /\{\s*student_name\s*\}/gi,
+    /\{\{\s*(?:Học sinh|học sinh)\s*\}\}/gu,
+    /\{\s*(?:Học sinh|học sinh)\s*\}/gu
+  ];
+
+  function personalizeComment(text, studentName) {
+    const template = String(text || "").trim();
+    const safeName = String(studentName || "").trim();
+    if (!template || !safeName) return template;
+
+    let result = template;
+    let hasPlaceholder = false;
+
+    COMMENT_NAME_PATTERNS.forEach((pattern) => {
+      result = result.replace(pattern, () => {
+        hasPlaceholder = true;
+        return safeName;
+      });
+    });
+
+    if (hasPlaceholder) {
+      return result;
+    }
+
+    return result.replace(/^\s*(?:Học sinh|học sinh)(?=\s|[,.!?:;])/u, safeName);
+  }
+
   async function typeTextSmart(el, text, fastMode = false) {
     el.focus();
     el.value = "";
@@ -108,7 +137,7 @@ export class ScriptGeneratorFlow2 {
   function getRandomComment(level) {
     const bank = COMMENT_BANK[level];
     if (!bank || !bank.comments?.length) {
-      return "Học sinh đã tham gia buổi học.";
+      return "{{student_name}} đã tham gia buổi học.";
     }
     return bank.comments[Math.floor(Math.random() * bank.comments.length)];
   }
@@ -233,7 +262,8 @@ export class ScriptGeneratorFlow2 {
       || "HS#" + idx;
     const scoreVal = Number(score.value);
     const level = mapScoreToLevel(scoreVal);
-    const chosen = getRandomComment(level);
+    const commentTemplate = getRandomComment(level);
+    const chosen = personalizeComment(commentTemplate, name);
 
     await typeTextSmart(comment, chosen, chosen.length > 120);
     await wait(1000 + Math.random() * 500); // Chờ lâu hơn để nhận xét lưu

@@ -3,6 +3,8 @@
  * Xây dựng prompt động: nhận xét ngắn gọn, tự nhiên, mỗi nhận xét 1 ý duy nhất
  */
 
+const STUDENT_NAME_PLACEHOLDER = '{{student_name}}';
+
 // Phần prompt mặc định (core)
 const BASE_PROMPT = `
 Bạn là giáo viên trực tiếp đứng lớp và đang viết nhận xét gửi cho phụ huynh SAU BUỔI HỌC.
@@ -23,6 +25,9 @@ YÊU CẦU DIỄN ĐẠT:
 - Tránh từ học thuật: "vận dụng", "thông qua", "qua đó", "rèn luyện"
 - Ưu tiên động từ cụ thể: "thêm", "tạo", "dùng", "chỉnh sửa"
 - Chỉ dùng từ "học sinh", KHÔNG dùng từ "con"
+- MỖI nhận xét PHẢI chứa đúng placeholder "${STUDENT_NAME_PLACEHOLDER}" ở vị trí tự nhiên trong câu
+- Giữ nguyên placeholder "${STUDENT_NAME_PLACEHOLDER}", KHÔNG được đổi thành tên thật hoặc placeholder khác
+- Ví dụ hợp lệ: "${STUDENT_NAME_PLACEHOLDER} đã ...", hoặc "Trong buổi học này, ${STUDENT_NAME_PLACEHOLDER} đã ..."
 
 ĐỊNH DẠNG:
 - Mỗi nhận xét nằm trên MỘT DÒNG
