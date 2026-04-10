@@ -42,10 +42,10 @@ export class ScriptGeneratorFlow2 {
   function uiError(text) { uiLog(text, "error"); }
 
   const COMMENT_NAME_PATTERNS = [
-    /\{\{\s*student_name\s*\}\}/gi,
-    /\{\s*student_name\s*\}/gi,
-    /\{\{\s*(?:Học sinh|học sinh)\s*\}\}/gu,
-    /\{\s*(?:Học sinh|học sinh)\s*\}/gu
+    /\\{\\{\\s*student_name\\s*\\}\\}/gi,
+    /\\{\\s*student_name\\s*\\}/gi,
+    /\\{\\{\\s*(?:Học sinh|học sinh)\\s*\\}\\}/gu,
+    /\\{\\s*(?:Học sinh|học sinh)\\s*\\}/gu
   ];
 
   function personalizeComment(text, studentName) {
@@ -67,7 +67,7 @@ export class ScriptGeneratorFlow2 {
       return result;
     }
 
-    return result.replace(/^\s*(?:Học sinh|học sinh)(?=\s|[,.!?:;])/u, safeName);
+    return result.replace(/^\\s*(?:Học sinh|học sinh)(?=\\s|[,.!?:;])/u, safeName);
   }
 
   async function typeTextSmart(el, text, fastMode = false) {
