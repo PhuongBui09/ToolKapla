@@ -58,10 +58,22 @@ export class ScriptGenerator {
     /\\{\\{\\s*(?:Học sinh|học sinh)\\s*\\}\\}/gu,
     /\\{\\s*(?:Học sinh|học sinh)\\s*\\}/gu
   ];
+  const COMMENT_SUBJECT_PATTERNS = [
+    /(^|[.!?:;]\\s+)(?:Học sinh|học sinh)(?=\\s|[,.!?:;])/gu,
+    /(\\n\\s*)(?:Học sinh|học sinh)(?=\\s|[,.!?:;])/gu
+  ];
+
+  function getStudentDisplayName(studentName) {
+    const normalizedName = String(studentName || "").trim().replace(/\\s+/gu, " ");
+    if (!normalizedName) return "";
+
+    const parts = normalizedName.split(" ");
+    return parts[parts.length - 1] || normalizedName;
+  }
 
   function personalizeComment(text, studentName) {
     const template = String(text || "").trim();
-    const safeName = String(studentName || "").trim();
+    const safeName = getStudentDisplayName(studentName);
     if (!template || !safeName) return template;
 
     let result = template;
@@ -74,11 +86,15 @@ export class ScriptGenerator {
       });
     });
 
+    COMMENT_SUBJECT_PATTERNS.forEach((pattern) => {
+      result = result.replace(pattern, (match, prefix = "") => prefix + safeName);
+    });
+
     if (hasPlaceholder) {
       return result;
     }
 
-    return result.replace(/^\\s*(?:Học sinh|học sinh)(?=\\s|[,.!?:;])/u, safeName);
+    return result;
   }
 
   async function typeTextSmart(el, text, fastMode = false) {
