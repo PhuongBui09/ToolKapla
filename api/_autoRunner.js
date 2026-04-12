@@ -68,6 +68,30 @@ function splitComments(fullText) {
         .filter((line) => line.length > 0);
 }
 
+function extractJSON(jsonString) {
+    let cleaned = String(jsonString || '').trim();
+
+    if (cleaned.startsWith('```')) {
+        cleaned = cleaned.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/, '');
+    }
+
+    return cleaned;
+}
+
+function normalizeFlow2Comments(comments) {
+    const rawText = String(comments || '').trim();
+
+    if (!rawText) {
+        return '';
+    }
+
+    try {
+        return JSON.stringify(JSON.parse(extractJSON(rawText)));
+    } catch {
+        return rawText;
+    }
+}
+
 function normalizeModelMeta(meta) {
     return {
         modelUsed: String(meta?.modelUsed || '').trim(),
@@ -134,7 +158,8 @@ async function runEntryById(entryId, { triggeredBy = 'manual' } = {}) {
             throw new Error('Gemini trả về nội dung rỗng cho mẫu auto này.');
         }
 
-        const comments = runningEntry.flowType === 'flow2' ? text : splitComments(text);
+        const comments =
+            runningEntry.flowType === 'flow2' ? normalizeFlow2Comments(text) : splitComments(text);
         const runItem = normalizeRunHistoryItem({
             id: createId('run'),
             entryId: runningEntry.id,

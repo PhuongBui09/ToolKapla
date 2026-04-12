@@ -28,6 +28,19 @@ function createId(prefix = 'auto') {
     return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
+function extractJSON(jsonString) {
+    let cleaned = String(jsonString || '').trim();
+    if (cleaned.startsWith('```')) {
+        cleaned = cleaned.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/, '');
+    }
+    return cleaned;
+}
+
+function parseStoredFlow2CommentBank(rawComments) {
+    const parsed = JSON.parse(extractJSON(rawComments));
+    return parsed.commentBank || parsed;
+}
+
 function formatDateTime(timestamp) {
     if (!timestamp) {
         return 'Chưa có';
@@ -788,8 +801,7 @@ export class AutoCommentManager {
 
         if (runItem.flowType === 'flow2') {
             try {
-                const parsed = JSON.parse(runItem.comments);
-                window.flow2CommentBank = parsed.commentBank || parsed;
+                window.flow2CommentBank = parseStoredFlow2CommentBank(runItem.comments);
                 document.getElementById('commentsInput').value = this.formatCommentBankForDisplay(
                     window.flow2CommentBank,
                 );

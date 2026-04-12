@@ -73,7 +73,7 @@ export function saveCommentToHistory(
             flowType,
             lessonPreview: preview,
             lessonDescription: descriptionToSave,
-            comments,
+            comments: flowType === 'flow2' ? normalizeFlow2Comments(comments) : comments,
             timestamp,
             source: historyOptions.source || 'manual',
             automationId: historyOptions.automationId || null,
@@ -160,6 +160,30 @@ function splitComments(fullText) {
         .split('\n')
         .map((line) => line.trim())
         .filter((line) => line.length > 0);
+}
+
+function extractJSON(jsonString) {
+    let cleaned = String(jsonString || '').trim();
+
+    if (cleaned.startsWith('```')) {
+        cleaned = cleaned.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/, '');
+    }
+
+    return cleaned;
+}
+
+function normalizeFlow2Comments(comments) {
+    const rawText = String(comments || '').trim();
+
+    if (!rawText) {
+        return '';
+    }
+
+    try {
+        return JSON.stringify(JSON.parse(extractJSON(rawText)));
+    } catch {
+        return rawText;
+    }
 }
 
 function parseRetryDelayMs(retryDelay) {

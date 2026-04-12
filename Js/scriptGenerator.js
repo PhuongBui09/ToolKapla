@@ -68,7 +68,7 @@ export class ScriptGenerator {
     if (!normalizedName) return "";
 
     const parts = normalizedName.split(" ");
-    return parts[parts.length - 1] || normalizedName;
+    return parts.slice(-2).join(" ") || normalizedName;
   }
 
   function personalizeComment(text, studentName) {

@@ -18,12 +18,17 @@ window.toolkaplaAiBusy = false;
 
 // Helper: Extract JSON từ response (xử lý markdown code blocks)
 function extractJSON(jsonString) {
-    let cleaned = jsonString.trim();
+    let cleaned = String(jsonString || '').trim();
     // Remove markdown code blocks: ```json ... ``` hoặc ``` ... ```
     if (cleaned.startsWith('```')) {
-        cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
+        cleaned = cleaned.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/, '');
     }
     return cleaned;
+}
+
+function parseStoredFlow2CommentBank(rawComments) {
+    const parsed = JSON.parse(extractJSON(rawComments));
+    return parsed.commentBank || parsed;
 }
 
 // Hàm để disable buttons khi đang sinh comments
@@ -122,8 +127,7 @@ function renderHistory() {
             if (item.flowType === 'flow2') {
                 // Flow 2: comments là JSON string chứa COMMENT_BANK
                 try {
-                    const parsed = JSON.parse(item.comments);
-                    window.flow2CommentBank = parsed.commentBank || parsed;
+                    window.flow2CommentBank = parseStoredFlow2CommentBank(item.comments);
                     document.getElementById('commentsInput').value = formatCommentBankForDisplay(
                         window.flow2CommentBank,
                     );
