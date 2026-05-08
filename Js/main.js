@@ -9,6 +9,7 @@ import {
     updateHistoryPreview,
 } from './gemini.js';
 import { initPromptConfigUI } from './promptConfigUI.js';
+import { initScoreConfigUI } from './scoreConfigUI.js';
 import { buildPromptFlow1, buildPromptFlow2 } from './promptFlow2.js';
 import { initAutoCommentManager } from './autoCommentManager.js';
 
@@ -522,6 +523,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Khởi tạo UI cấu hình prompt
     initPromptConfigUI();
+    initScoreConfigUI();
 
     initAutoCommentManager({
         switchTab: (tabName) => tabManager.switchTab(tabName),

@@ -38,11 +38,12 @@ export function loadConfig() {
  */
 export function saveConfig(config) {
   try {
-    localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(config));
-    return true;
+    const mergedConfig = { ...loadConfig(), ...(config || {}) };
+    localStorage.setItem(CONFIG_STORAGE_KEY, JSON.stringify(mergedConfig));
+    return mergedConfig;
   } catch (e) {
     console.error("Lỗi khi lưu config:", e);
-    return false;
+    return null;
   }
 }
 
