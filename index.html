@@ -44,22 +44,12 @@
                         <div class="generate-layout__primary">
                             <div class="form-section">
                                 <fieldset>
-                                    <legend>🎯 Chọn cách sinh nhận xét</legend>
-                                    <div class="flow-switcher">
-                                        <label class="radio-label">
-                                            <input
-                                                type="radio"
-                                                name="flowType"
-                                                value="flow1"
-                                                checked
-                                            />
-                                            <span>Flow 1 – Nhận xét chung</span>
-                                        </label>
-                                        <label class="radio-label">
-                                            <input type="radio" name="flowType" value="flow2" />
-                                            <span>Flow 2 – Theo điểm (YEU/KHA/GIOI)</span>
-                                        </label>
-                                    </div>
+                                    <legend>🎯 Luồng sinh nhận xét</legend>
+                                    <p class="history-note">
+                                        Một luồng duy nhất: AI sinh nhận xét theo điểm, còn nếu ô
+                                        điểm đang trống thì hệ thống sẽ tự điền điểm mặc định theo
+                                        cấu hình của bạn.
+                                    </p>
                                 </fieldset>
                             </div>
 
@@ -259,45 +249,15 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
                             <!-- Phần cấu hình điểm -->
                             <div class="score-box">
                                 <fieldset>
-                                    <legend>⭐ Chọn Điểm</legend>
+                                    <legend>⭐ Điểm mặc định</legend>
 
-                                    <div class="score-option">
-                                        <label>
-                                            <input
-                                                type="radio"
-                                                name="scoreMode"
-                                                value="fixed"
-                                                checked
-                                            />
-                                            Điểm cố định
-                                        </label>
+                                    <div class="score-option score-option--single">
+                                        <label for="fixedScore">Điểm khi ô điểm đang trống</label>
                                         <input
                                             type="number"
                                             id="fixedScore"
-                                            min="1"
-                                            max="10"
-                                            value="9"
-                                        />
-                                    </div>
-
-                                    <div class="score-option">
-                                        <label>
-                                            <input type="radio" name="scoreMode" value="range" />
-                                            Random từ
-                                        </label>
-                                        <input
-                                            type="number"
-                                            id="scoreMin"
-                                            min="1"
-                                            max="10"
-                                            value="8"
-                                        />
-                                        <span style="color: #ccc">đến</span>
-                                        <input
-                                            type="number"
-                                            id="scoreMax"
-                                            min="1"
-                                            max="10"
+                                            min="8"
+                                            max="9"
                                             value="9"
                                         />
                                     </div>
@@ -314,12 +274,13 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
                                             sinh nhận xét.
                                         </p>
                                         <p>
-                                            <strong>Điểm cố định:</strong> Tất cả học sinh sẽ được
-                                            điểm này.
+                                            <strong>Điểm mặc định:</strong> Nếu ô điểm đang trống,
+                                            hệ thống sẽ tự điền điểm này trước khi chọn nhận xét.
                                         </p>
                                         <p>
-                                            <strong>Random từ X đến Y:</strong> Mỗi học sinh sẽ được
-                                            random một điểm trong khoảng này.
+                                            <strong>Điểm đã nhập:</strong> Nếu giáo viên đã nhập
+                                            trước, script sẽ giữ nguyên và chọn nhận xét đúng theo
+                                            điểm đó.
                                         </p>
                                     </div>
                                 </fieldset>
@@ -469,11 +430,10 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
                                     </div>
 
                                     <div class="config-group">
-                                        <label for="autoFlowType">🎯 flowType</label>
-                                        <select id="autoFlowType">
-                                            <option value="flow1">Flow 1 - Nhận xét chung</option>
-                                            <option value="flow2">Flow 2 - Theo điểm</option>
-                                        </select>
+                                        <label>🎯 flowType</label>
+                                        <div class="auto-comment-note auto-comment-note--compact">
+                                            Tất cả mẫu tự động hiện dùng chung một flow theo điểm.
+                                        </div>
                                     </div>
 
                                     <div class="config-group">

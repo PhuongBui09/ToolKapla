@@ -10,6 +10,7 @@
 export class ScriptGeneratorFlow2 {
     constructor() {
         this.commentBank = null;
+        this.defaultScore = 9;
     }
 
     /**
@@ -24,8 +25,16 @@ export class ScriptGeneratorFlow2 {
         }
     }
 
+    setDefaultScore(score) {
+        const parsedScore = Number(score);
+        if (Number.isFinite(parsedScore)) {
+            this.defaultScore = Math.min(9, Math.max(8, Math.round(parsedScore)));
+        }
+    }
+
     generateScript() {
         const commentBank = JSON.stringify(this.commentBank);
+        const defaultScore = this.defaultScore;
 
         return `(async function () {
   // ===== CORE HELPERS =====
@@ -125,14 +134,22 @@ export class ScriptGeneratorFlow2 {
     return false;
   }
 
+  function parseScoreValue(value) {
+    const normalized = String(value ?? "").trim().replace(",", ".");
+    if (!normalized) return null;
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
   // ===== INIT =====
-  if (!confirm("Flow 2: Sinh nhận xét theo điểm, kiểm tra tự động, rồi gửi. Tiếp tục?")) {
+  if (!confirm("Script nhập nhận xét theo điểm, tự điền điểm mặc định nếu đang trống, rồi gửi. Tiếp tục?")) {
     console.log("❗ Hủy");
     return;
   }
 
   let paused = false, sendQueue = [], missingStudents = [];
   const COMMENT_BANK = ${commentBank};
+  const DEFAULT_SCORE = ${defaultScore};
   const COLORS = {
     default: { bg: "#f3f4f6", color: "#374151", border: "#d1d5db" },
     pause: { bg: "#fef3c7", color: "#92400e", border: "#fcd34d" },
@@ -173,7 +190,7 @@ export class ScriptGeneratorFlow2 {
 
     panel.innerHTML = \`
       <div style="background: linear-gradient(135deg, #0891b2, #06b6d4); color: #fff; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 14px;">
-        <div style="display: flex; gap: 8px; align-items: center;"><span style="font-size: 18px;">🤖</span><span>Flow 2 Nhận Xét</span></div>
+        <div style="display: flex; gap: 8px; align-items: center;"><span style="font-size: 18px;">🤖</span><span>Nhận Xét Theo Điểm</span></div>
         <button id="btnCollapse" style="background: none; border: none; color: #fff; font-size: 14px; cursor: pointer;">▼</button>
       </div>
       <div id="panelContent" style="padding: 12px; background: #f9fafb;">
@@ -276,7 +293,12 @@ export class ScriptGeneratorFlow2 {
     const name = row.querySelector(".student_name")?.innerText?.trim()
       || row.getAttribute("pname")
       || "HS#" + idx;
-    const scoreVal = Number(score.value);
+    const enteredScore = parseScoreValue(score.value);
+    const scoreVal = Number.isFinite(enteredScore) ? enteredScore : DEFAULT_SCORE;
+    if (!Number.isFinite(enteredScore)) {
+      await typeTextSmart(score, String(DEFAULT_SCORE), true);
+      await wait(500 + Math.random() * 200);
+    }
     const level = mapScoreToLevel(scoreVal);
     const commentTemplate = getRandomComment(level);
     const chosen = personalizeComment(commentTemplate, name);
@@ -284,7 +306,16 @@ export class ScriptGeneratorFlow2 {
     await typeTextSmart(comment, chosen, chosen.length > 120);
     await wait(1000 + Math.random() * 500); // Chờ lâu hơn để nhận xét lưu
 
-    studentMap.set(idx, { comment, score, sendBtn, name, chosen, level, scoreVal });
+    studentMap.set(idx, {
+      comment,
+      score,
+      sendBtn,
+      name,
+      chosen,
+      level,
+      scoreVal,
+      usedDefaultScore: !Number.isFinite(enteredScore),
+    });
     if (sendBtn) {
       sendQueue.push(sendBtn);
       sendBtn.style.outline = "2px solid #22c55e";

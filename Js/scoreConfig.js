@@ -1,15 +1,7 @@
-/**
- * scoreConfig.js
- * Quản lý cấu hình chọn điểm và lưu vào localStorage
- */
-
 const SCORE_CONFIG_STORAGE_KEY = 'toolkapla_score_config';
 
 export const DEFAULT_SCORE_CONFIG = {
-    scoreMode: 'fixed',
     fixedScore: 9,
-    min: 8,
-    max: 9,
 };
 
 function clampScore(value, fallback) {
@@ -17,7 +9,7 @@ function clampScore(value, fallback) {
     if (!Number.isFinite(parsed)) {
         return fallback;
     }
-    return Math.min(10, Math.max(1, Math.round(parsed)));
+    return Math.min(9, Math.max(8, Math.round(parsed)));
 }
 
 function normalizeScoreConfig(config = {}) {
@@ -25,20 +17,10 @@ function normalizeScoreConfig(config = {}) {
         ...DEFAULT_SCORE_CONFIG,
         ...(config && typeof config === 'object' ? config : {}),
     };
-    const scoreMode = mergedConfig.scoreMode === 'range' ? 'range' : 'fixed';
     const fixedScore = clampScore(mergedConfig.fixedScore, DEFAULT_SCORE_CONFIG.fixedScore);
-    let min = clampScore(mergedConfig.min, DEFAULT_SCORE_CONFIG.min);
-    let max = clampScore(mergedConfig.max, DEFAULT_SCORE_CONFIG.max);
-
-    if (min > max) {
-        [min, max] = [max, min];
-    }
 
     return {
-        scoreMode,
         fixedScore,
-        min,
-        max,
     };
 }
 
@@ -72,4 +54,3 @@ export function resetScoreConfig() {
     localStorage.removeItem(SCORE_CONFIG_STORAGE_KEY);
     return { ...DEFAULT_SCORE_CONFIG };
 }
-

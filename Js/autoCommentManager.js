@@ -14,8 +14,8 @@ const STATE_REFRESH_INTERVAL_MS = 60 * 1000;
 const FOLLOW_UP_DUE_SWEEP_DELAY_MS = 5 * 1000;
 
 const FLOW_LABELS = {
-    flow1: 'Flow 1 - Nhận xét chung',
-    flow2: 'Flow 2 - Theo điểm',
+    flow1: 'Dữ liệu cũ - Nhận xét chung',
+    flow2: 'Flow duy nhất - Theo điểm',
 };
 
 const PANEL_TITLES = {
@@ -347,7 +347,6 @@ export class AutoCommentManager {
         this.form = document.getElementById('autoCommentForm');
         this.entryIdInput = document.getElementById('autoCommentEntryId');
         this.lessonPreviewInput = document.getElementById('autoLessonPreview');
-        this.flowTypeInput = document.getElementById('autoFlowType');
         this.lessonDescriptionInput = document.getElementById('autoLessonDescription');
         this.saveBtn = document.getElementById('autoCommentSaveBtn');
         this.cancelBtn = document.getElementById('autoCommentCancelBtn');
@@ -675,7 +674,6 @@ export class AutoCommentManager {
     resetForm() {
         this.entryIdInput.value = '';
         this.lessonPreviewInput.value = '';
-        this.flowTypeInput.value = 'flow1';
         this.lessonDescriptionInput.value = '';
         this.saveBtn.textContent = 'Lưu mẫu và chạy AI';
         this.saveBtn.disabled = false;
@@ -693,7 +691,6 @@ export class AutoCommentManager {
 
         this.entryIdInput.value = entry.id;
         this.lessonPreviewInput.value = entry.lessonPreview;
-        this.flowTypeInput.value = entry.flowType;
         this.lessonDescriptionInput.value = entry.lessonDescription;
         this.saveBtn.textContent = 'Cập nhật và chạy AI';
         this.cancelBtn.style.display = 'inline-flex';
@@ -710,7 +707,6 @@ export class AutoCommentManager {
         }
 
         const lessonPreview = this.lessonPreviewInput.value.trim();
-        const flowType = this.flowTypeInput.value === 'flow2' ? 'flow2' : 'flow1';
         const lessonDescription = this.lessonDescriptionInput.value.trim();
 
         if (!lessonPreview || !lessonDescription) {
@@ -723,6 +719,7 @@ export class AutoCommentManager {
 
         try {
             const existingId = this.entryIdInput.value.trim();
+            const flowType = 'flow2';
             const payload = await this.request('/api/auto-templates', {
                 method: 'POST',
                 body: {
@@ -822,16 +819,9 @@ export class AutoCommentManager {
 
     applyDataToMainForm(item) {
         const lessonDescription = document.getElementById('lessonDescription');
-        const flowRadio = document.querySelector(
-            `input[name="flowType"][value="${item.flowType}"]`,
-        );
 
         if (lessonDescription) {
             lessonDescription.value = item.lessonDescription;
-        }
-
-        if (flowRadio) {
-            flowRadio.checked = true;
         }
 
         if (typeof this.switchTab === 'function') {
