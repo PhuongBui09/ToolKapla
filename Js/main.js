@@ -34,14 +34,22 @@ function parseStoredFlow2CommentBank(rawComments) {
 // Hàm để disable buttons khi đang sinh comments
 function disableButtons() {
     window.toolkaplaAiBusy = true;
-    document.querySelectorAll('button').forEach((btn) => (btn.disabled = true));
-    document.getElementById('commentsInput').disabled = true;
+    const activeArea = document.getElementById('tab-generate-comments');
+    if (activeArea) {
+        activeArea.querySelectorAll('button, input, textarea, select').forEach((el) => {
+            el.disabled = true;
+        });
+    }
 }
 
 // Hàm để enable buttons khi hoàn thành
 function enableButtons() {
-    document.querySelectorAll('button').forEach((btn) => (btn.disabled = false));
-    document.getElementById('commentsInput').disabled = false;
+    const activeArea = document.getElementById('tab-generate-comments');
+    if (activeArea) {
+        activeArea.querySelectorAll('button, input, textarea, select').forEach((el) => {
+            el.disabled = false;
+        });
+    }
     window.toolkaplaAiBusy = false;
 }
 
@@ -412,6 +420,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Cập nhật thông tin tab script
     updateScriptTabInfo();
+
+    // Đảm bảo tab navigation luôn mở, kể cả nếu phiên trước đang chạy dở
+    document.querySelectorAll('.tab-btn').forEach((btn) => {
+        btn.disabled = false;
+    });
 
     // Listen for score input changes
     document.getElementById('fixedScore').addEventListener('change', updateScriptTabInfo);
