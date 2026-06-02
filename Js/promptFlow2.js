@@ -157,58 +157,13 @@ export function buildPromptFlow2(lessonDescription, config = null) {
 - KHÔNG dùng các từ chung chung như: "quy trình", "tổng thể", "hoàn chỉnh", "nền tảng", "tư duy"`;
     }
 
-    // Determine counts per category. Default ratios favor 9 and 7-8; 10, 6, and 5 are smaller.
-    // Default distribution (sum 25): DIEM_10:3, DIEM_9:10, DIEM_7_8:8, DIEM_6:2, DIEM_5:2
-    const defaultRatios = { DIEM_10: 3, DIEM_9: 10, DIEM_7_8: 8, DIEM_6: 2, DIEM_5: 2 };
-    const ratioSum = Object.values(defaultRatios).reduce((s, v) => s + v, 0);
-
-    // total comments: use config.numComments if provided, otherwise fall back to ratioSum (25)
-    const total = config && typeof config.numComments === 'number' ? config.numComments : ratioSum;
-
-    // support explicit distribution in config (counts or percentages)
-    let counts = { DIEM_10: 0, DIEM_9: 0, DIEM_7_8: 0, DIEM_6: 0, DIEM_5: 0 };
-    if (config && config.distribution && typeof config.distribution === 'object') {
-        const dist = config.distribution;
-        const keys = Object.keys(counts);
-        const numericValues = keys.map((k) => Number(dist[k] || 0));
-        const sumNumeric = numericValues.reduce((s, v) => s + v, 0);
-
-        if (sumNumeric === 0) {
-            // maybe distribution provided as percentages (sum to 100)
-            const percentSum = keys.map((k) => Number(dist[k] || 0)).reduce((s, v) => s + v, 0);
-            if (percentSum > 0) {
-                keys.forEach((k, i) => {
-                    counts[k] = Math.round((Number(dist[k] || 0) / percentSum) * total);
-                });
-            }
-        } else {
-            // distribution provided as raw counts -> scale to `total` if sums differ
-            if (sumNumeric === total) {
-                keys.forEach((k, i) => {
-                    counts[k] = Math.round(Number(dist[k] || 0));
-                });
-            } else {
-                keys.forEach((k, i) => {
-                    counts[k] = Math.round((Number(dist[k] || 0) / sumNumeric) * total);
-                });
-            }
-        }
-    } else {
-        // compute from default ratios
-        Object.keys(defaultRatios).forEach((k) => {
-            counts[k] = Math.round((defaultRatios[k] / ratioSum) * total);
-        });
-    }
-
-    // adjust rounding errors so sum(counts) === total
-    const sumCounts = Object.values(counts).reduce((s, v) => s + v, 0);
-    if (sumCounts !== total) {
-        // add the difference to the largest ratio bucket (DIEM_9 by default)
-        const primary = Object.keys(defaultRatios).reduce((a, b) =>
-            defaultRatios[a] >= defaultRatios[b] ? a : b,
-        );
-        counts[primary] += total - sumCounts;
-    }
+    const counts = {
+        DIEM_10: 4,
+        DIEM_9: 10,
+        DIEM_7_8: 10,
+        DIEM_6: 4,
+        DIEM_5: 5,
+    };
 
     return `${BASE_PROMPT}
 

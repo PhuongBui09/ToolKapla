@@ -129,19 +129,13 @@ ${lessonDescription}`;
 function buildPromptFlow2(lessonDescription, config = null) {
   const normalizedConfig = normalizePromptConfig(config || DEFAULT_PROMPT_CONFIG);
   const baseInstructions = buildInstructions(normalizedConfig);
-  const defaultRatios = { DIEM_10: 3, DIEM_9: 10, DIEM_7_8: 8, DIEM_6: 2, DIEM_5: 2 };
-  const ratioSum = Object.values(defaultRatios).reduce((sum, value) => sum + value, 0);
-  const total = normalizedConfig.numComments;
-  const counts = {};
-
-  Object.keys(defaultRatios).forEach((key) => {
-    counts[key] = Math.round((defaultRatios[key] / ratioSum) * total);
-  });
-
-  const countedTotal = Object.values(counts).reduce((sum, value) => sum + value, 0);
-  if (countedTotal !== total) {
-    counts.DIEM_9 += total - countedTotal;
-  }
+  const counts = {
+    DIEM_10: 4,
+    DIEM_9: 10,
+    DIEM_7_8: 10,
+    DIEM_6: 4,
+    DIEM_5: 5,
+  };
 
   return `${BASE_PROMPT}
 

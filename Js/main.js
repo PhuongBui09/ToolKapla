@@ -278,7 +278,6 @@ function formatCommentBankForDisplay(bank) {
 // Helper: Get config từ HTML (Cấu Hình tab)
 function getConfigFromUI() {
     return {
-        numComments: Number(document.getElementById('configNumComments').value) || 20,
         includeAllObjectives: document.getElementById('configIncludeAllObjectives').checked,
         commentVariety: document.getElementById('configCommentVariety').value || 'medium',
         commentLength: document.getElementById('configCommentLength').value || '1-2',

@@ -24,9 +24,6 @@ export function initPromptConfigUI() {
  * Điền config vào UI
  */
 function populateConfigUI(config) {
-  // Số lượng nhận xét
-  document.getElementById("configNumComments").value = config.numComments;
-
   // Bắt buộc mỗi nhận xét phải bao gồm tất cả mục tiêu
   document.getElementById("configIncludeAllObjectives").checked =
     config.includeAllObjectives;
@@ -52,20 +49,6 @@ function populateConfigUI(config) {
  * Setup event listeners
  */
 function setupEventListeners() {
-  // Lưu khi thay đổi số lượng nhận xét
-  document
-    .getElementById("configNumComments")
-    .addEventListener("change", (e) => {
-      const value = parseInt(e.target.value);
-      if (value >= 10 && value <= 25) {
-        saveConfig({ numComments: value });
-        Toast.show("✓ Đã lưu số lượng nhận xét", "success");
-      } else {
-        Toast.show("⚠️ Số lượng phải từ 10-25", "warning");
-        e.target.value = loadConfig().numComments;
-      }
-    });
-
   // Lưu khi thay đổi bắt buộc mục tiêu
   document
     .getElementById("configIncludeAllObjectives")
@@ -144,7 +127,6 @@ function setupEventListeners() {
  */
 export function getConfigFromUI() {
   return {
-    numComments: parseInt(document.getElementById("configNumComments").value),
     includeAllObjectives: document.getElementById("configIncludeAllObjectives")
       .checked,
     commentVariety: document.getElementById("configCommentVariety").value,
