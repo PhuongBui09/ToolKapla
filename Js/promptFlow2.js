@@ -135,8 +135,8 @@ ${lessonDescription}`;
 }
 
 /**
- * Build prompt cho Flow 2: Sinh 20 nhận xét chia XUATSAR/GIOI/KHA/YEU (CỐ ĐỊNH)
- * Dựa trên BASE_PROMPT + thêm logic thái độ theo mức điểm cố định
+ * Build prompt cho Flow 2: Sinh nhận xét chia theo 5 mức điểm (5, 6, 7-8, 9, 10)
+ * Dựa trên BASE_PROMPT + thêm logic thái độ theo mức điểm
  * @param {string} lessonDescription - Mô tả buổi học
  * @param {object} config - Cấu hình (tương tự Flow 1)
  * @returns {string} Prompt cho AI
@@ -157,16 +157,16 @@ export function buildPromptFlow2(lessonDescription, config = null) {
 - KHÔNG dùng các từ chung chung như: "quy trình", "tổng thể", "hoàn chỉnh", "nền tảng", "tư duy"`;
     }
 
-    // Determine counts per category. Default ratios favor GIOI, then KHA; XUATSAR and YEU are smaller.
-    // New default distribution (sum 25): XUATSAR:3, GIOI:13, KHA:7, YEU:2
-    const defaultRatios = { XUATSAR: 3, GIOI: 13, KHA: 7, YEU: 2 };
+    // Determine counts per category. Default ratios favor 9 and 7-8; 10, 6, and 5 are smaller.
+    // Default distribution (sum 25): DIEM_10:3, DIEM_9:10, DIEM_7_8:8, DIEM_6:2, DIEM_5:2
+    const defaultRatios = { DIEM_10: 3, DIEM_9: 10, DIEM_7_8: 8, DIEM_6: 2, DIEM_5: 2 };
     const ratioSum = Object.values(defaultRatios).reduce((s, v) => s + v, 0);
 
     // total comments: use config.numComments if provided, otherwise fall back to ratioSum (25)
     const total = config && typeof config.numComments === 'number' ? config.numComments : ratioSum;
 
     // support explicit distribution in config (counts or percentages)
-    let counts = { XUATSAR: 0, GIOI: 0, KHA: 0, YEU: 0 };
+    let counts = { DIEM_10: 0, DIEM_9: 0, DIEM_7_8: 0, DIEM_6: 0, DIEM_5: 0 };
     if (config && config.distribution && typeof config.distribution === 'object') {
         const dist = config.distribution;
         const keys = Object.keys(counts);
@@ -203,7 +203,7 @@ export function buildPromptFlow2(lessonDescription, config = null) {
     // adjust rounding errors so sum(counts) === total
     const sumCounts = Object.values(counts).reduce((s, v) => s + v, 0);
     if (sumCounts !== total) {
-        // add the difference to the largest ratio bucket (GIOI by default)
+        // add the difference to the largest ratio bucket (DIEM_9 by default)
         const primary = Object.keys(defaultRatios).reduce((a, b) =>
             defaultRatios[a] >= defaultRatios[b] ? a : b,
         );
@@ -214,49 +214,60 @@ export function buildPromptFlow2(lessonDescription, config = null) {
 
 ${baseInstructions}
 
-HÃY CHIA NHẬN XÉT THÀNH 4 NHÓM THEO MỨC ĐIỂM (CỐ ĐỊNH):
+HÃY CHIA NHẬN XÉT THÀNH 5 NHÓM THEO MỨC ĐIỂM (CỐ ĐỊNH):
 
-1️⃣ Xuất sắc (Điểm 10 - Hoàn hảo, vượt mong đợi)
-     • Thái độ học tập: chủ động, sáng tạo, vượt mong đợi, thể hiện năng lực nổi bật trong buổi học
-     • Viết CHÍNH XÁC ${counts.XUATSAR} nhận xét
-     LƯU Ý BỔ SUNG:
-     - KHÔNG mô tả học sinh hỗ trợ, hướng dẫn hoặc giúp đỡ các bạn khác
-     - Chỉ mô tả năng lực cá nhân, mức độ hoàn thành và chất lượng sản phẩm
+1️⃣ Điểm 10
+     • Học sinh tham gia phát biểu, tập trung học trong lớp, ngoan ngoãn
+     • Có khả năng sáng tạo, hoàn thành được dự án và có thể tự làm được dự án đơn giản
+     • Viết CHÍNH XÁC ${counts.DIEM_10} nhận xét
+     • Nhận xét phải thể hiện rõ học sinh vượt mong đợi, có sản phẩm hoặc kết quả nổi bật
 
-2️⃣ Giỏi (Điểm 9 - Giỏi)
-     • Thái độ học tập: chủ động, tập trung, hiểu rõ nội dung, thực hiện đúng yêu cầu, phối hợp tốt trong quá trình học
-     • Viết CHÍNH XÁC ${counts.GIOI} nhận xét
+2️⃣ Điểm 9
+     • Học sinh tham gia phát biểu, tập trung học trong lớp, ngoan ngoãn
+     • Viết CHÍNH XÁC ${counts.DIEM_9} nhận xét
+     • Nhận xét phải cho thấy học sinh hiểu bài, thực hiện đúng yêu cầu và học tập nghiêm túc
 
-3️⃣ Khá (Điểm 7–8 – Đạt yêu cầu)
-     • Thái độ học tập: BẮT BUỘC phải đề cập rõ ràng rằng học sinh cần tập trung hơn trong quá trình học hoặc thực hành (ví dụ: chưa tập trung ổn định, đôi lúc sao nhãng, cần chú ý hơn khi làm bài)
-     • Nội dung học tập: học sinh nắm được nội dung chính và hoàn thành các yêu cầu cơ bản của buổi học
-     • Viết CHÍNH XÁC ${counts.KHA} nhận xét
-     • MỖI nhận xét PHẢI có ít nhất 1 cụm từ liên quan đến “tập trung” hoặc “chú ý”
+3️⃣ Điểm 7-8
+     • Học sinh ngoan ngoãn, có tham gia phát biểu và phát biểu đúng
+     • Đôi khi vẫn còn một vài câu sai hoặc cần chỉnh lại cách làm
+     • Viết CHÍNH XÁC ${counts.DIEM_7_8} nhận xét
+     • Nhận xét phải nêu rõ học sinh đã tham gia tương tác nhưng còn vài chỗ chưa thật chính xác
 
-4️⃣ Yếu (Điểm 0-6 - Yếu, cần hỗ trợ)
-     • Thái độ học tập: tham gia, cần thêm thời gian/luyện tập, động viên cố gắng hơn
-     • Giọng văn: Động viên, ghi nhận sự tham gia, KHÔNG phê bình tiêu cực, tích cực hướng
-     • Viết CHÍNH XÁC ${counts.YEU} nhận xét
+4️⃣ Điểm 6
+     • Học sinh ngoan xuyên suốt buổi học, giữ trật tự và làm theo hướng dẫn
+     • Chưa tham gia phát biểu và chưa tương tác nhiều với giáo viên
+     • Viết CHÍNH XÁC ${counts.DIEM_6} nhận xét
+     • Nhận xét phải nhấn mạnh sự ngoan ngoãn, chăm chú, nhưng còn ít chủ động trao đổi
+
+5️⃣ Điểm 5
+     • Học sinh không chú ý, có thể quậy phá hoặc chưa giữ được sự tập trung trong buổi học
+     • Viết CHÍNH XÁC ${counts.DIEM_5} nhận xét
+     • Nhận xét phải mang nghĩa "Chưa tập trung học", nêu rõ học sinh cần rèn lại sự tập trung và nề nếp
+     • KHÔNG dùng giọng nặng nề, chỉ mô tả thực tế theo hướng nhắc nhở
 
 ĐỊNH DẠNG TRẢ VỀ (CHỈ JSON, không giải thích):
 
 {
     "lessonSummary": "Tóm tắt 1 câu nội dung buổi học",
     "commentBank": {
-        "XUATSAR": {
+        "DIEM_10": {
             "range": "10",
             "comments": []
         },
-        "GIOI": {
+        "DIEM_9": {
             "range": "9",
             "comments": []
         },
-        "KHA": {
+        "DIEM_7_8": {
             "range": "7-8",
             "comments": []
         },
-        "YEU": {
-            "range": "0-6",
+        "DIEM_6": {
+            "range": "6",
+            "comments": []
+        },
+        "DIEM_5": {
+            "range": "5",
             "comments": []
         }
     }

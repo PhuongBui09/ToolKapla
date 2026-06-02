@@ -1,15 +1,63 @@
 /**
  * scriptGenerator2.js
- * Sinh script JS cho Flow 2: Sinh nhận xét theo điểm (4 mức: XUATSAR/GIOI/KHA/YEU)
+ * Sinh script JS cho Flow 2: Sinh nhận xét theo điểm (5 mức: 5, 6, 7-8, 9, 10)
  *
  * Flow 2 hoạt động:
  * 1. AI sinh COMMENT_BANK dựa trên nội dung buổi học
  * 2. Script console nhận COMMENT_BANK đã sinh, map & gửi (chạy trên browser)
  */
 
+const DEFAULT_COMMENT_BANK = {
+    DIEM_10: { range: '10', comments: [] },
+    DIEM_9: { range: '9', comments: [] },
+    DIEM_7_8: { range: '7-8', comments: [] },
+    DIEM_6: { range: '6', comments: [] },
+    DIEM_5: { range: '5', comments: [] },
+};
+
+function normalizeCommentEntries(value) {
+    if (Array.isArray(value)) {
+        return value.map((comment) => String(comment || '').trim()).filter(Boolean);
+    }
+
+    if (value && Array.isArray(value.comments)) {
+        return value.comments.map((comment) => String(comment || '').trim()).filter(Boolean);
+    }
+
+    return [];
+}
+
+function normalizeCommentBank(bank) {
+    const source = bank && typeof bank === 'object' ? bank : {};
+    const legacyYeuComments = normalizeCommentEntries(source.YEU);
+
+    return {
+        DIEM_10: {
+            range: '10',
+            comments: normalizeCommentEntries(source.DIEM_10 || source.XUATSAR),
+        },
+        DIEM_9: {
+            range: '9',
+            comments: normalizeCommentEntries(source.DIEM_9 || source.GIOI),
+        },
+        DIEM_7_8: {
+            range: '7-8',
+            comments: normalizeCommentEntries(source.DIEM_7_8 || source.KHA),
+        },
+        DIEM_6: {
+            range: '6',
+            comments: normalizeCommentEntries(source.DIEM_6 || source.YEU || legacyYeuComments),
+        },
+        DIEM_5: {
+            range: '5',
+            comments: normalizeCommentEntries(source.DIEM_5 || source.YEU || legacyYeuComments),
+        },
+    };
+}
+
 export class ScriptGeneratorFlow2 {
     constructor() {
-        this.commentBank = null;
+        this.commentBank = { ...DEFAULT_COMMENT_BANK };
         this.defaultScore = 9;
     }
 
@@ -18,10 +66,10 @@ export class ScriptGeneratorFlow2 {
      */
     setCommentBank(bank) {
         if (bank && typeof bank === 'object') {
-            this.commentBank = bank;
+            this.commentBank = normalizeCommentBank(bank);
         } else {
             console.error('Invalid comment bank:', bank);
-            this.commentBank = { XUATSAR: [], GIOI: [], KHA: [], YEU: [] };
+            this.commentBank = { ...DEFAULT_COMMENT_BANK };
         }
     }
 
@@ -141,6 +189,28 @@ export class ScriptGeneratorFlow2 {
     return Number.isFinite(parsed) ? parsed : null;
   }
 
+  function normalizeCommentBank(sourceBank) {
+    const bank = sourceBank && typeof sourceBank === "object" ? sourceBank : {};
+    const legacyYeuComments = normalizeCommentEntries(bank.YEU);
+    return {
+      DIEM_10: { range: "10", comments: normalizeCommentEntries(bank.DIEM_10 || bank.XUATSAR) },
+      DIEM_9: { range: "9", comments: normalizeCommentEntries(bank.DIEM_9 || bank.GIOI) },
+      DIEM_7_8: { range: "7-8", comments: normalizeCommentEntries(bank.DIEM_7_8 || bank.KHA) },
+      DIEM_6: { range: "6", comments: normalizeCommentEntries(bank.DIEM_6 || bank.YEU || legacyYeuComments) },
+      DIEM_5: { range: "5", comments: normalizeCommentEntries(bank.DIEM_5 || bank.YEU || legacyYeuComments) }
+    };
+  }
+
+  function normalizeCommentEntries(value) {
+    if (Array.isArray(value)) {
+      return value.map((comment) => String(comment || "").trim()).filter(Boolean);
+    }
+    if (value && Array.isArray(value.comments)) {
+      return value.comments.map((comment) => String(comment || "").trim()).filter(Boolean);
+    }
+    return [];
+  }
+
   // ===== INIT =====
   if (!confirm("Script nhập nhận xét theo điểm, tự điền điểm mặc định nếu đang trống, rồi gửi. Tiếp tục?")) {
     console.log("❗ Hủy");
@@ -148,7 +218,7 @@ export class ScriptGeneratorFlow2 {
   }
 
   let paused = false, sendQueue = [], missingStudents = [];
-  const COMMENT_BANK = ${commentBank};
+  const COMMENT_BANK = normalizeCommentBank(${commentBank});
   const DEFAULT_SCORE = ${defaultScore};
   const COLORS = {
     default: { bg: "#f3f4f6", color: "#374151", border: "#d1d5db" },
@@ -161,15 +231,21 @@ export class ScriptGeneratorFlow2 {
   // ===== HELPER FUNCTIONS =====
   function mapScoreToLevel(score) {
     const s = Number(score);
-    if (s === 10) return "XUATSAR";
-    if (s === 9) return "GIOI";
-    if (s >= 7 && s <= 8) return "KHA";
-    return "YEU";
+    if (s === 10) return "DIEM_10";
+    if (s === 9) return "DIEM_9";
+    if (s >= 7 && s <= 8) return "DIEM_7_8";
+    if (s === 6) return "DIEM_6";
+    return "DIEM_5";
   }
 
   function getRandomComment(level) {
     const bank = COMMENT_BANK[level];
     if (!bank || !bank.comments?.length) {
+      if (level === "DIEM_5") return "{{student_name}} chưa tập trung học trong buổi học.";
+      if (level === "DIEM_6") return "{{student_name}} ngoan ngoãn trong buổi học nhưng chưa tham gia phát biểu nhiều.";
+      if (level === "DIEM_7_8") return "{{student_name}} ngoan ngoãn, có tham gia phát biểu nhưng đôi lúc còn một vài câu sai.";
+      if (level === "DIEM_9") return "{{student_name}} tham gia phát biểu, tập trung học trong lớp và làm bài nghiêm túc.";
+      if (level === "DIEM_10") return "{{student_name}} tham gia phát biểu, tập trung học trong lớp và hoàn thành tốt dự án.";
       return "{{student_name}} đã tham gia buổi học.";
     }
     return bank.comments[Math.floor(Math.random() * bank.comments.length)];

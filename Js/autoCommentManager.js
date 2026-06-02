@@ -38,7 +38,74 @@ function extractJSON(jsonString) {
 
 function parseStoredFlow2CommentBank(rawComments) {
     const parsed = JSON.parse(extractJSON(rawComments));
-    return parsed.commentBank || parsed;
+    return normalizeFlow2CommentBank(parsed.commentBank || parsed);
+}
+
+function normalizeCommentEntries(value) {
+    if (Array.isArray(value)) {
+        return value.map((comment) => String(comment || '').trim()).filter(Boolean);
+    }
+
+    if (value && Array.isArray(value.comments)) {
+        return value.comments.map((comment) => String(comment || '').trim()).filter(Boolean);
+    }
+
+    return [];
+}
+
+function normalizeFlow2CommentBank(bank) {
+    const source = bank && typeof bank === 'object' ? bank : {};
+    const legacyYeuComments = normalizeCommentEntries(source.YEU);
+
+    return {
+        DIEM_10: {
+            range: '10',
+            comments: normalizeCommentEntries(source.DIEM_10 || source.XUATSAR),
+        },
+        DIEM_9: {
+            range: '9',
+            comments: normalizeCommentEntries(source.DIEM_9 || source.GIOI),
+        },
+        DIEM_7_8: {
+            range: '7-8',
+            comments: normalizeCommentEntries(source.DIEM_7_8 || source.KHA),
+        },
+        DIEM_6: {
+            range: '6',
+            comments: normalizeCommentEntries(source.DIEM_6 || source.YEU || legacyYeuComments),
+        },
+        DIEM_5: {
+            range: '5',
+            comments: normalizeCommentEntries(source.DIEM_5 || source.YEU || legacyYeuComments),
+        },
+    };
+}
+
+function formatCommentBankForDisplay(bank) {
+    const normalized = normalizeFlow2CommentBank(bank);
+    const sections = [
+        ['DIEM_10', 'MỨC ĐIỂM 10'],
+        ['DIEM_9', 'MỨC ĐIỂM 9'],
+        ['DIEM_7_8', 'MỨC ĐIỂM 7-8'],
+        ['DIEM_6', 'MỨC ĐIỂM 6'],
+        ['DIEM_5', 'MỨC ĐIỂM 5'],
+    ];
+
+    return sections
+        .map(([key, title]) => {
+            const comments = normalized[key]?.comments || [];
+            if (comments.length === 0) {
+                return '';
+            }
+
+            let result = `=== NHẬN XÉT ${title} ===\n`;
+            comments.forEach((comment, index) => {
+                result += `${index + 1}. ${comment}\n`;
+            });
+            return `${result}\n`;
+        })
+        .filter(Boolean)
+        .join('');
 }
 
 function formatDateTime(timestamp) {
@@ -1124,38 +1191,7 @@ export class AutoCommentManager {
     formatCommentBankForDisplay(bank) {
         let result = '';
 
-        if (bank.XUATSAR?.comments) {
-            result += '=== NHẬN XÉT MỨC XUẤT SẮC (Điểm 10) ===\n';
-            bank.XUATSAR.comments.forEach((comment, index) => {
-                result += `${index + 1}. ${comment}\n`;
-            });
-            result += '\n';
-        }
-
-        if (bank.GIOI?.comments) {
-            result += '=== NHẬN XÉT MỨC GIỎI (Điểm 9) ===\n';
-            bank.GIOI.comments.forEach((comment, index) => {
-                result += `${index + 1}. ${comment}\n`;
-            });
-            result += '\n';
-        }
-
-        if (bank.KHA?.comments) {
-            result += '=== NHẬN XÉT MỨC KHÁ (Điểm 7-8) ===\n';
-            bank.KHA.comments.forEach((comment, index) => {
-                result += `${index + 1}. ${comment}\n`;
-            });
-            result += '\n';
-        }
-
-        if (bank.YEU?.comments) {
-            result += '=== NHẬN XÉT MỨC YẾU (Điểm 0-6) ===\n';
-            bank.YEU.comments.forEach((comment, index) => {
-                result += `${index + 1}. ${comment}\n`;
-            });
-        }
-
-        return result;
+        return formatCommentBankForDisplay(bank);
     }
 
     escapeHtml(value) {

@@ -28,7 +28,60 @@ function extractJSON(jsonString) {
 
 function parseStoredFlow2CommentBank(rawComments) {
     const parsed = JSON.parse(extractJSON(rawComments));
-    return parsed.commentBank || parsed;
+    return normalizeFlow2CommentBank(parsed.commentBank || parsed);
+}
+
+function normalizeCommentEntries(value) {
+    if (Array.isArray(value)) {
+        return value.map((comment) => String(comment || '').trim()).filter(Boolean);
+    }
+
+    if (value && Array.isArray(value.comments)) {
+        return value.comments.map((comment) => String(comment || '').trim()).filter(Boolean);
+    }
+
+    return [];
+}
+
+function normalizeFlow2CommentBank(bank) {
+    const source = bank && typeof bank === 'object' ? bank : {};
+    const legacyYeuComments = normalizeCommentEntries(source.YEU);
+
+    return {
+        DIEM_10: {
+            range: '10',
+            comments: normalizeCommentEntries(source.DIEM_10 || source.XUATSAR),
+        },
+        DIEM_9: {
+            range: '9',
+            comments: normalizeCommentEntries(source.DIEM_9 || source.GIOI),
+        },
+        DIEM_7_8: {
+            range: '7-8',
+            comments: normalizeCommentEntries(source.DIEM_7_8 || source.KHA),
+        },
+        DIEM_6: {
+            range: '6',
+            comments: normalizeCommentEntries(source.DIEM_6 || source.YEU || legacyYeuComments),
+        },
+        DIEM_5: {
+            range: '5',
+            comments: normalizeCommentEntries(source.DIEM_5 || source.YEU || legacyYeuComments),
+        },
+    };
+}
+
+function formatFlow2BankSection(bank, key, title) {
+    const comments = bank?.[key]?.comments;
+    if (!comments || comments.length === 0) {
+        return '';
+    }
+
+    let result = `=== NHẬN XÉT ${title} ===\n`;
+    comments.forEach((comment, index) => {
+        result += `${index + 1}. ${comment}\n`;
+    });
+    return `${result}\n`;
 }
 
 // Hàm để disable buttons khi đang sinh comments
@@ -210,40 +263,16 @@ window.generatedCommentBank = null;
 
 // Helper: Format COMMENT_BANK để hiển thị trong textarea
 function formatCommentBankForDisplay(bank) {
-    let result = '';
-
-    if (bank.XUATSAR && bank.XUATSAR.comments) {
-        result += '=== NHẬN XÉT MỨC XUẤT SẮC (Điểm 10) ===\n';
-        bank.XUATSAR.comments.forEach((c, i) => {
-            result += `${i + 1}. ${c}\n`;
-        });
-        result += '\n';
-    }
-
-    if (bank.GIOI && bank.GIOI.comments) {
-        result += '=== NHẬN XÉT MỨC GIỎI (Điểm 9) ===\n';
-        bank.GIOI.comments.forEach((c, i) => {
-            result += `${i + 1}. ${c}\n`;
-        });
-        result += '\n';
-    }
-
-    if (bank.KHA && bank.KHA.comments) {
-        result += '=== NHẬN XÉT MỨC KHÁ (Điểm 7-8) ===\n';
-        bank.KHA.comments.forEach((c, i) => {
-            result += `${i + 1}. ${c}\n`;
-        });
-        result += '\n';
-    }
-
-    if (bank.YEU && bank.YEU.comments) {
-        result += '=== NHẬN XÉT MỨC YẾU (Điểm 0-6) ===\n';
-        bank.YEU.comments.forEach((c, i) => {
-            result += `${i + 1}. ${c}\n`;
-        });
-    }
-
-    return result;
+    const normalized = normalizeFlow2CommentBank(bank);
+    return [
+        formatFlow2BankSection(normalized, 'DIEM_10', 'MỨC ĐIỂM 10'),
+        formatFlow2BankSection(normalized, 'DIEM_9', 'MỨC ĐIỂM 9'),
+        formatFlow2BankSection(normalized, 'DIEM_7_8', 'MỨC ĐIỂM 7-8'),
+        formatFlow2BankSection(normalized, 'DIEM_6', 'MỨC ĐIỂM 6'),
+        formatFlow2BankSection(normalized, 'DIEM_5', 'MỨC ĐIỂM 5'),
+    ]
+        .filter(Boolean)
+        .join('');
 }
 
 // Helper: Get config từ HTML (Cấu Hình tab)
@@ -318,20 +347,13 @@ window.generateCommentsByAI = async function () {
             originalLesson: lesson,
         });
 
-        if (
-            !commentBank ||
-            !commentBank.commentBank ||
-            !commentBank.commentBank.XUATSAR ||
-            !commentBank.commentBank.GIOI ||
-            !commentBank.commentBank.KHA ||
-            !commentBank.commentBank.YEU
-        ) {
+        if (!commentBank?.commentBank) {
             throw new Error('COMMENT_BANK không hợp lệ');
         }
 
-        window.flow2CommentBank = commentBank.commentBank;
-        window.generatedCommentBank = commentBank.commentBank;
-        commentsInput.value = formatCommentBankForDisplay(commentBank.commentBank);
+        window.flow2CommentBank = normalizeFlow2CommentBank(commentBank.commentBank);
+        window.generatedCommentBank = window.flow2CommentBank;
+        commentsInput.value = formatCommentBankForDisplay(window.flow2CommentBank);
 
         progressDiv.style.background = 'rgba(76, 175, 80, 0.15)';
         progressDiv.style.borderColor = 'rgba(76, 175, 80, 0.4)';
@@ -339,7 +361,7 @@ window.generateCommentsByAI = async function () {
         progressDiv.textContent = '✅ Hoàn thành! Bạn có thể chỉnh sửa nhận xét rồi bấm "Tạo Script"';
         setTimeout(() => progressDiv.remove(), 3000);
 
-        Toast.show('✅ Đã sinh nhận xét theo điểm (XUATSAR + GIOI + KHA + YEU)!', 'success');
+        Toast.show('✅ Đã sinh nhận xét theo 5 mức điểm!', 'success');
     } catch (e) {
         console.error(e);
         progressDiv.style.background = 'rgba(220, 53, 69, 0.15)';
