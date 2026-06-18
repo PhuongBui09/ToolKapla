@@ -219,6 +219,20 @@ function getSearchableRunHistoryContent(item) {
         .toLowerCase();
 }
 
+function getSearchableEntryContent(entry) {
+    return [
+        entry?.lessonPreview,
+        entry?.lessonDescription,
+        FLOW_LABELS[entry?.flowType] || FLOW_LABELS.flow1,
+        entry?.lastStatus,
+        entry?.lastError,
+        summarizeRecentRuns(entry?.recentRuns, entry?.runCount),
+    ]
+        .map((value) => String(value || ''))
+        .join('\n')
+        .toLowerCase();
+}
+
 function clone(value) {
     return JSON.parse(JSON.stringify(value));
 }
@@ -366,6 +380,7 @@ export class AutoCommentManager {
         this.switchTab = switchTab;
         this.entries = [];
         this.runHistory = [];
+        this.entrySearchTerm = '';
         this.runHistorySearchTerm = '';
         this.activePanel = 'form';
         this.refreshIntervalId = null;
@@ -409,6 +424,7 @@ export class AutoCommentManager {
         this.cancelBtn = document.getElementById('autoCommentCancelBtn');
         this.listContainer = document.getElementById('autoCommentList');
         this.emptyState = document.getElementById('autoCommentEmpty');
+        this.entrySearchInput = document.getElementById('autoEntrySearchInput');
         this.summary = document.getElementById('autoCommentSummary');
         this.runHistoryContainer = document.getElementById('autoRunHistoryContainer');
         this.runHistoryEmpty = document.getElementById('autoRunHistoryEmpty');
@@ -511,6 +527,13 @@ export class AutoCommentManager {
                     void this.deleteEntry(entryId);
                     return;
                 }
+            });
+        }
+
+        if (this.entrySearchInput) {
+            this.entrySearchInput.addEventListener('input', () => {
+                this.entrySearchTerm = this.entrySearchInput.value;
+                this.render();
             });
         }
 
@@ -1064,9 +1087,13 @@ export class AutoCommentManager {
     }
 
     render() {
-        const entries = this.entries
+        const allEntries = this.entries
             .slice()
             .sort((left, right) => right.updatedAt - left.updatedAt);
+        const searchTerm = normalizeSearchTerm(this.entrySearchInput?.value ?? this.entrySearchTerm);
+        const entries = searchTerm
+            ? allEntries.filter((entry) => getSearchableEntryContent(entry).includes(searchTerm))
+            : allEntries;
         this.listContainer.innerHTML = '';
         this.renderOverview();
 
@@ -1077,23 +1104,29 @@ export class AutoCommentManager {
             return;
         }
 
-        if (this.lastErrorMessage && entries.length === 0) {
+        if (this.lastErrorMessage && allEntries.length === 0) {
             this.summary.textContent = this.lastErrorMessage;
             this.emptyState.style.display = 'block';
             this.emptyState.textContent = 'Không thể tải dữ liệu auto từ server.';
             return;
         }
 
-        const totalEntries = entries.length;
-        const dueEntries = entries.filter((entry) => this.isEntryDue(entry)).length;
+        const totalEntries = allEntries.length;
+        const dueEntries = allEntries.filter((entry) => this.isEntryDue(entry)).length;
         this.summary.textContent =
             totalEntries === 0
                 ? 'Chưa có mẫu tự động nào. Lưu 1 mẫu để hệ thống chạy AI ngay rồi tự vận hành về sau.'
                 : `${totalEntries} mẫu đang lưu, ${dueEntries} mẫu đến hạn hoặc đang chờ retry. Server sẽ tự chạy ngay khi lưu, tự thử lại mỗi 5 phút nếu lỗi và làm mới lại sau mỗi 1 tháng kể từ lần thành công gần nhất. Nếu nhiều mẫu đến hạn cùng lúc, hệ thống sẽ xử lý theo từng batch nhỏ để tránh quá tải.`;
 
-        if (entries.length === 0) {
+        if (allEntries.length === 0) {
             this.emptyState.style.display = 'block';
             this.emptyState.textContent = 'Chưa có mẫu tự động nào';
+            return;
+        }
+
+        if (entries.length === 0) {
+            this.emptyState.style.display = 'block';
+            this.emptyState.textContent = 'Không tìm thấy mẫu tự động nào khớp với từ khóa.';
             return;
         }
 
@@ -1183,7 +1216,7 @@ export class AutoCommentManager {
         this.runHistoryContainer.innerHTML = '';
         this.renderOverview();
         const searchTerm = normalizeSearchTerm(
-            this.runHistorySearchInput?.value || this.runHistorySearchTerm,
+            this.runHistorySearchInput?.value ?? this.runHistorySearchTerm,
         );
         const filteredRunHistory = searchTerm
             ? this.runHistory.filter((item) =>
