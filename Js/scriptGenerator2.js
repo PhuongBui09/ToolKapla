@@ -1,6 +1,6 @@
 /**
  * scriptGenerator2.js
- * Sinh script JS cho Flow 2: Sinh nhận xét theo điểm (5 mức: 5, 6, 7-8, 9, 10)
+ * Sinh script JS cho Flow 2: Sinh nhận xét theo điểm (6 mức: 5, 6, 7, 8, 9, 10)
  *
  * Flow 2 hoạt động:
  * 1. AI sinh COMMENT_BANK dựa trên nội dung buổi học
@@ -10,7 +10,8 @@
 const DEFAULT_COMMENT_BANK = {
     DIEM_10: { range: '10', comments: [] },
     DIEM_9: { range: '9', comments: [] },
-    DIEM_7_8: { range: '7-8', comments: [] },
+    DIEM_8: { range: '8', comments: [] },
+    DIEM_7: { range: '7', comments: [] },
     DIEM_6: { range: '6', comments: [] },
     DIEM_5: { range: '5', comments: [] },
 };
@@ -40,9 +41,13 @@ function normalizeCommentBank(bank) {
             range: '9',
             comments: normalizeCommentEntries(source.DIEM_9 || source.GIOI),
         },
-        DIEM_7_8: {
-            range: '7-8',
-            comments: normalizeCommentEntries(source.DIEM_7_8 || source.KHA),
+        DIEM_8: {
+            range: '8',
+            comments: normalizeCommentEntries(source.DIEM_8 || source.DIEM_7_8 || source.KHA),
+        },
+        DIEM_7: {
+            range: '7',
+            comments: normalizeCommentEntries(source.DIEM_7 || source.DIEM_7_8 || source.KHA),
         },
         DIEM_6: {
             range: '6',
@@ -76,7 +81,7 @@ export class ScriptGeneratorFlow2 {
     setDefaultScore(score) {
         const parsedScore = Number(score);
         if (Number.isFinite(parsedScore)) {
-            this.defaultScore = Math.min(9, Math.max(8, Math.round(parsedScore)));
+            this.defaultScore = Math.min(10, Math.max(5, Math.round(parsedScore)));
         }
     }
 
@@ -195,7 +200,8 @@ export class ScriptGeneratorFlow2 {
     return {
       DIEM_10: { range: "10", comments: normalizeCommentEntries(bank.DIEM_10 || bank.XUATSAR) },
       DIEM_9: { range: "9", comments: normalizeCommentEntries(bank.DIEM_9 || bank.GIOI) },
-      DIEM_7_8: { range: "7-8", comments: normalizeCommentEntries(bank.DIEM_7_8 || bank.KHA) },
+      DIEM_8: { range: "8", comments: normalizeCommentEntries(bank.DIEM_8 || bank.DIEM_7_8 || bank.KHA) },
+      DIEM_7: { range: "7", comments: normalizeCommentEntries(bank.DIEM_7 || bank.DIEM_7_8 || bank.KHA) },
       DIEM_6: { range: "6", comments: normalizeCommentEntries(bank.DIEM_6 || bank.YEU || legacyYeuComments) },
       DIEM_5: { range: "5", comments: normalizeCommentEntries(bank.DIEM_5 || bank.YEU || legacyYeuComments) }
     };
@@ -233,7 +239,8 @@ export class ScriptGeneratorFlow2 {
     const s = Number(score);
     if (s === 10) return "DIEM_10";
     if (s === 9) return "DIEM_9";
-    if (s >= 7 && s <= 8) return "DIEM_7_8";
+    if (s === 8) return "DIEM_8";
+    if (s === 7) return "DIEM_7";
     if (s === 6) return "DIEM_6";
     return "DIEM_5";
   }
@@ -243,7 +250,8 @@ export class ScriptGeneratorFlow2 {
     if (!bank || !bank.comments?.length) {
       if (level === "DIEM_5") return "{{student_name}} chưa tập trung học trong buổi học.";
       if (level === "DIEM_6") return "{{student_name}} ngoan ngoãn trong buổi học nhưng chưa tham gia phát biểu nhiều.";
-      if (level === "DIEM_7_8") return "{{student_name}} ngoan ngoãn, có tham gia phát biểu nhưng đôi lúc còn một vài câu sai.";
+      if (level === "DIEM_7") return "{{student_name}} ngoan, có theo dõi bài học nhưng cần thêm sự hướng dẫn của giáo viên.";
+      if (level === "DIEM_8") return "{{student_name}} ngoan, có theo dõi bài học và đôi lúc cần giáo viên gợi ý để hoàn thành nhiệm vụ.";
       if (level === "DIEM_9") return "{{student_name}} tham gia phát biểu, tập trung học trong lớp và làm bài nghiêm túc.";
       if (level === "DIEM_10") return "{{student_name}} tham gia phát biểu, tập trung học trong lớp và hoàn thành tốt dự án.";
       return "{{student_name}} đã tham gia buổi học.";

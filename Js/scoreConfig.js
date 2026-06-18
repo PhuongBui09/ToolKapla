@@ -9,7 +9,7 @@ function clampScore(value, fallback) {
     if (!Number.isFinite(parsed)) {
         return fallback;
     }
-    return Math.min(9, Math.max(8, Math.round(parsed)));
+    return Math.min(10, Math.max(5, Math.round(parsed)));
 }
 
 function normalizeScoreConfig(config = {}) {

@@ -56,9 +56,13 @@ function normalizeFlow2CommentBank(bank) {
             range: '9',
             comments: normalizeCommentEntries(source.DIEM_9 || source.GIOI),
         },
-        DIEM_7_8: {
-            range: '7-8',
-            comments: normalizeCommentEntries(source.DIEM_7_8 || source.KHA),
+        DIEM_8: {
+            range: '8',
+            comments: normalizeCommentEntries(source.DIEM_8 || source.DIEM_7_8 || source.KHA),
+        },
+        DIEM_7: {
+            range: '7',
+            comments: normalizeCommentEntries(source.DIEM_7 || source.DIEM_7_8 || source.KHA),
         },
         DIEM_6: {
             range: '6',
@@ -267,7 +271,8 @@ function formatCommentBankForDisplay(bank) {
     return [
         formatFlow2BankSection(normalized, 'DIEM_10', 'MỨC ĐIỂM 10'),
         formatFlow2BankSection(normalized, 'DIEM_9', 'MỨC ĐIỂM 9'),
-        formatFlow2BankSection(normalized, 'DIEM_7_8', 'MỨC ĐIỂM 7-8'),
+        formatFlow2BankSection(normalized, 'DIEM_8', 'MỨC ĐIỂM 8'),
+        formatFlow2BankSection(normalized, 'DIEM_7', 'MỨC ĐIỂM 7'),
         formatFlow2BankSection(normalized, 'DIEM_6', 'MỨC ĐIỂM 6'),
         formatFlow2BankSection(normalized, 'DIEM_5', 'MỨC ĐIỂM 5'),
     ]
@@ -360,7 +365,7 @@ window.generateCommentsByAI = async function () {
         progressDiv.textContent = '✅ Hoàn thành! Bạn có thể chỉnh sửa nhận xét rồi bấm "Tạo Script"';
         setTimeout(() => progressDiv.remove(), 3000);
 
-        Toast.show('✅ Đã sinh nhận xét theo 5 mức điểm!', 'success');
+        Toast.show('✅ Đã sinh nhận xét theo 6 mức điểm!', 'success');
     } catch (e) {
         console.error(e);
         progressDiv.style.background = 'rgba(220, 53, 69, 0.15)';

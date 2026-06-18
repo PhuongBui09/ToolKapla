@@ -67,9 +67,13 @@ function normalizeFlow2CommentBank(bank) {
             range: '9',
             comments: normalizeCommentEntries(source.DIEM_9 || source.GIOI),
         },
-        DIEM_7_8: {
-            range: '7-8',
-            comments: normalizeCommentEntries(source.DIEM_7_8 || source.KHA),
+        DIEM_8: {
+            range: '8',
+            comments: normalizeCommentEntries(source.DIEM_8 || source.DIEM_7_8 || source.KHA),
+        },
+        DIEM_7: {
+            range: '7',
+            comments: normalizeCommentEntries(source.DIEM_7 || source.DIEM_7_8 || source.KHA),
         },
         DIEM_6: {
             range: '6',
@@ -87,7 +91,8 @@ function formatCommentBankForDisplay(bank) {
     const sections = [
         ['DIEM_10', 'MỨC ĐIỂM 10'],
         ['DIEM_9', 'MỨC ĐIỂM 9'],
-        ['DIEM_7_8', 'MỨC ĐIỂM 7-8'],
+        ['DIEM_8', 'MỨC ĐIỂM 8'],
+        ['DIEM_7', 'MỨC ĐIỂM 7'],
         ['DIEM_6', 'MỨC ĐIỂM 6'],
         ['DIEM_5', 'MỨC ĐIỂM 5'],
     ];

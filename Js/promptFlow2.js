@@ -3,7 +3,7 @@
  *
  * Dựa trên base prompt từ promptBuilder.js
  * Flow 1: Sinh 20 nhận xét chung (không chia mức)
- * Flow 2: Sinh 15 nhận xét chia theo HIGH/MID/LOW dựa trên khoảng điểm
+ * Flow 2: Sinh nhận xét chia theo từng mức điểm
  */
 
 const STUDENT_NAME_PLACEHOLDER = '{{student_name}}';
@@ -135,7 +135,7 @@ ${lessonDescription}`;
 }
 
 /**
- * Build prompt cho Flow 2: Sinh nhận xét chia theo 5 mức điểm (5, 6, 7-8, 9, 10)
+ * Build prompt cho Flow 2: Sinh nhận xét chia theo 6 mức điểm (5, 6, 7, 8, 9, 10)
  * Dựa trên BASE_PROMPT + thêm logic thái độ theo mức điểm
  * @param {string} lessonDescription - Mô tả buổi học
  * @param {object} config - Cấu hình (tương tự Flow 1)
@@ -160,7 +160,8 @@ export function buildPromptFlow2(lessonDescription, config = null) {
     const counts = {
         DIEM_10: 4,
         DIEM_9: 10,
-        DIEM_7_8: 10,
+        DIEM_8: 5,
+        DIEM_7: 5,
         DIEM_6: 4,
         DIEM_5: 5,
     };
@@ -169,36 +170,43 @@ export function buildPromptFlow2(lessonDescription, config = null) {
 
 ${baseInstructions}
 
-HÃY CHIA NHẬN XÉT THÀNH 5 NHÓM THEO MỨC ĐIỂM (CỐ ĐỊNH):
+HÃY CHIA NHẬN XÉT THÀNH 6 NHÓM THEO MỨC ĐIỂM (CỐ ĐỊNH):
 
 1️⃣ Điểm 10
-     • Học sinh tham gia phát biểu, tập trung học trong lớp, ngoan ngoãn
-     • Có khả năng sáng tạo, hoàn thành được dự án và có thể tự làm được dự án đơn giản
-     • Viết CHÍNH XÁC ${counts.DIEM_10} nhận xét
-     • Nhận xét phải thể hiện rõ học sinh vượt mong đợi, có sản phẩm hoặc kết quả nổi bật
+     • Học sinh chủ động phát biểu, tập trung xuyên suốt buổi học.
+     • Hiểu bài rất tốt, có khả năng sáng tạo, hoàn thành dự án đầy đủ và có thể tự thực hiện các dự án đơn giản.
+     • Có sản phẩm hoặc kết quả nổi bật, vượt mong đợi.
+     • Viết CHÍNH XÁC ${counts.DIEM_10} nhận xét.
 
 2️⃣ Điểm 9
-     • Học sinh tham gia phát biểu, tập trung học trong lớp, ngoan ngoãn
-     • Viết CHÍNH XÁC ${counts.DIEM_9} nhận xét
-     • Nhận xét phải cho thấy học sinh hiểu bài, thực hiện đúng yêu cầu và học tập nghiêm túc
+     • Học sinh tập trung học, chủ động phát biểu và tương tác với giáo viên.
+     • Hiểu bài đầy đủ, hoàn thành đúng yêu cầu của bài học.
+     • Chỉ còn một vài lỗi nhỏ hoặc cần nhắc ở một số chi tiết.
+     • Viết CHÍNH XÁC ${counts.DIEM_9} nhận xét.
 
-3️⃣ Điểm 7-8
-     • Học sinh ngoan ngoãn, có tham gia phát biểu và phát biểu đúng
-     • Đôi khi vẫn còn một vài câu sai hoặc cần chỉnh lại cách làm
-     • Viết CHÍNH XÁC ${counts.DIEM_7_8} nhận xét
-     • Nhận xét phải nêu rõ học sinh đã tham gia tương tác nhưng còn vài chỗ chưa thật chính xác
+3️⃣ Điểm 8
+     • Học sinh ngoan, có theo dõi bài học và tham gia phát biểu.
+     • Hiểu phần lớn nội dung bài học.
+     • Đôi lúc cần giáo viên gợi ý và hỗ trợ để hoàn thành nhiệm vụ.
+     • Viết CHÍNH XÁC ${counts.DIEM_8} nhận xét.
 
-4️⃣ Điểm 6
-     • Học sinh ngoan xuyên suốt buổi học, giữ trật tự và làm theo hướng dẫn
-     • Chưa tham gia phát biểu và chưa tương tác nhiều với giáo viên
-     • Viết CHÍNH XÁC ${counts.DIEM_6} nhận xét
-     • Nhận xét phải nhấn mạnh sự ngoan ngoãn, chăm chú, nhưng còn ít chủ động trao đổi
+4️⃣ Điểm 7
+     • Học sinh ngoan, có theo dõi bài học nhưng rất ít chủ động phát biểu hoặc tương tác.
+     • Tiếp thu còn hạn chế, cần thêm sự hướng dẫn của giáo viên.
+     • Hoàn thành được các yêu cầu cơ bản của bài học.
+     • Viết CHÍNH XÁC ${counts.DIEM_7} nhận xét.
 
-5️⃣ Điểm 5
-     • Học sinh không chú ý, có thể quậy phá hoặc chưa giữ được sự tập trung trong buổi học
-     • Viết CHÍNH XÁC ${counts.DIEM_5} nhận xét
-     • Nhận xét phải mang nghĩa "Chưa tập trung học", nêu rõ học sinh cần rèn lại sự tập trung và nề nếp
-     • KHÔNG dùng giọng nặng nề, chỉ mô tả thực tế theo hướng nhắc nhở
+5️⃣ Điểm 6
+     • Học sinh chưa tập trung trong buổi học, còn dễ mất tập trung hoặc sao nhãng.
+     • Cần cải thiện sự chủ động và thái độ học tập.
+     • Vẫn hợp tác khi giáo viên nhắc nhở hoặc hướng dẫn.
+     • Viết CHÍNH XÁC ${counts.DIEM_6} nhận xét.
+
+6️⃣ Điểm 5
+     • Học sinh chưa hợp tác với giáo viên trong buổi học.
+     • Rất ít hoặc không tham gia các hoạt động của lớp, ảnh hưởng đến việc tiếp thu bài.
+     • Nhận xét mang tính khách quan, không dùng từ ngữ nặng nề hay phê bình gay gắt.
+     • Viết CHÍNH XÁC ${counts.DIEM_5} nhận xét.
 
 ĐỊNH DẠNG TRẢ VỀ (CHỈ JSON, không giải thích):
 
@@ -213,8 +221,12 @@ HÃY CHIA NHẬN XÉT THÀNH 5 NHÓM THEO MỨC ĐIỂM (CỐ ĐỊNH):
             "range": "9",
             "comments": []
         },
-        "DIEM_7_8": {
-            "range": "7-8",
+        "DIEM_8": {
+            "range": "8",
+            "comments": []
+        },
+        "DIEM_7": {
+            "range": "7",
             "comments": []
         },
         "DIEM_6": {
