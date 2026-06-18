@@ -3,10 +3,11 @@ const { getJson, setJson } = require('./_redis');
 
 const ENTRIES_KEY = 'auto:entries';
 const RUN_HISTORY_KEY = 'auto:runs';
+const CURRENT_AUTO_FLOW_TYPE = 'flow2';
 const AUTO_REFRESH_MONTHS = 1;
 const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 const MAX_RECENT_RUNS = 8;
-const MAX_RUN_HISTORY = 50;
+const MAX_RUN_HISTORY = 200;
 
 function createId(prefix = 'auto') {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -37,7 +38,7 @@ function normalizeEntry(entry) {
   return {
     id: entry?.id || createId('entry'),
     lessonPreview: String(entry?.lessonPreview || '').trim(),
-    flowType: entry?.flowType === 'flow2' ? 'flow2' : 'flow1',
+    flowType: CURRENT_AUTO_FLOW_TYPE,
     lessonDescription: String(entry?.lessonDescription || '').trim(),
     promptConfig: normalizePromptConfig(entry?.promptConfig || DEFAULT_PROMPT_CONFIG),
     createdAt,
@@ -162,7 +163,7 @@ async function upsertEntry(payload) {
     throw new Error('Thiếu lessonPreview hoặc lessonDescription');
   }
 
-  const flowType = payload?.flowType === 'flow2' ? 'flow2' : 'flow1';
+  const flowType = CURRENT_AUTO_FLOW_TYPE;
   const promptConfig = normalizePromptConfig(payload?.promptConfig || DEFAULT_PROMPT_CONFIG);
   const now = Date.now();
   const existingId = String(payload?.id || '').trim();
@@ -285,6 +286,7 @@ async function mergeLegacyState({ entries = [], runHistory = [] } = {}) {
 
 module.exports = {
   AUTO_REFRESH_MONTHS,
+  CURRENT_AUTO_FLOW_TYPE,
   MAX_RECENT_RUNS,
   MAX_RUN_HISTORY,
   addCalendarMonths,

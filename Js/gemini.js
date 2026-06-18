@@ -3,6 +3,7 @@ import { buildPrompt, buildPromptWithUserConfig } from './aiPrompt.js';
 const API_BASE = window.BACKEND_URL || ''; // set window.BACKEND_URL to your Vercel URL when hosting frontend on GitHub
 const STORAGE_KEY = 'toolkapla_comments_history';
 const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
+const MAX_COMMENT_HISTORY = 200;
 
 // Cache để lưu comments khi lesson trùng nhau
 const commentCache = new Map();
@@ -83,9 +84,9 @@ export function saveCommentToHistory(
         // Thêm item mới lên đầu
         history.unshift(historyItem);
 
-        // Giới hạn tối đa 50 items
-        if (history.length > 50) {
-            history.pop();
+        // Giới hạn tối đa số item đủ lớn cho kho tự động và lịch sử thủ công.
+        if (history.length > MAX_COMMENT_HISTORY) {
+            history.splice(MAX_COMMENT_HISTORY);
         }
 
         localStorage.setItem(STORAGE_KEY, JSON.stringify(history));

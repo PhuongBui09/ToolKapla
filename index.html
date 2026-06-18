@@ -346,6 +346,17 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
                             </div>
                         </button>
 
+                        <button type="button" class="auto-launch-card" data-open-panel="list">
+                            <span class="auto-launch-card__icon">📋</span>
+                            <div class="auto-launch-card__body">
+                                <strong>Danh Sách Mẫu</strong>
+                                <p>Xem, sửa, chạy lại hoặc xoá các mẫu tự động đã lưu.</p>
+                                <span class="auto-launch-card__meta" id="autoListCardMeta">
+                                    Chưa có mẫu nào
+                                </span>
+                            </div>
+                        </button>
+
                         <button type="button" class="auto-launch-card" data-open-panel="history">
                             <span class="auto-launch-card__icon">🧾</span>
                             <div class="auto-launch-card__body">
@@ -387,6 +398,9 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
                         <div class="auto-modal__switcher">
                             <button type="button" class="auto-modal-tab" data-open-panel="form">
                                 Thêm form
+                            </button>
+                            <button type="button" class="auto-modal-tab" data-open-panel="list">
+                                Danh sách mẫu
                             </button>
                             <button type="button" class="auto-modal-tab" data-open-panel="history">
                                 Lịch sử auto
@@ -450,6 +464,15 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
                                         </button>
                                     </div>
                                 </form>
+                            </section>
+
+                            <section class="auto-modal-panel" data-panel="list">
+                                <p class="auto-comment-note">
+                                    Tất cả mẫu đang lưu nằm ở đây. Nếu mẫu chưa có kết quả trong
+                                    lịch sử, hãy chạy lại AI để tạo kết quả mới theo flow hiện tại.
+                                </p>
+                                <div id="autoCommentList" class="auto-comment-list"></div>
+                                <p id="autoCommentEmpty">Chưa có mẫu tự động nào</p>
                             </section>
 
                             <section class="auto-modal-panel" data-panel="history">

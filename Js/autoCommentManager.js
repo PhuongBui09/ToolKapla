@@ -9,9 +9,10 @@ const BACKEND_MIGRATION_KEY = 'toolkapla_auto_backend_migrated_v2';
 const AUTO_REFRESH_MONTHS = 1;
 const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 const MAX_RECENT_RUNS = 8;
-const MAX_RUN_HISTORY = 50;
+const MAX_RUN_HISTORY = 200;
 const STATE_REFRESH_INTERVAL_MS = 60 * 1000;
 const FOLLOW_UP_DUE_SWEEP_DELAY_MS = 5 * 1000;
+const CURRENT_AUTO_FLOW_TYPE = 'flow2';
 
 const FLOW_LABELS = {
     flow1: 'Dữ liệu cũ - Nhận xét chung',
@@ -250,7 +251,7 @@ function normalizeEntry(entry) {
     return {
         id: entry?.id || createId('entry'),
         lessonPreview: String(entry?.lessonPreview || '').trim(),
-        flowType: entry?.flowType === 'flow2' ? 'flow2' : 'flow1',
+        flowType: CURRENT_AUTO_FLOW_TYPE,
         lessonDescription: String(entry?.lessonDescription || '').trim(),
         createdAt,
         updatedAt,
@@ -373,26 +374,15 @@ export class AutoCommentManager {
         this.loadingState = true;
         this.lastErrorMessage = '';
         this.submitInFlight = false;
+        this.manualRunInFlightIds = new Set();
     }
 
     init() {
         this.cacheDom();
-        this.hideSavedListUI();
         this.bindEvents();
+        this.render();
         this.renderRunHistory();
         this.bootstrap();
-    }
-
-    hideSavedListUI() {
-        const launchListButton = document.querySelector(
-            '#tab-auto-comments .auto-launch-card[data-open-panel="list"]',
-        );
-        const modalTab = this.modal?.querySelector('.auto-modal-tab[data-open-panel="list"]');
-        const modalPanel = this.modal?.querySelector('.auto-modal-panel[data-panel="list"]');
-
-        if (launchListButton) launchListButton.style.display = 'none';
-        if (modalTab) modalTab.style.display = 'none';
-        if (modalPanel) modalPanel.style.display = 'none';
     }
 
     async bootstrap() {
@@ -507,6 +497,16 @@ export class AutoCommentManager {
                     return;
                 }
 
+                if (action === 'run') {
+                    void this.runEntryNow(entryId);
+                    return;
+                }
+
+                if (action === 'load-latest') {
+                    this.loadLatestRunForEntry(entryId);
+                    return;
+                }
+
                 if (action === 'delete') {
                     void this.deleteEntry(entryId);
                     return;
@@ -590,7 +590,7 @@ export class AutoCommentManager {
         this.runHistory = runHistory.sort((left, right) => right.timestamp - left.timestamp);
         this.loadingState = false;
         this.lastErrorMessage = '';
-        // this.render(); // Removed: no longer show list
+        this.render();
         this.renderRunHistory();
     }
 
@@ -603,7 +603,7 @@ export class AutoCommentManager {
             console.error('Không thể đồng bộ auto state:', error);
             this.loadingState = false;
             this.lastErrorMessage = error.message || 'Không thể tải dữ liệu auto từ server';
-            // this.render(); // Removed: no longer show list
+            this.render();
             this.renderRunHistory();
 
             if (!silent) {
@@ -714,6 +714,10 @@ export class AutoCommentManager {
         return this.runHistory.find((item) => item.id === runId) || null;
     }
 
+    getLatestRunForEntry(entryId) {
+        return this.runHistory.find((item) => item.entryId === entryId) || null;
+    }
+
     getNextRunAt(entry) {
         return addCalendarMonths(entry.scheduleAnchorAt || entry.updatedAt || entry.createdAt);
     }
@@ -786,7 +790,7 @@ export class AutoCommentManager {
 
         try {
             const existingId = this.entryIdInput.value.trim();
-            const flowType = 'flow2';
+            const flowType = CURRENT_AUTO_FLOW_TYPE;
             const payload = await this.request('/api/auto-templates', {
                 method: 'POST',
                 body: {
@@ -855,6 +859,51 @@ export class AutoCommentManager {
         }
     }
 
+    async runEntryNow(entryId) {
+        const entry = this.getEntryById(entryId);
+        if (!entry || this.manualRunInFlightIds.has(entryId)) {
+            return;
+        }
+
+        this.manualRunInFlightIds.add(entryId);
+        this.render();
+
+        try {
+            const payload = await this.request('/api/auto-run-now', {
+                method: 'POST',
+                body: { id: entryId },
+            });
+
+            this.applyStatePayload(payload);
+            Toast.show(payload?.message || 'Đã chạy AI và lưu vào lịch sử auto.', 'success');
+
+            const fallbackLabel = formatModelUsageLabel(payload?.meta);
+            if (payload?.meta?.fallbackUsed && fallbackLabel) {
+                Toast.show(fallbackLabel, 'warning');
+            }
+        } catch (error) {
+            console.error('Không thể chạy mẫu auto:', error);
+            if (error.payload?.state) {
+                this.applyStatePayload(error.payload);
+            }
+            Toast.show(error.message || 'Không thể chạy mẫu tự động', 'error');
+        } finally {
+            this.manualRunInFlightIds.delete(entryId);
+            this.render();
+            this.renderRunHistory();
+        }
+    }
+
+    loadLatestRunForEntry(entryId) {
+        const latestRun = this.getLatestRunForEntry(entryId);
+        if (!latestRun) {
+            Toast.show('Mẫu này chưa có kết quả auto để nạp. Hãy chạy AI trước.', 'warning');
+            return;
+        }
+
+        this.loadRunHistoryIntoMainForm(latestRun.id);
+    }
+
     loadRunHistoryIntoMainForm(runId) {
         const runItem = this.getRunHistoryItemById(runId);
         if (!runItem) {
@@ -899,9 +948,6 @@ export class AutoCommentManager {
     }
 
     openPanel(panelName = 'form') {
-        if (panelName === 'list') {
-            panelName = 'form';
-        }
         this.activePanel = PANEL_TITLES[panelName] ? panelName : 'form';
         this.modal.classList.add('is-open');
         this.modal.setAttribute('aria-hidden', 'false');
@@ -1057,13 +1103,16 @@ export class AutoCommentManager {
             const nextActionAt = this.getNextActionAt(entry);
             const item = document.createElement('article');
             item.className = 'auto-comment-card';
+            const isRunning =
+                entry.lastStatus === 'running' || this.manualRunInFlightIds.has(entry.id);
+            const latestRun = this.getLatestRunForEntry(entry.id);
 
             const statusClass =
-                entry.lastStatus === 'error'
+                isRunning
+                    ? 'is-running'
+                    : entry.lastStatus === 'error'
                     ? 'is-error'
-                    : entry.lastStatus === 'running'
-                      ? 'is-running'
-                      : entry.lastStatus === 'success'
+                    : entry.lastStatus === 'success'
                         ? 'is-success'
                         : '';
 
@@ -1072,9 +1121,10 @@ export class AutoCommentManager {
             }
 
             const flowLabel = FLOW_LABELS[entry.flowType] || FLOW_LABELS.flow1;
-            const disabledAttr = entry.lastStatus === 'running' ? 'disabled' : '';
+            const disabledAttr = isRunning ? 'disabled' : '';
+            const loadDisabledAttr = latestRun ? '' : 'disabled';
             const lastRunText =
-                entry.lastStatus === 'running'
+                isRunning
                     ? 'Đang được server gọi AI...'
                     : entry.lastGeneratedAt
                       ? `Lần cuối: ${formatDateTime(entry.lastGeneratedAt)}`
@@ -1084,10 +1134,10 @@ export class AutoCommentManager {
                 Number(entry.retryAfterAt) > 0 ? 'Lần thử lại' : 'Lần tự động kế tiếp';
 
             const statusText =
-                entry.lastStatus === 'error'
+                isRunning
+                    ? 'Server đang xử lý mẫu này'
+                    : entry.lastStatus === 'error'
                     ? `Lần gần nhất bị lỗi. Hệ thống sẽ tự thử lại mỗi 5 phút cho tới khi thành công. ${recentRunSummary}`
-                    : entry.lastStatus === 'running'
-                      ? 'Server đang xử lý mẫu này'
                       : entry.lastStatus === 'success'
                         ? recentRunSummary
                         : 'Đang chờ lần chạy đầu tiên ngay sau khi lưu mẫu.';
@@ -1112,6 +1162,12 @@ export class AutoCommentManager {
                 <div class="auto-comment-actions">
                     <button type="button" class="btn-secondary auto-comment-edit-btn" data-action="edit" data-entry-id="${entry.id}" ${disabledAttr}>
                         Sửa
+                    </button>
+                    <button type="button" class="btn-secondary" data-action="run" data-entry-id="${entry.id}" ${disabledAttr}>
+                        Chạy AI
+                    </button>
+                    <button type="button" class="btn-secondary" data-action="load-latest" data-entry-id="${entry.id}" ${loadDisabledAttr}>
+                        Nạp kết quả
                     </button>
                     <button type="button" class="auto-comment-danger-btn" data-action="delete" data-entry-id="${entry.id}" ${disabledAttr}>
                         Xóa

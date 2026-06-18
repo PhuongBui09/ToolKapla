@@ -69,7 +69,7 @@ function normalizePromptConfig(config = {}) {
   };
 }
 
-function buildInstructions(config) {
+function buildInstructions(config, { includeCount = true } = {}) {
   const normalizedConfig = normalizePromptConfig(config);
   const instructions = [];
 
@@ -112,7 +112,13 @@ function buildInstructions(config) {
     );
   }
 
-  return `- Viết CHÍNH XÁC ${normalizedConfig.numComments} nhận xét (không nhiều hơn, không ít hơn)\n${instructions.join('\n')}`;
+  if (includeCount) {
+    instructions.unshift(
+      `- Viết CHÍNH XÁC ${normalizedConfig.numComments} nhận xét (không nhiều hơn, không ít hơn)`,
+    );
+  }
+
+  return instructions.join('\n');
 }
 
 function buildPromptFlow1(lessonDescription, config = null) {
@@ -128,7 +134,7 @@ ${lessonDescription}`;
 
 function buildPromptFlow2(lessonDescription, config = null) {
   const normalizedConfig = normalizePromptConfig(config || DEFAULT_PROMPT_CONFIG);
-  const baseInstructions = buildInstructions(normalizedConfig);
+  const baseInstructions = buildInstructions(normalizedConfig, { includeCount: false });
   const counts = {
     DIEM_10: 4,
     DIEM_9: 10,
