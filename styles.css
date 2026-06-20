@@ -72,7 +72,9 @@ body {
     color: #fff;
     background: linear-gradient(135deg, rgba(0, 212, 255, 0.22), rgba(54, 83, 255, 0.18));
     border-color: rgba(0, 212, 255, 0.3);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04), 0 10px 25px rgba(0, 212, 255, 0.14);
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+        0 10px 25px rgba(0, 212, 255, 0.14);
 }
 
 .tab-btn:disabled {
@@ -435,7 +437,10 @@ legend {
     background: rgba(9, 18, 38, 0.72);
     color: #eef4ff;
     font-size: 14px;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
 }
 
 .history-search-input::placeholder {
@@ -628,8 +633,7 @@ legend {
     padding: 20px;
     border-radius: 20px;
     border: 1px solid rgba(0, 212, 255, 0.18);
-    background:
-        linear-gradient(150deg, rgba(16, 24, 54, 0.94), rgba(27, 36, 64, 0.85));
+    background: linear-gradient(150deg, rgba(16, 24, 54, 0.94), rgba(27, 36, 64, 0.85));
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
 }
 
@@ -708,8 +712,7 @@ legend {
     margin: 24px auto;
     border-radius: 26px;
     border: 1px solid rgba(0, 212, 255, 0.22);
-    background:
-        linear-gradient(180deg, rgba(16, 20, 42, 0.98), rgba(18, 24, 50, 0.98));
+    background: linear-gradient(180deg, rgba(16, 20, 42, 0.98), rgba(18, 24, 50, 0.98));
     box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
     overflow: hidden;
 }
@@ -799,6 +802,97 @@ legend {
     margin-top: 8px;
 }
 
+/* =========================
+   Rubric / Grading UI
+========================= */
+.rubric-card {
+    display: grid;
+    gap: 14px;
+}
+
+.score-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.score-option {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    padding: 12px;
+    border-radius: 14px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+
+.score-option input[type='radio'] {
+    margin-top: 2px;
+}
+
+.score-option .score-value {
+    font-weight: 800;
+    font-size: 20px;
+    color: #00d4ff;
+    min-width: 46px;
+    text-align: center;
+}
+
+.score-option .score-desc {
+    color: #bcd3f0;
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+.score-option:hover {
+    transform: translateY(-4px);
+    border-color: rgba(0, 212, 255, 0.22);
+    box-shadow: 0 10px 30px rgba(0, 212, 255, 0.06);
+}
+
+.score-option input[type='radio']:checked + .score-value,
+.score-option input[type='radio']:checked ~ .score-value {
+    color: #fff;
+}
+
+.rubric-note label {
+    display: block;
+    margin-bottom: 8px;
+    color: #e6f6ff;
+}
+
+.rubric-note textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.grade-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.04));
+    color: #dfefff;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: none;
+}
+
+@media (max-width: 880px) {
+    .score-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 560px) {
+    .score-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .auto-comment-list {
     display: grid;
     gap: 16px;
@@ -828,7 +922,9 @@ legend {
 
 .auto-comment-card.is-running {
     border-color: rgba(255, 193, 7, 0.5);
-    box-shadow: 0 0 0 1px rgba(255, 193, 7, 0.18), 0 10px 30px rgba(0, 0, 0, 0.22);
+    box-shadow:
+        0 0 0 1px rgba(255, 193, 7, 0.18),
+        0 10px 30px rgba(0, 0, 0, 0.22);
 }
 
 .auto-comment-card__header {

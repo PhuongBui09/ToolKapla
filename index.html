@@ -94,6 +94,98 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
                             >
                                 🔨 Tạo Script
                             </button>
+
+                            <div class="form-section" id="rubricSection">
+                                <fieldset>
+                                    <legend>📊 Thang điểm đánh giá học sinh</legend>
+                                    <p class="history-note" style="margin-bottom:12px">
+                                        Sử dụng thang điểm dưới đây để chấm học sinh. Giáo viên có
+                                        thể chọn điểm, viết ghi chú và lưu/ xuất kết quả.
+                                    </p>
+
+                                    <div class="rubric-card">
+                                        <div
+                                            class="score-grid"
+                                            role="radiogroup"
+                                            aria-label="Chấm điểm"
+                                        >
+                                            <label class="score-option">
+                                                <input
+                                                    type="radio"
+                                                    name="studentScore"
+                                                    value="10"
+                                                />
+                                                <div class="score-value">10</div>
+                                                <div class="score-desc">
+                                                    Chủ động phát biểu, tập trung xuyên suốt. Hiểu
+                                                    bài rất tốt, sáng tạo.
+                                                </div>
+                                            </label>
+
+                                            <label class="score-option">
+                                                <input type="radio" name="studentScore" value="9" />
+                                                <div class="score-value">9</div>
+                                                <div class="score-desc">
+                                                    Tập trung, chủ động; hiểu đầy đủ, lỗi nhỏ.
+                                                </div>
+                                            </label>
+
+                                            <label class="score-option">
+                                                <input type="radio" name="studentScore" value="8" />
+                                                <div class="score-value">8</div>
+                                                <div class="score-desc">
+                                                    Theo dõi bài, tham gia; hiểu phần lớn nội dung.
+                                                </div>
+                                            </label>
+
+                                            <label class="score-option">
+                                                <input type="radio" name="studentScore" value="7" />
+                                                <div class="score-value">7</div>
+                                                <div class="score-desc">
+                                                    Theo dõi nhưng ít tương tác; cần hướng dẫn thêm.
+                                                </div>
+                                            </label>
+
+                                            <label class="score-option">
+                                                <input type="radio" name="studentScore" value="6" />
+                                                <div class="score-value">6</div>
+                                                <div class="score-desc">
+                                                    Chưa tập trung, cần cải thiện thái độ học tập.
+                                                </div>
+                                            </label>
+
+                                            <label class="score-option">
+                                                <input type="radio" name="studentScore" value="5" />
+                                                <div class="score-value">5</div>
+                                                <div class="score-desc">
+                                                    Không hợp tác, ít hoặc không tham gia hoạt động.
+                                                </div>
+                                            </label>
+                                        </div>
+
+                                        <div class="rubric-note">
+                                            <label for="teacherNote"
+                                                >Ghi chú cho học sinh (dùng để ghi lý do/nhận xét
+                                                ngắn):</label
+                                            >
+                                            <textarea
+                                                id="teacherNote"
+                                                placeholder="Viết ghi chú, nhận xét hoặc hướng dẫn cụ thể..."
+                                            ></textarea>
+                                        </div>
+
+                                        <div class="grade-actions">
+                                            <button id="saveGradeBtn">💾 Lưu</button>
+                                            <button id="clearGradeBtn" class="btn-secondary">
+                                                ✖️ Xóa
+                                            </button>
+                                            <button id="exportGradeBtn" class="btn-secondary">
+                                                📤 Xuất JSON
+                                            </button>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -372,9 +464,9 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
 
                     <p class="auto-comment-note auto-comment-note--compact">
                         Lưu mẫu xong hệ thống sẽ chạy AI ngay. Nếu lỗi, backend sẽ tự thử lại mỗi 5
-                        phút cho tới khi thành công; sau đó cứ mỗi 1 tháng hệ thống sẽ tự làm mới lại
-                        comment. Nếu nhiều mẫu cùng đến hạn, hệ thống sẽ tự xử lý theo từng batch
-                        nhỏ để tránh quá tải.
+                        phút cho tới khi thành công; sau đó cứ mỗi 1 tháng hệ thống sẽ tự làm mới
+                        lại comment. Nếu nhiều mẫu cùng đến hạn, hệ thống sẽ tự xử lý theo từng
+                        batch nhỏ để tránh quá tải.
                     </p>
                 </div>
 
@@ -486,9 +578,9 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
 
                             <section class="auto-modal-panel" data-panel="history">
                                 <p class="auto-comment-note">
-                                    Các lần AI chạy sau mỗi 1 tháng sẽ được lưu riêng ở đây, không đi
-                                    vào tab Lịch Sử thủ công. Nếu backlog lớn, server sẽ tự rút dần
-                                    theo batch qua các lượt chạy nền kế tiếp.
+                                    Các lần AI chạy sau mỗi 1 tháng sẽ được lưu riêng ở đây, không
+                                    đi vào tab Lịch Sử thủ công. Nếu backlog lớn, server sẽ tự rút
+                                    dần theo batch qua các lượt chạy nền kế tiếp.
                                 </p>
                                 <div class="history-search">
                                     <input
@@ -512,6 +604,7 @@ Hiểu và thực hành được chức năng cảm biến chuyển động tron
 
         <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js"></script>
+        <script type="module" defer src="./Js/gradeUI.js"></script>
         <script type="module" defer src="./Js/main.js"></script>
     </body>
 </html>
