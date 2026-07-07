@@ -4,6 +4,7 @@
  */
 
 import { loadConfig, saveConfig, resetConfig, DEFAULT_CONFIG } from './promptConfig.js';
+import { BASE_PROMPT } from './promptFlow2.js';
 import { Toast } from './toast.js';
 
 /**
@@ -36,6 +37,9 @@ function populateConfigUI(config) {
 
     // Cấm từ chung chung
     document.getElementById('configBanGenericWords').checked = config.banGenericWords;
+
+    // Base prompt gốc
+    document.getElementById('configBasePromptDefault').value = BASE_PROMPT.trim();
 
     // Base prompt tùy chỉnh
     document.getElementById('configCustomBasePrompt').value = config.customBasePrompt || '';

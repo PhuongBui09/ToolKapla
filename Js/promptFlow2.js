@@ -8,7 +8,7 @@
 
 const STUDENT_NAME_PLACEHOLDER = '{{student_name}}';
 
-const BASE_PROMPT = `
+export const BASE_PROMPT = `
 Bạn là giáo viên trực tiếp đứng lớp và đang viết nhận xét gửi cho phụ huynh SAU BUỔI HỌC.
 
 Dựa trên phần mô tả buổi học dưới đây, hãy viết nhận xét mô tả CỤ THỤ học sinh đã học và đã làm những gì trong buổi học, đồng thời nêu ngắn gọn thái độ học tập (ví dụ: tập trung, hợp tác, chủ động).
