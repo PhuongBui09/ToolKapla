@@ -289,6 +289,14 @@ function getConfigFromUI() {
         tone: document.getElementById('configTone').value || 'pedagogical',
         allowEmoji: document.getElementById('configAllowEmoji').checked,
         banGenericWords: document.getElementById('configBanGenericWords').checked,
+        scoreRangePrompts: {
+            DIEM_10: document.getElementById('configScorePrompt10').value,
+            DIEM_9: document.getElementById('configScorePrompt9').value,
+            DIEM_8: document.getElementById('configScorePrompt8').value,
+            DIEM_7: document.getElementById('configScorePrompt7').value,
+            DIEM_6: document.getElementById('configScorePrompt6').value,
+            DIEM_5: document.getElementById('configScorePrompt5').value,
+        },
     };
 }
 
@@ -362,7 +370,8 @@ window.generateCommentsByAI = async function () {
         progressDiv.style.background = 'rgba(76, 175, 80, 0.15)';
         progressDiv.style.borderColor = 'rgba(76, 175, 80, 0.4)';
         progressDiv.style.color = '#4caf50';
-        progressDiv.textContent = '✅ Hoàn thành! Bạn có thể chỉnh sửa nhận xét rồi bấm "Tạo Script"';
+        progressDiv.textContent =
+            '✅ Hoàn thành! Bạn có thể chỉnh sửa nhận xét rồi bấm "Tạo Script"';
         setTimeout(() => progressDiv.remove(), 3000);
 
         Toast.show('✅ Đã sinh nhận xét theo 6 mức điểm!', 'success');

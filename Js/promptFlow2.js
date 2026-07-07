@@ -101,6 +101,38 @@ function buildInstructions(config) {
     return instructions.join('\n');
 }
 
+const DEFAULT_SCORE_RANGE_PROMPTS = {
+    DIEM_10: `     • Học sinh chủ động phát biểu, tập trung xuyên suốt buổi học.
+     • Hiểu bài rất tốt, có khả năng sáng tạo, hoàn thành dự án đầy đủ và có thể tự thực hiện các dự án đơn giản.
+     • Có sản phẩm hoặc kết quả nổi bật, vượt mong đợi.`,
+    DIEM_9: `     • Học sinh tập trung học, chủ động phát biểu và tương tác với giáo viên.
+     • Hiểu bài đầy đủ, hoàn thành đúng yêu cầu của bài học.
+     • Chỉ còn một vài lỗi nhỏ hoặc cần nhắc ở một số chi tiết.`,
+    DIEM_8: `     • Học sinh ngoan, có theo dõi bài học và tham gia phát biểu.
+     • Hiểu phần lớn nội dung bài học.
+     • Đôi lúc cần giáo viên gợi ý và hỗ trợ để hoàn thành nhiệm vụ.`,
+    DIEM_7: `     • Học sinh ngoan, có theo dõi bài học nhưng rất ít chủ động phát biểu hoặc tương tác.
+     • Tiếp thu còn hạn chế, cần thêm sự hướng dẫn của giáo viên.
+     • Hoàn thành được các yêu cầu cơ bản của bài học.`,
+    DIEM_6: `     • Học sinh chưa tập trung trong buổi học, còn dễ mất tập trung hoặc sao nhãng.
+     • Cần cải thiện sự chủ động và thái độ học tập.
+     • Vẫn hợp tác khi giáo viên nhắc nhở hoặc hướng dẫn.`,
+    DIEM_5: `     • Học sinh chưa hợp tác với giáo viên trong buổi học.
+     • Rất ít hoặc không tham gia các hoạt động của lớp, ảnh hưởng đến việc tiếp thu bài.
+     • Nhận xét mang tính khách quan, không dùng từ ngữ nặng nề hay phê bình gay gắt.`,
+};
+
+function getScorePromptText(config, key) {
+    return config?.scoreRangePrompts?.[key] || DEFAULT_SCORE_RANGE_PROMPTS[key] || '';
+}
+
+function buildScoreSection(key, title, config, count) {
+    const content = getScorePromptText(config, key);
+    return `${title}
+${content}
+     • Viết CHÍNH XÁC ${count} nhận xét.`;
+}
+
 /**
  * Build prompt cho Flow 1: Sinh 20 nhận xét chung với config
  * @param {string} lessonDescription - Mô tả buổi học
@@ -172,41 +204,17 @@ ${baseInstructions}
 
 HÃY CHIA NHẬN XÉT THÀNH 6 NHÓM THEO MỨC ĐIỂM (CỐ ĐỊNH):
 
-1️⃣ Điểm 10
-     • Học sinh chủ động phát biểu, tập trung xuyên suốt buổi học.
-     • Hiểu bài rất tốt, có khả năng sáng tạo, hoàn thành dự án đầy đủ và có thể tự thực hiện các dự án đơn giản.
-     • Có sản phẩm hoặc kết quả nổi bật, vượt mong đợi.
-     • Viết CHÍNH XÁC ${counts.DIEM_10} nhận xét.
+${buildScoreSection('DIEM_10', '1️⃣ Điểm 10', config, counts.DIEM_10)}
 
-2️⃣ Điểm 9
-     • Học sinh tập trung học, chủ động phát biểu và tương tác với giáo viên.
-     • Hiểu bài đầy đủ, hoàn thành đúng yêu cầu của bài học.
-     • Chỉ còn một vài lỗi nhỏ hoặc cần nhắc ở một số chi tiết.
-     • Viết CHÍNH XÁC ${counts.DIEM_9} nhận xét.
+${buildScoreSection('DIEM_9', '2️⃣ Điểm 9', config, counts.DIEM_9)}
 
-3️⃣ Điểm 8
-     • Học sinh ngoan, có theo dõi bài học và tham gia phát biểu.
-     • Hiểu phần lớn nội dung bài học.
-     • Đôi lúc cần giáo viên gợi ý và hỗ trợ để hoàn thành nhiệm vụ.
-     • Viết CHÍNH XÁC ${counts.DIEM_8} nhận xét.
+${buildScoreSection('DIEM_8', '3️⃣ Điểm 8', config, counts.DIEM_8)}
 
-4️⃣ Điểm 7
-     • Học sinh ngoan, có theo dõi bài học nhưng rất ít chủ động phát biểu hoặc tương tác.
-     • Tiếp thu còn hạn chế, cần thêm sự hướng dẫn của giáo viên.
-     • Hoàn thành được các yêu cầu cơ bản của bài học.
-     • Viết CHÍNH XÁC ${counts.DIEM_7} nhận xét.
+${buildScoreSection('DIEM_7', '4️⃣ Điểm 7', config, counts.DIEM_7)}
 
-5️⃣ Điểm 6
-     • Học sinh chưa tập trung trong buổi học, còn dễ mất tập trung hoặc sao nhãng.
-     • Cần cải thiện sự chủ động và thái độ học tập.
-     • Vẫn hợp tác khi giáo viên nhắc nhở hoặc hướng dẫn.
-     • Viết CHÍNH XÁC ${counts.DIEM_6} nhận xét.
+${buildScoreSection('DIEM_6', '5️⃣ Điểm 6', config, counts.DIEM_6)}
 
-6️⃣ Điểm 5
-     • Học sinh chưa hợp tác với giáo viên trong buổi học.
-     • Rất ít hoặc không tham gia các hoạt động của lớp, ảnh hưởng đến việc tiếp thu bài.
-     • Nhận xét mang tính khách quan, không dùng từ ngữ nặng nề hay phê bình gay gắt.
-     • Viết CHÍNH XÁC ${counts.DIEM_5} nhận xét.
+${buildScoreSection('DIEM_5', '6️⃣ Điểm 5', config, counts.DIEM_5)}
 
 ĐỊNH DẠNG TRẢ VỀ (CHỈ JSON, không giải thích):
 
