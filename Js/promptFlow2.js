@@ -133,6 +133,10 @@ ${content}
      • Viết CHÍNH XÁC ${count} nhận xét.`;
 }
 
+function getPromptBase(config) {
+    return config?.customBasePrompt?.trim() ? config.customBasePrompt : BASE_PROMPT;
+}
+
 /**
  * Build prompt cho Flow 1: Sinh 20 nhận xét chung với config
  * @param {string} lessonDescription - Mô tả buổi học
@@ -158,7 +162,8 @@ export function buildPromptFlow1(lessonDescription, config = null) {
 - KHÔNG dùng các từ chung chung như: "quy trình", "tổng thể", "hoàn chỉnh", "nền tảng", "tư duy"`;
     }
 
-    return `${BASE_PROMPT}
+    const promptBase = getPromptBase(config);
+    return `${promptBase}
 
 ${instructions}
 
@@ -198,7 +203,8 @@ export function buildPromptFlow2(lessonDescription, config = null) {
         DIEM_5: 5,
     };
 
-    return `${BASE_PROMPT}
+    const promptBase = getPromptBase(config);
+    return `${promptBase}
 
 ${baseInstructions}
 

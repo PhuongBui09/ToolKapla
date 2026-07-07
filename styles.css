@@ -228,6 +228,25 @@ h3 {
     margin-top: 24px;
     display: flex;
     gap: 12px;
+    flex-wrap: wrap;
+}
+
+.config-actions--wrap {
+    justify-content: flex-start;
+}
+
+.score-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.config-group--full {
+    width: 100%;
+}
+
+.config-group textarea {
+    min-height: 140px;
 }
 
 /* =========================

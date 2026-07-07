@@ -289,6 +289,7 @@ function getConfigFromUI() {
         tone: document.getElementById('configTone').value || 'pedagogical',
         allowEmoji: document.getElementById('configAllowEmoji').checked,
         banGenericWords: document.getElementById('configBanGenericWords').checked,
+        customBasePrompt: document.getElementById('configCustomBasePrompt').value,
         scoreRangePrompts: {
             DIEM_10: document.getElementById('configScorePrompt10').value,
             DIEM_9: document.getElementById('configScorePrompt9').value,

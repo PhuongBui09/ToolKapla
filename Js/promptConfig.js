@@ -14,6 +14,7 @@ export const DEFAULT_CONFIG = {
     tone: 'pedagogical', // 'pedagogical' | 'neutral' | 'friendly'
     allowEmoji: false,
     banGenericWords: true,
+    customBasePrompt: '',
     scoreRangePrompts: {
         DIEM_10: `     • Học sinh chủ động phát biểu, tập trung xuyên suốt buổi học.
      • Hiểu bài rất tốt, có khả năng sáng tạo, hoàn thành dự án đầy đủ và có thể tự thực hiện các dự án đơn giản.

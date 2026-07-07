@@ -37,6 +37,9 @@ function populateConfigUI(config) {
     // Cấm từ chung chung
     document.getElementById('configBanGenericWords').checked = config.banGenericWords;
 
+    // Base prompt tùy chỉnh
+    document.getElementById('configCustomBasePrompt').value = config.customBasePrompt || '';
+
     // Cấu hình mức điểm Flow 2
     document.getElementById('configScorePrompt10').value = config.scoreRangePrompts?.DIEM_10 || '';
     document.getElementById('configScorePrompt9').value = config.scoreRangePrompts?.DIEM_9 || '';
@@ -95,6 +98,12 @@ function setupEventListeners() {
             e.target.checked ? '✓ Cấm các từ chung chung' : '✓ Cho phép các từ chung chung',
             'success',
         );
+    });
+
+    // Lưu khi thay đổi Base Prompt tùy chỉnh
+    document.getElementById('configCustomBasePrompt').addEventListener('change', (e) => {
+        saveConfig({ customBasePrompt: e.target.value });
+        Toast.show('✓ Đã lưu Base Prompt tùy chỉnh', 'success');
     });
 
     // Lưu khi thay đổi nội dung mức điểm Flow 2
@@ -180,6 +189,7 @@ export function getConfigFromUI() {
         tone: document.getElementById('configTone').value,
         allowEmoji: document.getElementById('configAllowEmoji').checked,
         banGenericWords: document.getElementById('configBanGenericWords').checked,
+        customBasePrompt: document.getElementById('configCustomBasePrompt').value,
         scoreRangePrompts: {
             DIEM_10: document.getElementById('configScorePrompt10').value,
             DIEM_9: document.getElementById('configScorePrompt9').value,
