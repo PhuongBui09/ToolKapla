@@ -148,33 +148,31 @@ export class ScriptGeneratorFlow2 {
     return result;
   }
 
-  const SAVE_FALLBACK_DELAY_MS = 250;
-
-  async function saveField(el) {
-    try {
-      const result = saveAttendance($(el));
-      if (result && typeof result.then === "function") {
-        await result;
-      } else {
-        await wait(SAVE_FALLBACK_DELAY_MS);
-      }
-    } catch (e) {
-      await wait(SAVE_FALLBACK_DELAY_MS);
-    }
-  }
-
-  async function typeTextSmart(el, text) {
+  async function typeTextSmart(el, text, fastMode = false) {
     el.focus();
-    el.value = String(text);
-    el.dispatchEvent(new Event("input", { bubbles: true }));
-    await saveField(el);
+    el.value = "";
+    text = String(text);
+
+    if (fastMode || text.length > 120) {
+      el.value = text;
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      await wait(100);
+    } else {
+      for (let c of text) {
+        el.value += c;
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        await wait(20 + Math.random() * 20);
+      }
+    }
+
+    try { saveAttendance($(el)); await wait(500); } catch (e) {}
   }
 
   async function setSelectValue(selectEl, value) {
     selectEl.value = value;
     selectEl.dispatchEvent(new Event("change", { bubbles: true }));
     try { $(selectEl).val(value).trigger("change"); } catch (e) {}
-    await saveField(selectEl);
+    try { saveAttendance($(selectEl)); await wait(300); } catch (e) {}
   }
 
   async function waitForReload(maxWait = 5000) {
@@ -382,13 +380,15 @@ export class ScriptGeneratorFlow2 {
     const enteredScore = parseScoreValue(score.value);
     const scoreVal = Number.isFinite(enteredScore) ? enteredScore : DEFAULT_SCORE;
     if (!Number.isFinite(enteredScore)) {
-      await typeTextSmart(score, String(DEFAULT_SCORE));
+      await typeTextSmart(score, String(DEFAULT_SCORE), true);
+      await wait(500 + Math.random() * 200);
     }
     const level = mapScoreToLevel(scoreVal);
     const commentTemplate = getRandomComment(level);
     const chosen = personalizeComment(commentTemplate, name);
 
-    await typeTextSmart(comment, chosen);
+    await typeTextSmart(comment, chosen, chosen.length > 120);
+    await wait(1000 + Math.random() * 500); // Chờ lâu hơn để nhận xét lưu
 
     studentMap.set(idx, {
       comment,
@@ -411,7 +411,7 @@ export class ScriptGeneratorFlow2 {
   uiSuccess("✅ PHASE 1 hoàn tất: Nhập xong " + sendQueue.length + " HS");
 
   // ===== PHASE 1.5: WAIT FOR SERVER =====
-  uiLog("⏳ Chờ server hoàn tất lưu dữ liệu...", "pause");
+  uiLog("⏳ Chờ server lưu dữ liệu (1 giây)...", "pause");
   await wait(1000);
   uiSuccess("✅ Dữ liệu đã được lưu. Sẵn sàng gửi!");
   window.__panel.missingInfo.style.display = "none";
