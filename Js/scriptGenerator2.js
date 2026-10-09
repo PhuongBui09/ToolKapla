@@ -188,23 +188,11 @@ export class ScriptGeneratorFlow2 {
     }
   }
 
-  async function typeTextSmart(el, text, fastMode = false) {
+  async function typeTextSmart(el, text) {
     el.focus();
-    el.value = "";
-    text = String(text);
-
-    if (fastMode || text.length > 120) {
-      el.value = text;
-      el.dispatchEvent(new Event("input", { bubbles: true }));
-      await wait(100);
-    } else {
-      for (let c of text) {
-        el.value += c;
-        el.dispatchEvent(new Event("input", { bubbles: true }));
-        await wait(20 + Math.random() * 20);
-      }
-    }
-
+    el.value = String(text);
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+    await wait(100);
     await saveField(el, "nhận xét/điểm");
   }
 
@@ -419,15 +407,13 @@ export class ScriptGeneratorFlow2 {
     const enteredScore = parseScoreValue(score.value);
     const scoreVal = Number.isFinite(enteredScore) ? enteredScore : DEFAULT_SCORE;
     if (!Number.isFinite(enteredScore)) {
-      await typeTextSmart(score, String(DEFAULT_SCORE), true);
-      await wait(500 + Math.random() * 200);
+      await typeTextSmart(score, String(DEFAULT_SCORE));
     }
     const level = mapScoreToLevel(scoreVal);
     const commentTemplate = getRandomComment(level);
     const chosen = personalizeComment(commentTemplate, name);
 
-    await typeTextSmart(comment, chosen, chosen.length > 120);
-    await wait(1000 + Math.random() * 500); // Chờ lâu hơn để nhận xét lưu
+    await typeTextSmart(comment, chosen);
 
     studentMap.set(idx, {
       comment,
@@ -450,8 +436,8 @@ export class ScriptGeneratorFlow2 {
   uiSuccess("✅ PHASE 1 hoàn tất: Nhập xong " + sendQueue.length + " HS");
 
   // ===== PHASE 1.5: WAIT FOR SERVER =====
-  uiLog("⏳ Chờ server lưu dữ liệu (1 giây)...", "pause");
-  await wait(1000);
+  uiLog("⏳ Hoàn tất các yêu cầu lưu lên server...", "pause");
+  await wait(200);
   uiSuccess("✅ Dữ liệu đã được lưu. Sẵn sàng gửi!");
   window.__panel.missingInfo.style.display = "none";
   window.__panel.btnSendAll.disabled = false;
