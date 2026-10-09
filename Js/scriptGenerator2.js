@@ -156,7 +156,12 @@ export class ScriptGeneratorFlow2 {
     }
 
     try {
-      const request = saveAttendance($(el));
+      const pageJQuery = window.jQuery || window.$;
+      if (typeof pageJQuery !== "function") {
+        throw new Error("Không tìm thấy jQuery của trang để lưu dữ liệu.");
+      }
+
+      const request = saveAttendance(pageJQuery(el));
       if (request && typeof request.then === "function") {
         const result = await request;
         if (result === false) throw new Error("Server từ chối lưu dữ liệu.");
@@ -206,7 +211,6 @@ export class ScriptGeneratorFlow2 {
   async function setSelectValue(selectEl, value) {
     selectEl.value = value;
     selectEl.dispatchEvent(new Event("change", { bubbles: true }));
-    try { $(selectEl).val(value).trigger("change"); } catch (e) {}
     await saveField(selectEl, "điểm danh");
   }
 
