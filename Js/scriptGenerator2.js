@@ -148,6 +148,41 @@ export class ScriptGeneratorFlow2 {
     return result;
   }
 
+  async function saveField(el, label) {
+    if (typeof saveAttendance !== "function") {
+      const error = new Error("Trang hiện tại không có hàm saveAttendance().");
+      uiError("❌ Không thể lưu " + label + ": " + error.message);
+      throw error;
+    }
+
+    try {
+      const request = saveAttendance($(el));
+      if (request && typeof request.then === "function") {
+        const result = await request;
+        if (result === false) throw new Error("Server từ chối lưu dữ liệu.");
+      } else {
+        await wait(150);
+        const jquery = window.jQuery || window.$;
+        if (jquery && typeof jquery.active === "number") {
+          const startedAt = Date.now();
+          while (jquery.active > 0) {
+            if (Date.now() - startedAt > 15000) {
+              throw new Error("Quá thời gian chờ server lưu dữ liệu.");
+            }
+            await wait(100);
+          }
+          await wait(150);
+        } else {
+          await wait(700);
+        }
+      }
+    } catch (error) {
+      console.error("Lỗi saveAttendance khi lưu " + label + ":", error);
+      uiError("❌ Lưu " + label + " thất bại; đã dừng để tránh bỏ sót.");
+      throw error;
+    }
+  }
+
   async function typeTextSmart(el, text, fastMode = false) {
     el.focus();
     el.value = "";
@@ -165,14 +200,14 @@ export class ScriptGeneratorFlow2 {
       }
     }
 
-    try { saveAttendance($(el)); await wait(500); } catch (e) {}
+    await saveField(el, "nhận xét/điểm");
   }
 
   async function setSelectValue(selectEl, value) {
     selectEl.value = value;
     selectEl.dispatchEvent(new Event("change", { bubbles: true }));
     try { $(selectEl).val(value).trigger("change"); } catch (e) {}
-    try { saveAttendance($(selectEl)); await wait(300); } catch (e) {}
+    await saveField(selectEl, "điểm danh");
   }
 
   async function waitForReload(maxWait = 5000) {
